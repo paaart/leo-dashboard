@@ -8,7 +8,7 @@ import QuoteSummary from "./QuoteSummary";
 import RateTypeToggle from "./RateTypeToggle";
 import { getDistance, getHHGQuoteMap, getVehicleQuotesDict } from "@/lib/api";
 
-const TransportationCalculator = () => {
+const DomesticCalculator = () => {
   const [source, setSource] = useState("");
   const [destination, setDestination] = useState("");
   const [cft, setCft] = useState("");
@@ -219,4 +219,4 @@ const TransportationCalculator = () => {
   );
 };
 
-export default TransportationCalculator;
+export default DomesticCalculator;

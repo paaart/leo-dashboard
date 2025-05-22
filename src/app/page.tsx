@@ -4,7 +4,7 @@ import { useState } from "react";
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
 
-import TransportationCalculator from "@/components/TransportationCalculator";
+import DomesticCalculator from "@/components/DomesticCalculator";
 
 export default function Dashboard() {
   const [section, setSection] = useState<
@@ -14,7 +14,7 @@ export default function Dashboard() {
   const renderContent = () => {
     switch (section) {
       case "domestic":
-        return <TransportationCalculator />;
+        return <DomesticCalculator />;
       case "international":
         return <div className="p-6">Here are your pending tasks ✅</div>;
       case "loans":
