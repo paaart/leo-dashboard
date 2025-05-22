@@ -4,14 +4,18 @@ import { useState } from "react";
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
 
+import TransportationCalculator from "@/components/TransportationCalculator";
+
 export default function Dashboard() {
-  const [section, setSection] = useState<"home" | "tasks" | "loans">("home");
+  const [section, setSection] = useState<
+    "domestic" | "international" | "loans"
+  >("domestic");
 
   const renderContent = () => {
     switch (section) {
-      case "home":
-        return <div className="p-6">Welcome to the Leo ERP dashboard 🚛</div>;
-      case "tasks":
+      case "domestic":
+        return <TransportationCalculator />;
+      case "international":
         return <div className="p-6">Here are your pending tasks ✅</div>;
       case "loans":
         return <div className="p-6">Manage Loans & Advances 💸</div>;

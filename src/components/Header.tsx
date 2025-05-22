@@ -12,6 +12,7 @@ export default function Header() {
           alt="Leo Packers"
           width={150}
           height={40}
+          priority
           className="h-15 w-auto object-contain"
         />
       </div>
