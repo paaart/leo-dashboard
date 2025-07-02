@@ -5,13 +5,15 @@ import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
 import DomesticCalculator from "@/components/DomesticCalculator";
 import InternationalShipping from "@/components/InternationalCalculator/InternationalShipping";
-// import InternationalHistory from "@/components/InternationalHistory";
 import HistoryView from "@/components/InternationalCalculator/History/HistoryList";
+import LoanEntryForm from "@/components/LoansAndAdvances/LoanEntryForm";
+import OutstandingLoansList from "@/components/LoansAndAdvances/OutstandingLoansList";
+import ManageEmployees from "@/components/LoansAndAdvances/ManageEmployees";
 
 type Section =
   | { main: "domestic"; sub?: null }
   | { main: "international"; sub: "calculator" | "history" }
-  | { main: "loans"; sub?: null };
+  | { main: "loans"; sub: "create" | "view" | "employees" };
 
 export default function Dashboard() {
   const [section, setSection] = useState<Section>({
@@ -21,16 +23,24 @@ export default function Dashboard() {
 
   const renderContent = () => {
     const { main, sub } = section;
-    console.log(sub);
 
     switch (main) {
       case "domestic":
         return <DomesticCalculator />;
-      case "loans":
-        return <InternationalShipping />;
       case "international":
         if (sub === "history") return <HistoryView />;
         return <InternationalShipping />;
+      case "loans":
+        switch (sub) {
+          case "create":
+            return <LoanEntryForm />;
+          case "view":
+            return <OutstandingLoansList />;
+          case "employees":
+            return <ManageEmployees />;
+          default:
+            return <LoanEntryForm />;
+        }
       default:
         return null;
     }
