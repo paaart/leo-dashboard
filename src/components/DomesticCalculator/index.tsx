@@ -149,71 +149,74 @@ const DomesticCalculator = () => {
   }
 
   return (
-    <div className="min-h-screen px-4 py-6 max-w-2xl mx-auto">
-      <h2 className="text-xl font-semibold mb-4">Shipping Cost Calculator</h2>
+    <div className="min-h-screen p-8 bg-white dark:bg-[#23272f] max-w- mx-auto">
+      <div className="min-h-screen px-4 py-6 max-w-2xl mx-auto">
+        <h2 className="text-xl font-semibold mb-4">Shipping Cost Calculator</h2>
 
-      {error && <div className="text-red-500 mb-4">{error}</div>}
+        {error && <div className="text-red-500 mb-4">{error}</div>}
 
-      <RateTypeToggle
-        houseRate={houseRate}
-        carRate={carRate}
-        onChange={handleRateToggle}
-      />
-
-      <CitySelector
-        label="Source City"
-        value={source}
-        options={sourceCities}
-        onChange={setSource}
-      />
-
-      <CitySelector
-        label="Destination City"
-        value={destination}
-        options={destinationCities}
-        onChange={setDestination}
-      />
-
-      {houseRate && <CFTInput value={cft} onChange={setCft} />}
-
-      {carRate && (
-        <VehicleSizeSelector
-          carSize={carSize}
-          carOptions={carOptions}
-          onChange={setCarSize}
+        <RateTypeToggle
+          houseRate={houseRate}
+          carRate={carRate}
+          onChange={handleRateToggle}
         />
-      )}
 
-      <button
-        onClick={calculateCost}
-        disabled={
-          (!houseRate && !carRate) ||
-          !destination ||
-          (houseRate && !cft) ||
-          (carRate && !carSize)
-        }
-        className="w-full py-2 px-4 bg-blue-600 text-white rounded disabled:opacity-50"
-      >
-        Calculate
-      </button>
+        <CitySelector
+          label="Source City"
+          value={source}
+          options={sourceCities}
+          onChange={setSource}
+        />
 
-      <QuoteSummary
-        showHHG={houseRate}
-        showVehicle={carRate}
-        packagingCost={packagingCost}
-        transportCost={transportCost}
-        totalCost={totalCost}
-        leoCost={leoCost}
-        carrierCost={carrierCost}
-        distance={distance}
-      />
+        <CitySelector
+          label="Destination City"
+          value={destination}
+          options={destinationCities}
+          onChange={setDestination}
+        />
 
-      <div className="mt-8 text-sm text-gray-600 dark:text-gray-400 italic">
-        <p>
-          The above rates are indicative rates including our margins. <br />
-          Before giving final rates, consider additional services like handyman,
-          lift availability, extra packing for fragile items, storage, etc.
-        </p>
+        {houseRate && <CFTInput value={cft} onChange={setCft} />}
+
+        {carRate && (
+          <VehicleSizeSelector
+            carSize={carSize}
+            carOptions={carOptions}
+            onChange={setCarSize}
+          />
+        )}
+
+        <button
+          onClick={calculateCost}
+          disabled={
+            (!houseRate && !carRate) ||
+            !destination ||
+            (houseRate && !cft) ||
+            (carRate && !carSize)
+          }
+          className="w-full py-2 px-4 bg-blue-600 text-white rounded disabled:opacity-50"
+        >
+          Calculate
+        </button>
+
+        <QuoteSummary
+          showHHG={houseRate}
+          showVehicle={carRate}
+          packagingCost={packagingCost}
+          transportCost={transportCost}
+          totalCost={totalCost}
+          leoCost={leoCost}
+          carrierCost={carrierCost}
+          distance={distance}
+        />
+
+        <div className="mt-8 text-sm text-gray-600 dark:text-gray-400 italic">
+          <p>
+            The above rates are indicative rates including our margins. <br />
+            Before giving final rates, consider additional services like
+            handyman, lift availability, extra packing for fragile items,
+            storage, etc.
+          </p>
+        </div>
       </div>
     </div>
   );
