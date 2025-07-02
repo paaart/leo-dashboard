@@ -149,7 +149,7 @@ const DomesticCalculator = () => {
   }
 
   return (
-    <div className="min-h-screen p-8 bg-white dark:bg-[#23272f] max-w- mx-auto">
+    <div className="min-h-screen p-8 bg-white dark:bg-[#23272f] max-w-screen mx-auto">
       <div className="min-h-screen px-4 py-6 max-w-2xl mx-auto">
         <h2 className="text-xl font-semibold mb-4">Shipping Cost Calculator</h2>
 
