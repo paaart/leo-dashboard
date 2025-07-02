@@ -1,9 +1,10 @@
-// lib/api/saveInternationalQuote.ts
+// src/app/api/international/save/route.ts
 import { supabase } from "@/lib/supabaseClient";
-import { BasicDetails } from "@/components/InternationalCalculator/types";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function saveInternationalQuote(values: BasicDetails) {
-  // Convert camelCase to snake_case
+export async function POST(req: NextRequest) {
+  const values = await req.json();
+
   const payload = {
     customer_name: values.customerName,
     origin_city: values.originCity,
@@ -13,14 +14,12 @@ export async function saveInternationalQuote(values: BasicDetails) {
     destination_port: values.destinationPort,
     mode: values.mode,
     volume_cbm: values.volumeInCBM,
-
     packing_charges: parseFloat(values.packingCharges || "0"),
     handling_charges: parseFloat(values.handlingCharges || "0"),
     origin_charges_custom: parseFloat(values.originChargesCustom || "0"),
     ocean_freight: parseFloat(values.oceanFreight || "0"),
     dthc: parseFloat(values.dthc || "0"),
     destination_charges: parseFloat(values.destination || "0"),
-
     calculate_gst_val: values.calculateGSTVal,
   };
 
@@ -30,9 +29,8 @@ export async function saveInternationalQuote(values: BasicDetails) {
     .select();
 
   if (error) {
-    console.error("❌ Error saving quote:", error);
-    return { success: false, error };
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return { success: true, data };
+  return NextResponse.json({ success: true, data });
 }

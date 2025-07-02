@@ -9,15 +9,15 @@ import ResultsTable from "./Calculator/ResultsTable";
 import {
   computeDerivedValues,
   isDataComplete,
-  // margins,
-  // generateTableData,
-  // generatePartFData,
-  // generateTotalRow,
+  margins,
+  generateTableData,
+  generatePartFData,
+  generateTotalRow,
 } from "./helpers";
-import { saveInternationalQuote } from "./api/SaveInternationalQuote";
+import { saveInternationalQuote } from "@/lib/api";
 import SubmitActions from "./Calculator/SubmitActions";
 import toast from "react-hot-toast";
-// import downloadPDF from "./MyPdfDocument";
+import { downloadPDF } from "./Calculator/DownloadDocument";
 
 const initialDetails: BasicDetails = {
   customerName: "",
@@ -66,7 +66,19 @@ export default function InternationalShipping() {
   };
 
   const handlePDFDownload = () => {
-    console.log("pdf printed");
+    const dateStr = new Date().toLocaleDateString("en-IN");
+    const tableData = generateTableData(calculatedValues);
+    const partFData = generatePartFData(calculatedValues);
+    const totals = generateTotalRow(calculatedValues);
+
+    downloadPDF({
+      basicDetails,
+      margins,
+      tableData,
+      partFData,
+      totals,
+      dateStr,
+    });
   };
 
   return (

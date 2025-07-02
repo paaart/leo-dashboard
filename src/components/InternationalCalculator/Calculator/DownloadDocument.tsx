@@ -36,5 +36,8 @@ export const downloadPDF = async ({
     />
   ).toBlob();
 
-  saveAs(blob, `International_Shipping_Quote_${dateStr}.pdf`);
+  saveAs(
+    blob,
+    `${basicDetails.customerName}_International_Shipping_Quote_${dateStr}.pdf`
+  );
 };

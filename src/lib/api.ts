@@ -1,3 +1,4 @@
+import { BasicDetails } from "@/components/InternationalCalculator/types";
 import { supabase } from "./supabaseClient";
 
 export async function getHHGQuoteMap() {
@@ -78,4 +79,33 @@ export async function getDistance(
   }
 
   return data?.distance || null;
+}
+
+export async function saveInternationalQuote(values: BasicDetails) {
+  const res = await fetch("/api/international/save", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(values),
+  });
+
+  const result = await res.json();
+
+  if (!res.ok) {
+    console.error("❌ Error saving quote:", result.error);
+    return { success: false, error: result.error };
+  }
+
+  return { success: true, data: result.data };
+}
+
+export async function fetchInternationalQuote(): Promise<BasicDetails[]> {
+  const res = await fetch("/api/international/history");
+
+  if (!res.ok) {
+    const errData = await res.json();
+    throw new Error(errData.error || "Failed to fetch international quotes");
+  }
+
+  const { data } = await res.json();
+  return data as BasicDetails[];
 }
