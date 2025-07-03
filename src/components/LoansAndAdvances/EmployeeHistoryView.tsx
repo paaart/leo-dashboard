@@ -18,6 +18,7 @@ type Transaction = {
   amount: number;
   type: "loan" | "repayment";
   remarks: string | null;
+  payment_date: string;
   created_at: string;
 };
 
@@ -31,7 +32,7 @@ export default function EmployeeHistoryView({ employee, onBack }: Props) {
 
       const { data, error } = await supabase
         .from("employee_loans")
-        .select("id, amount, type, remarks, created_at")
+        .select("id, amount, type, remarks, payment_date, created_at")
         .eq("employee_id", employee.employee_id)
         .order("created_at", { ascending: false });
 
@@ -89,8 +90,8 @@ export default function EmployeeHistoryView({ employee, onBack }: Props) {
                 >
                   ₹{Math.abs(txn.amount).toFixed(2)}
                 </p>
-                <p className="text-sm text-gray-400 dark:text-gray-500">
-                  {new Date(txn.created_at).toLocaleDateString("en-IN", {
+                <p className="text-sm text-gray-400 ">
+                  {new Date(txn.payment_date).toLocaleDateString("en-IN", {
                     year: "numeric",
                     month: "short",
                     day: "numeric",
