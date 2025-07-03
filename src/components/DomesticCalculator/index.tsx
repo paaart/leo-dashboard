@@ -133,6 +133,8 @@ const DomesticCalculator = () => {
       setLeoCost(0);
       setCarrierCost(0);
       setCarSize("");
+      setPackagingCost(0);
+      setTransportCost(0);
     }
     setTotalCost(0);
   };
