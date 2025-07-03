@@ -188,7 +188,7 @@ const DomesticCalculator = () => {
         <button
           onClick={calculateCost}
           disabled={
-            (!houseRate && !carRate) ||
+            !source ||
             !destination ||
             (houseRate && !cft) ||
             (carRate && !carSize)
