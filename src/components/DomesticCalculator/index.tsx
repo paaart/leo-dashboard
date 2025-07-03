@@ -90,10 +90,7 @@ const DomesticCalculator = () => {
 
   const calculateCost = async () => {
     const parsedCft = parseFloat(cft);
-    if (isNaN(parsedCft)) {
-      setError("CFT must be a number");
-      return;
-    }
+
     if (parsedCft > 10000) {
       setError("Entered CFT is too large. Please enter a realistic value.");
       return;
@@ -102,15 +99,15 @@ const DomesticCalculator = () => {
     setError(null);
     let total = 0;
 
+    const dist = await getDistance(source, destination);
+    setDistance(dist ?? 0);
+
     if (houseRate && selectedData) {
       const pack = parseEquation(selectedData.packaging, parsedCft, true);
       const transport = parseEquation(selectedData.transportation, parsedCft);
       setPackagingCost(pack);
       setTransportCost(transport);
       total = pack + transport;
-
-      const dist = await getDistance(source, destination);
-      setDistance(dist ?? 0);
     }
 
     if (carRate && carSize) {
