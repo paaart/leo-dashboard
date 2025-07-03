@@ -94,7 +94,7 @@ const DomesticCalculator = () => {
       setError("CFT must be a number");
       return;
     }
-    if (parsedCft > 1000) {
+    if (parsedCft > 10000) {
       setError("Entered CFT is too large. Please enter a realistic value.");
       return;
     }
