@@ -14,8 +14,9 @@ type Employee = {
 export default function ManageEmployees() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [name, setName] = useState("");
+  const [employeeCode, setEmployeeCode] = useState("");
   const [loading, setLoading] = useState(false);
-  const [refresh, setRefresh] = useState(0); // to refetch after add
+  const [refresh, setRefresh] = useState(0);
 
   useEffect(() => {
     const fetchEmployees = async () => {
@@ -41,7 +42,10 @@ export default function ManageEmployees() {
     if (!name.trim()) return;
 
     const promise = async () => {
-      const { error } = await supabase.from("employees").insert({ name });
+      const { error } = await supabase.from("employees").insert({
+        name,
+        employee_code: employeeCode,
+      });
       if (error) throw new Error("Insert failed");
       return true;
     };
@@ -54,6 +58,7 @@ export default function ManageEmployees() {
       })
       .then(() => {
         setName("");
+        setEmployeeCode("");
         setRefresh((r) => r + 1);
       });
   };
@@ -71,7 +76,7 @@ export default function ManageEmployees() {
       <h2 className="text-xl font-semibold mb-4">Add New Employee</h2>
 
       <div className="mb-6">
-        <label className="block mb-1 font-medium">Name</label>
+        <label className="block mb-1 mt-1 font-medium">Name</label>
         <input
           type="text"
           className="w-full p-2 border rounded bg-white dark:bg-gray-800"
@@ -79,10 +84,18 @@ export default function ManageEmployees() {
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
+        <label className="block mb-1 mt-1 font-medium">Employee Code</label>
+        <input
+          type="text"
+          className="w-full p-2 border rounded bg-white dark:bg-gray-800"
+          placeholder="e.g. EMP015"
+          value={employeeCode}
+          onChange={(e) => setEmployeeCode(e.target.value.toUpperCase())}
+        />
         <button
           onClick={handleAdd}
-          disabled={loading}
-          className="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+          disabled={loading || !name.trim() || !employeeCode.trim()}
+          className="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition disabled:opacity-30"
         >
           {loading ? "Adding..." : "Add Employee"}
         </button>

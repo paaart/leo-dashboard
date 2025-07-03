@@ -1,9 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient"; // adjust path
+import { supabase } from "@/lib/supabaseClient";
 import toast from "react-hot-toast";
-// import { Database } from "@/types/supabase"; // if using types
 
 type Employee = {
   id: string;
@@ -15,8 +14,11 @@ export default function LoanEntryForm() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState<string>("");
   const [amount, setAmount] = useState<string>("");
-  const [type, setType] = useState<"loan" | "repayment">("loan");
+  const [type, setType] = useState<"loan" | "repayment" | "advance">("loan");
   const [remarks, setRemarks] = useState("");
+  const [date, setDate] = useState(
+    () => new Date().toISOString().split("T")[0]
+  );
 
   const [loading, setLoading] = useState(false);
 
@@ -39,34 +41,43 @@ export default function LoanEntryForm() {
 
     setLoading(true);
 
-    const numericAmount = type === "loan" ? Number(amount) : -Number(amount);
+    const numericAmount =
+      type === "loan" || type === "advance" ? Number(amount) : -Number(amount);
 
     const { error } = await supabase.from("employee_loans").insert({
       employee_id: selectedEmployee,
       amount: numericAmount,
       type,
       remarks,
+      payment_date: date,
+    });
+    console.log("Submitting data:", {
+      selectedEmployee,
+      amount,
+      type,
+      remarks,
+      date,
     });
 
     if (error) {
-      console.error("Error adding loan entry", error);
+      toast.error("Failed to record entry");
     } else {
-      toast.success(
-        `Successfully recorded ${type === "loan" ? "loan" : "repayment"}.`
-      );
+      toast.success(`Successfully recorded ${type}.`);
       setAmount("");
       setType("loan");
       setRemarks("");
+      setDate(new Date().toISOString().split("T")[0]);
     }
 
     setLoading(false);
   };
 
   return (
-    <div className=" mx-auto bg-white dark:bg-[#23272f] p-6 rounded shadow min-h-screen">
+    <div className="mx-auto bg-white dark:bg-[#23272f] p-6 rounded shadow min-h-screen">
       <div className="min-h-screen px-4 py-6 max-w-2xl mx-auto">
         <h2 className="text-xl font-semibold mb-4">Create Loan / Repayment</h2>
-        <div className="mb-4 ">
+
+        <div className="mb-4">
           <label className="block mb-1 font-medium">Employee</label>
           <select
             className="w-full p-2 border rounded bg-white dark:bg-gray-800"
@@ -110,6 +121,17 @@ export default function LoanEntryForm() {
               <input
                 type="radio"
                 name="type"
+                value="advance"
+                checked={type === "advance"}
+                onChange={() => setType("advance")}
+                className="mr-1"
+              />
+              Advance
+            </label>
+            <label>
+              <input
+                type="radio"
+                name="type"
                 value="repayment"
                 checked={type === "repayment"}
                 onChange={() => setType("repayment")}
@@ -118,6 +140,17 @@ export default function LoanEntryForm() {
               Repayment
             </label>
           </div>
+        </div>
+
+        <div className="mb-4">
+          <label className="block mb-1 font-medium">Date</label>
+          <input
+            type="date"
+            className="w-full p-2 border rounded bg-white dark:bg-gray-800"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            max={new Date().toISOString().split("T")[0]} // optional: prevent future dates
+          />
         </div>
 
         <div className="mb-4">
