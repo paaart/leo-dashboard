@@ -25,6 +25,8 @@ type Transaction = {
 export default function EmployeeHistoryView({ employee, onBack }: Props) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const pageSize = 25;
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -34,7 +36,8 @@ export default function EmployeeHistoryView({ employee, onBack }: Props) {
         .from("employee_loans")
         .select("id, amount, type, remarks, payment_date, created_at")
         .eq("employee_id", employee.employee_id)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(page * pageSize, page * pageSize + pageSize - 1);
 
       if (error) {
         toast.error("Error fetching loan history");
@@ -46,7 +49,7 @@ export default function EmployeeHistoryView({ employee, onBack }: Props) {
     };
 
     fetchHistory();
-  }, [employee.employee_id]);
+  }, [employee.employee_id, page]);
 
   return (
     <div className="min-h-screen mx-auto p-8 bg-white dark:bg-[#23272f] rounded shadow h">
@@ -102,6 +105,23 @@ export default function EmployeeHistoryView({ employee, onBack }: Props) {
           ))}
         </ul>
       )}
+      <div className="flex justify-between mt-4">
+        <button
+          disabled={page === 0}
+          onClick={() => setPage((p) => p - 1)}
+          className="text-sm text-blue-600 disabled:text-gray-400 disabled:cursor-not-allowed"
+        >
+          ← Previous
+        </button>
+
+        <button
+          disabled={transactions.length < pageSize}
+          onClick={() => setPage((p) => p + 1)}
+          className="text-sm text-blue-600 disabled:text-gray-400 disabled:cursor-not-allowed"
+        >
+          Next →
+        </button>
+      </div>
     </div>
   );
 }
