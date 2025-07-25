@@ -197,15 +197,19 @@ const HEADERS: {
 export default function HistoryView() {
   const [entries, setEntries] = useState<BasicDetails[]>([]);
   const [selectedEntry, setSelectedEntry] = useState<BasicDetails | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true);
       try {
         const quotes = await fetchInternationalQuote();
         setEntries(quotes);
       } catch (err) {
         console.error(err);
       }
+
+      setIsLoading(false);
     };
 
     fetchData();
@@ -220,41 +224,47 @@ export default function HistoryView() {
         className="overflow-x-auto"
         style={{ WebkitOverflowScrolling: "touch" }}
       >
-        <table className="min-w-max text-xs border border-gray-300 dark:border-gray-700">
-          <thead>
-            <tr>
-              {HEADERS.map((header) => (
-                <th
-                  key={header.label}
-                  className="px-2 py-1 border-b border-gray-300 dark:border-gray-700 bg-gray-200 dark:bg-gray-700 text-left"
-                >
-                  {header.label}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {entries.map((entry, idx) => {
-              const calculatedValues = computeDerivedValues(entry);
-              return (
-                <tr
-                  key={idx}
-                  className="hover:bg-blue-50 dark:hover:bg-blue-900 cursor-pointer"
-                  onClick={() => setSelectedEntry(entry)}
-                >
-                  {HEADERS.map((header) => (
-                    <td
-                      key={header.label}
-                      className="px-2 py-1 border-b border-gray-200 dark:border-gray-700 text-left"
-                    >
-                      {header.getValue(entry, calculatedValues)}
-                    </td>
-                  ))}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        {isLoading ? (
+          <div className="flex justify-center items-center h-full">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900 dark:border-white"></div>
+          </div>
+        ) : (
+          <table className="min-w-max text-xs border border-gray-300 dark:border-gray-700">
+            <thead>
+              <tr>
+                {HEADERS.map((header) => (
+                  <th
+                    key={header.label}
+                    className="px-2 py-1 border-b border-gray-300 dark:border-gray-700 bg-gray-200 dark:bg-gray-700 text-left"
+                  >
+                    {header.label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {entries.map((entry, idx) => {
+                const calculatedValues = computeDerivedValues(entry);
+                return (
+                  <tr
+                    key={idx}
+                    className="hover:bg-blue-50 dark:hover:bg-blue-900 cursor-pointer"
+                    onClick={() => setSelectedEntry(entry)}
+                  >
+                    {HEADERS.map((header) => (
+                      <td
+                        key={header.label}
+                        className="px-2 py-1 border-b border-gray-200 dark:border-gray-700 text-left"
+                      >
+                        {header.getValue(entry, calculatedValues)}
+                      </td>
+                    ))}
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
       {selectedEntry && (
         <PdfPreviewModal
