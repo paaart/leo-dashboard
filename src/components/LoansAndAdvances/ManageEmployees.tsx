@@ -25,6 +25,7 @@ export default function ManageEmployees() {
       const { data, error } = await supabase
         .from("employees")
         .select("*")
+        .eq("display", true)
         .order("created_at", { ascending: false });
 
       if (error) {

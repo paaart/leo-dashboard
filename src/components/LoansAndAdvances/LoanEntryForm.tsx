@@ -27,6 +27,7 @@ export default function LoanEntryForm() {
       const { data, error } = await supabase
         .from("employees")
         .select("id, name, employee_code")
+        .eq("display", true)
         .order("created_at", { ascending: true });
 
       if (data) setEmployees(data);

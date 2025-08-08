@@ -17,6 +17,7 @@ export async function GET() {
   }
 
   const mappedData: BasicDetails[] = (data as QuoteRow[]).map((row) => ({
+    id: row.id,
     customerName: row.customer_name,
     originCity: row.origin_city,
     originPort: row.origin_port,
