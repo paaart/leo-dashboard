@@ -13,7 +13,6 @@ type Employee = {
   created_at: string;
   company_id: number | null;
   location_id: number | null;
-  // Joined labels (optional)
   company?: { id: number; name: string } | null;
   location?: { id: number; name: string } | null;
 };
