@@ -3,12 +3,11 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import toast from "react-hot-toast";
-// optional: a trash icon
 import { Trash2 } from "lucide-react";
 
 type Props = {
   employee: {
-    employee_id: string;
+    employee_id: string; // employees.id
     name: string;
     employee_code: string;
   };
@@ -24,14 +23,54 @@ type Transaction = {
   created_at: string;
 };
 
+type EmployeeData = {
+  id: string;
+  name: string;
+  employee_code: string;
+  company?: { name: string } | null;
+  location?: { name: string } | null;
+};
+
 export default function EmployeeHistoryView({ employee, onBack }: Props) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // pagination (you already added this earlier)
+  // pagination
   const [page, setPage] = useState(0);
   const pageSize = 25;
+
+  // NEW: employee company/location
+  const [empMeta, setEmpMeta] = useState<EmployeeData | null>(null);
+  const [metaLoading, setMetaLoading] = useState(true);
+
+  // Load employee company/location once
+  useEffect(() => {
+    const fetchMeta = async () => {
+      setMetaLoading(true);
+      const { data, error } = await supabase
+        .from("employees")
+        .select(
+          `
+          id, name, employee_code,
+          company:company_id ( name ),
+          location:location_id ( name )
+        `
+        )
+        .eq("id", employee.employee_id)
+        .single();
+
+      if (error) {
+        toast.error("Failed to load employee details");
+        setEmpMeta(null);
+      } else {
+        setEmpMeta(data as unknown as EmployeeData);
+      }
+      setMetaLoading(false);
+    };
+
+    fetchMeta();
+  }, [employee.employee_id]);
 
   const fetchHistory = useCallback(async () => {
     setLoading(true);
@@ -80,6 +119,9 @@ export default function EmployeeHistoryView({ employee, onBack }: Props) {
     }
   };
 
+  const companyName = empMeta?.company?.name ?? "—";
+  const locationName = empMeta?.location?.name ?? "—";
+
   return (
     <div className="min-h-screen mx-auto p-8 bg-white dark:bg-[#23272f] rounded shadow">
       <button
@@ -90,8 +132,26 @@ export default function EmployeeHistoryView({ employee, onBack }: Props) {
       </button>
 
       <h2 className="text-xl font-semibold mb-1">
-        {employee.employee_code} - {employee.name}
+        {employee.employee_code} — {employee.name}
       </h2>
+
+      {/* NEW: Company • Location row */}
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <span className="text-sm text-gray-500">Details:</span>
+        {metaLoading ? (
+          <span className="text-sm text-gray-400">Loading…</span>
+        ) : (
+          <>
+            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+              Company: {companyName}
+            </span>
+            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
+              Location: {locationName}
+            </span>
+          </>
+        )}
+      </div>
+
       <p className="text-sm text-gray-500 mb-4">Loan History</p>
 
       {loading ? (
