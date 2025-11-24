@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import toast from "react-hot-toast";
+import { EmployeeSearchSelect } from "@/lib/EmployeeSearchSelect";
 
+// ✅ keep the same Employee type as above
 type Employee = {
   id: string;
   name: string;
@@ -52,6 +54,7 @@ export default function LoanEntryForm() {
       remarks,
       payment_date: date,
     });
+
     console.log("Submitting data:", {
       selectedEmployee,
       amount,
@@ -68,6 +71,7 @@ export default function LoanEntryForm() {
       setType("loan");
       setRemarks("");
       setDate(new Date().toISOString().split("T")[0]);
+      // I’m leaving selectedEmployee as-is so they can add multiple entries
     }
 
     setLoading(false);
@@ -78,20 +82,13 @@ export default function LoanEntryForm() {
       <div className="min-h-screen px-4 py-6 max-w-2xl mx-auto">
         <h2 className="text-xl font-semibold mb-4">Create Loan / Repayment</h2>
 
+        {/* 🔥 New searchable dropdown */}
         <div className="mb-4">
-          <label className="block mb-1 font-medium">Employee</label>
-          <select
-            className="w-full p-2 border rounded bg-white dark:bg-gray-800"
+          <EmployeeSearchSelect
+            employees={employees}
             value={selectedEmployee}
-            onChange={(e) => setSelectedEmployee(e.target.value)}
-          >
-            <option value="">-- Select Employee --</option>
-            {employees.map((emp) => (
-              <option key={emp.id} value={emp.id}>
-                {emp.employee_code} - {emp.name}
-              </option>
-            ))}
-          </select>
+            onChange={setSelectedEmployee}
+          />
         </div>
 
         <div className="mb-4">
@@ -150,7 +147,7 @@ export default function LoanEntryForm() {
             className="w-full p-2 border rounded bg-white dark:bg-gray-800"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            max={new Date().toISOString().split("T")[0]} // optional: prevent future dates
+            max={new Date().toISOString().split("T")[0]}
           />
         </div>
 
@@ -166,7 +163,7 @@ export default function LoanEntryForm() {
         <button
           onClick={handleSubmit}
           disabled={loading}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition disabled:opacity-60"
         >
           {loading ? "Saving..." : "Submit"}
         </button>
