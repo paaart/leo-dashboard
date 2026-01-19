@@ -190,7 +190,7 @@ export default function PodDetailsModal({
           ) : tx.length === 0 ? (
             <p className="text-gray-600 dark:text-gray-300">No transactions.</p>
           ) : (
-            <ul className="divide-y divide-gray-200 dark:divide-gray-700 max-h-[360px] overflow-auto pr-2">
+            <ul className="divide-y divide-gray-200 dark:divide-gray-700 max-h-90 overflow-auto pr-2">
               {tx.map((t) => (
                 <li
                   key={t.id}
@@ -206,7 +206,7 @@ export default function PodDetailsModal({
                       })}
                     </p>
                     {t.note && (
-                      <p className="text-sm text-gray-500 dark:text-gray-400 break-words">
+                      <p className="text-sm text-gray-500 dark:text-gray-400 wrap-break-word">
                         {t.note}
                       </p>
                     )}

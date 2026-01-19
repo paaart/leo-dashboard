@@ -238,3 +238,88 @@ export async function fetchActiveCycleIdOrThrow(
   if (!data?.id) throw new Error("No active cycle found for this pod.");
   return data.id;
 }
+
+export async function updatePodRate(args: {
+  podId: string;
+  newRate: number;
+}): Promise<void> {
+  if (!args.newRate || Number.isNaN(args.newRate) || args.newRate <= 0) {
+    throw new Error("New rate must be > 0");
+  }
+
+  const { error } = await supabase
+    .from("warehouse_pods")
+    .update({ rate: args.newRate })
+    .eq("id", args.podId);
+
+  if (error) throw error;
+}
+
+/**
+ * Business rule:
+ * - If newRate > oldRate: charge extra (default 15 days) immediately + update rate.
+ * - If newRate <= oldRate: no refund/negative proration; only update rate.
+ */
+export async function applyMidCycleRateChange(args: {
+  podId: string;
+
+  oldRate: number;
+  newRate: number;
+
+  effectiveDate: string; // YYYY-MM-DD
+
+  // optional extra charge policy
+  addExtraChargeNow?: boolean; // default true for increase
+  extraDays?: number; // default 15
+  gstRate?: number; // default 18
+
+  note?: string | null;
+}): Promise<void> {
+  const oldRate = Number(args.oldRate);
+  const newRate = Number(args.newRate);
+
+  if (!newRate || Number.isNaN(newRate) || newRate <= 0) {
+    throw new Error("New rate must be > 0");
+  }
+
+  const isIncrease = newRate > oldRate;
+
+  const extraDays = Number.isFinite(args.extraDays)
+    ? Number(args.extraDays)
+    : 15;
+  const gstRate = Number.isFinite(args.gstRate) ? Number(args.gstRate) : 18;
+
+  // Default: charge extra only when rate increases
+  const addExtra =
+    typeof args.addExtraChargeNow === "boolean"
+      ? args.addExtraChargeNow
+      : isIncrease;
+
+  // 1) If increase and policy says charge extra: create one-time charge row
+  if (isIncrease && addExtra) {
+    const deltaMonthly = newRate - oldRate;
+
+    // 15-day policy = (deltaMonthly / 30) * extraDays
+    const extraCharge = (deltaMonthly / 30) * extraDays;
+
+    // Avoid tiny noise rows
+    const roundedExtra = Math.round((extraCharge + Number.EPSILON) * 100) / 100;
+
+    if (roundedExtra > 0) {
+      await addWarehouseTransaction({
+        podId: args.podId,
+        type: "adjustment", // can be 'charge' too; adjustment reads better
+        amount: roundedExtra, // positive
+        gstRate,
+        txDate: args.effectiveDate,
+        title: `Additional items (mid-cycle) • ${extraDays} days`,
+        note: args.note?.trim()
+          ? args.note.trim()
+          : `Rate changed from ₹${oldRate} to ₹${newRate}. Charged partial difference for ${extraDays} days.`,
+      });
+    }
+  }
+
+  // 2) Update recurring rate (affects next auto-charge)
+  await updatePodRate({ podId: args.podId, newRate });
+}
