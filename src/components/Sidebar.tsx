@@ -6,7 +6,8 @@ import { supabase } from "@/lib/supabaseClient";
 type Section =
   | { main: "domestic"; sub?: null }
   | { main: "international"; sub: "calculator" | "history" }
-  | { main: "loans"; sub: "create" | "view" | "employees" };
+  | { main: "loans"; sub: "create" | "view" | "employees" }
+  | { main: "warehouse"; sub: "add" | "active" | "renewals" };
 
 type SidebarProps = {
   section: Section;
@@ -14,22 +15,31 @@ type SidebarProps = {
 };
 
 export default function Sidebar({ section, setSection }: SidebarProps) {
-  const [open, setOpen] = useState<"international" | "loans" | null>(
+  const [open, setOpen] = useState<
+    "international" | "loans" | "warehouse" | null
+  >(
     section.main === "international"
       ? "international"
       : section.main === "loans"
       ? "loans"
+      : section.main === "warehouse"
+      ? "warehouse"
       : null
   );
 
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    const fetchAdminStatus = async () => {
+    const init = async () => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
 
+      const loggedIn = !!user;
+      setIsLoggedIn(loggedIn);
+
+      // Admin check (existing logic)
       if (user?.email) {
         const { data, error } = await supabase
           .from("employees")
@@ -37,13 +47,20 @@ export default function Sidebar({ section, setSection }: SidebarProps) {
           .eq("email", user.email)
           .single();
 
-        if (!error && data?.is_admin) {
-          setIsAdmin(true);
-        }
+        if (!error && data?.is_admin) setIsAdmin(true);
+      } else {
+        setIsAdmin(false);
       }
     };
 
-    fetchAdminStatus();
+    init();
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(!!session?.user);
+      if (!session?.user) setIsAdmin(false);
+    });
+
+    return () => sub.subscription.unsubscribe();
   }, []);
 
   const isActive = (main: string) => section.main === main;
@@ -111,6 +128,65 @@ export default function Sidebar({ section, setSection }: SidebarProps) {
             </div>
           )}
         </div>
+
+        {/* Warehouse – only when logged in */}
+        {isLoggedIn && (
+          <div>
+            <button
+              onClick={() => {
+                setSection({ main: "warehouse", sub: "active" });
+                setOpen((prev) => (prev === "warehouse" ? null : "warehouse"));
+              }}
+              className={`w-full flex justify-between items-center text-left px-3 py-2 rounded-md transition-colors ${
+                isActive("warehouse")
+                  ? "bg-gray-300 dark:bg-gray-700 font-semibold"
+                  : "hover:bg-gray-200 dark:hover:bg-gray-700"
+              }`}
+            >
+              <span>Warehouse</span>
+              <span>{open === "warehouse" ? "▾" : "▸"}</span>
+            </button>
+
+            {open === "warehouse" && section.main === "warehouse" && (
+              <div className="ml-4 mt-1 space-y-1">
+                <button
+                  onClick={() => setSection({ main: "warehouse", sub: "add" })}
+                  className={`block w-full text-left px-3 py-1 rounded ${
+                    section.sub === "add"
+                      ? "bg-gray-200 dark:bg-gray-600"
+                      : "hover:bg-gray-100 dark:hover:bg-gray-700"
+                  }`}
+                >
+                  Add Client
+                </button>
+                <button
+                  onClick={() =>
+                    setSection({ main: "warehouse", sub: "active" })
+                  }
+                  className={`block w-full text-left px-3 py-1 rounded ${
+                    section.sub === "active"
+                      ? "bg-gray-200 dark:bg-gray-600"
+                      : "hover:bg-gray-100 dark:hover:bg-gray-700"
+                  }`}
+                >
+                  Active Pods
+                </button>
+                <button
+                  onClick={() =>
+                    setSection({ main: "warehouse", sub: "renewals" })
+                  }
+                  className={`block w-full text-left px-3 py-1 rounded ${
+                    section.sub === "renewals"
+                      ? "bg-gray-200 dark:bg-gray-600"
+                      : "hover:bg-gray-100 dark:hover:bg-gray-700"
+                  }`}
+                >
+                  Renewals
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Loans / Advances – only for admins */}
         {isAdmin && (
