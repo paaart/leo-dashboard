@@ -20,6 +20,8 @@ import {
   addWarehouseTransaction,
   recordWarehousePayment,
 } from "@/lib/warehouse";
+import WarehouseRateChangeModal from "./WarehouseRateChangeModal";
+import { applyMidCycleRateChange } from "@/lib/warehouse";
 
 type MonthKey = string; // "YYYY-MM-01"
 
@@ -120,6 +122,7 @@ export default function WarehousePodLedgerView({
 
   const [drafts, setDrafts] = useState<Record<string, EditDraft>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [openRate, setOpenRate] = useState(false);
 
   // ✅ cycles state
   const [cycles, setCycles] = useState<WarehouseCycle[]>([]);
@@ -229,7 +232,7 @@ export default function WarehousePodLedgerView({
       list.sort(sortTxAsc);
     }
 
-    const keys = [...map.keys()].sort((a, b) => a.localeCompare(b));
+    const keys = [...map.keys()].sort((a, b) => b.localeCompare(a));
     return keys.map((k) => ({ monthKey: k, rows: map.get(k) ?? [] }));
   }, [vmRows]);
 
@@ -356,6 +359,13 @@ export default function WarehousePodLedgerView({
           >
             + Record Payment
           </button>
+
+          <button
+            onClick={() => setOpenRate(true)}
+            className="rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700"
+          >
+            Change Rate / Items
+          </button>
         </div>
       </div>
 
@@ -451,32 +461,24 @@ export default function WarehousePodLedgerView({
                 </div>
 
                 <div className="overflow-auto">
-                  <table className="min-w-[1100px] w-full">
+                  <table className="min-w-275 w-full">
                     <thead className="bg-gray-50 dark:bg-gray-800">
                       <tr>
-                        <th className="p-2 text-left text-sm w-[140px]">
-                          Date
-                        </th>
+                        <th className="p-2 text-left text-sm w-35">Date</th>
                         <th className="p-2 text-left text-sm">Title</th>
                         <th className="p-2 text-left text-sm">Note</th>
 
-                        <th className="p-2 text-right text-sm w-[120px]">
+                        <th className="p-2 text-right text-sm w-30">
                           Debit Amt
                         </th>
-                        <th className="p-2 text-right text-sm w-[90px]">
-                          GST %
-                        </th>
-                        <th className="p-2 text-right text-sm w-[140px]">
+                        <th className="p-2 text-right text-sm w-22.5">GST %</th>
+                        <th className="p-2 text-right text-sm w-35">
                           Debit Total
                         </th>
 
-                        <th className="p-2 text-right text-sm w-[120px]">
-                          Credit
-                        </th>
+                        <th className="p-2 text-right text-sm w-30">Credit</th>
 
-                        <th className="p-2 text-right text-sm w-[120px]">
-                          Action
-                        </th>
+                        <th className="p-2 text-right text-sm w-30">Action</th>
                       </tr>
                     </thead>
 
@@ -518,7 +520,7 @@ export default function WarehousePodLedgerView({
                               />
                             </td>
 
-                            <td className="p-2 min-w-[220px]">
+                            <td className="p-2 min-w-55">
                               <input
                                 className={cellInput}
                                 value={d.title}
@@ -529,7 +531,7 @@ export default function WarehousePodLedgerView({
                               />
                             </td>
 
-                            <td className="p-2 min-w-[260px]">
+                            <td className="p-2 min-w-65">
                               <input
                                 className={cellInput}
                                 value={d.note}
@@ -674,24 +676,24 @@ export default function WarehousePodLedgerView({
                         </p>
                       ) : (
                         <div className="overflow-auto">
-                          <table className="min-w-[1100px] w-full">
+                          <table className="min-w-275 w-full">
                             <thead className="bg-gray-50 dark:bg-gray-800">
                               <tr>
-                                <th className="p-2 text-left text-sm w-[140px]">
+                                <th className="p-2 text-left text-sm w-35">
                                   Date
                                 </th>
                                 <th className="p-2 text-left text-sm">Title</th>
                                 <th className="p-2 text-left text-sm">Note</th>
-                                <th className="p-2 text-right text-sm w-[120px]">
+                                <th className="p-2 text-right text-sm w-30">
                                   Debit Amt
                                 </th>
-                                <th className="p-2 text-right text-sm w-[90px]">
+                                <th className="p-2 text-right text-sm w-22.5">
                                   GST %
                                 </th>
-                                <th className="p-2 text-right text-sm w-[140px]">
+                                <th className="p-2 text-right text-sm w-35">
                                   Debit Total
                                 </th>
-                                <th className="p-2 text-right text-sm w-[120px]">
+                                <th className="p-2 text-right text-sm w-30">
                                   Credit
                                 </th>
                               </tr>
@@ -800,6 +802,31 @@ export default function WarehousePodLedgerView({
           });
           toast.success("Payment recorded");
           await load();
+        }}
+      />
+
+      <WarehouseRateChangeModal
+        open={openRate}
+        onClose={() => {
+          setOpenRate(false);
+          void load();
+        }}
+        oldRate={Number(pod.rate)}
+        onSubmit={async (v) => {
+          await applyMidCycleRateChange({
+            podId: pod.id,
+            oldRate: Number(pod.rate),
+            newRate: v.newRate,
+            effectiveDate: v.effectiveDate,
+            extraDays: v.extraDays,
+            gstRate: v.gstRate,
+            addExtraChargeNow: v.addExtraChargeNow,
+            note: v.note ?? null,
+          });
+
+          toast.success("Rate change applied");
+          setOpenRate(false);
+          void load();
         }}
       />
     </div>
