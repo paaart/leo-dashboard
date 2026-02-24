@@ -27,7 +27,7 @@ export default function WarehouseActivePods() {
   const load = async () => {
     setLoading(true);
     try {
-      await accrueWarehouseCharges(); // keep totals fresh at view time
+      await accrueWarehouseCharges();
       const data = await listWarehousePods();
       setRows(data); // includes all, even total_due = 0 (as you wanted)
     } catch (err: unknown) {
@@ -117,7 +117,7 @@ export default function WarehouseActivePods() {
         <p className="text-gray-600 dark:text-gray-300">No pods found.</p>
       ) : (
         <div className="overflow-auto">
-          <table className="min-w-[980px] w-full border border-gray-200 dark:border-gray-700 rounded">
+          <table className="min-w-245 w-full border border-gray-200 dark:border-gray-700 rounded">
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
                 <th className="p-2 text-left">Client</th>

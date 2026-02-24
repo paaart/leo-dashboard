@@ -49,6 +49,27 @@ export async function fetchPodTransactions(
   return (data ?? []) as WarehouseTxn[];
 }
 
+type PodJoin =
+  | {
+      client_id: string | null;
+      name: string | null;
+      contact: string | null;
+      locations?: { name: string | null }[] | null;
+    }
+  | PodJoin[];
+
+type CycleJoin = {
+  pod_id: string;
+  cycle_start: string;
+  cycle_end: string;
+  duration_months: number | string;
+  rate_at_start: number | string;
+  insurance_provider_at_start: "none" | "leo" | null;
+  insurance_value_at_start: number | string | null;
+  insurance_idv_at_start: number | string | null;
+  warehouse_pods: PodJoin | null;
+};
+
 export async function fetchRenewalsThisMonth(): Promise<WarehouseRenewalRow[]> {
   const { data, error } = await supabase
     .from("warehouse_pod_cycles")
@@ -62,6 +83,7 @@ export async function fetchRenewalsThisMonth(): Promise<WarehouseRenewalRow[]> {
       rate_at_start,
       insurance_provider_at_start,
       insurance_value_at_start,
+      insurance_idv_at_start,
       status,
       warehouse_pods:pod_id (
         id,
@@ -78,40 +100,43 @@ export async function fetchRenewalsThisMonth(): Promise<WarehouseRenewalRow[]> {
 
   if (error) throw error;
 
+  const rows = (data ?? []) as unknown as CycleJoin[];
+
   const now = new Date();
   const curY = now.getFullYear();
   const curM = now.getMonth();
 
   const out: WarehouseRenewalRow[] = [];
 
-  for (const c of data ?? []) {
-    const end_date = c.cycle_end as string;
+  for (const c of rows) {
+    const end_date = c.cycle_end;
     const ed = new Date(end_date + "T00:00:00");
 
-    if (ed.getFullYear() === curY && ed.getMonth() === curM) {
-      const pod = Array.isArray(c.warehouse_pods)
-        ? c.warehouse_pods[0]
-        : c.warehouse_pods;
+    if (ed.getFullYear() !== curY || ed.getMonth() !== curM) continue;
 
-      out.push({
-        pod_id: c.pod_id,
-        client_id: pod?.client_id ?? "(missing)",
-        name: pod?.name ?? "(missing)",
-        contact: pod?.contact ?? "(missing)",
-        location_name: pod?.locations?.[0]?.name ?? null,
+    const pod = Array.isArray(c.warehouse_pods)
+      ? c.warehouse_pods[0]
+      : c.warehouse_pods;
 
-        start_date: c.cycle_start as string,
-        duration_months: Number(c.duration_months),
-        end_date,
+    out.push({
+      pod_id: c.pod_id,
+      client_id: pod?.client_id ?? "(missing)",
+      name: pod?.name ?? "(missing)",
+      contact: pod?.contact ?? "(missing)",
+      location_name: pod?.locations?.[0]?.name ?? null,
 
-        rate: Number(c.rate_at_start),
+      start_date: c.cycle_start,
+      duration_months: Number(c.duration_months),
+      end_date,
 
-        insurance_provider: (c.insurance_provider_at_start ?? "none") as
-          | "none"
-          | "leo",
-        insurance_value: Number(c.insurance_value_at_start ?? 0),
-      });
-    }
+      rate: Number(c.rate_at_start),
+
+      insurance_provider: (c.insurance_provider_at_start ?? "none") as
+        | "none"
+        | "leo",
+      insurance_value: Number(c.insurance_value_at_start ?? 0),
+      insurance_idv: Number(c.insurance_idv_at_start ?? 0),
+    });
   }
 
   out.sort((a, b) => a.end_date.localeCompare(b.end_date));

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
@@ -10,26 +9,27 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
 
   const handleLogin = async () => {
-    const { data, error } = await supabase
-      .from("employees")
-      .select("email")
-      .eq("employee_code", employeeCode.trim())
-      .single();
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          employeeCode: employeeCode.trim(),
+          password,
+        }),
+      });
 
-    if (error || !data?.email) {
-      alert("Invalid employee code");
-      return;
-    }
+      const json = await res.json();
 
-    const { error: loginError } = await supabase.auth.signInWithPassword({
-      email: data.email,
-      password,
-    });
+      if (!res.ok || !json.ok) {
+        alert(json.error || "Login failed");
+        return;
+      }
 
-    if (loginError) {
-      alert("Login failed: " + loginError.message);
-    } else {
       router.push("/");
+      router.refresh();
+    } catch (e) {
+      alert(`"Login failed. Please try again" ${e}`);
     }
   };
 

@@ -71,7 +71,7 @@ export default function EditPodModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
+    <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 p-4">
       <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl dark:bg-[#1f2933]">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold">Edit Client</h3>

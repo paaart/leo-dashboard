@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
 
 type Section =
   | { main: "domestic"; sub?: null }
@@ -13,6 +12,10 @@ type SidebarProps = {
   section: Section;
   setSection: (section: Section) => void;
 };
+
+type AuthMeResponse =
+  | { ok: true; user: { id: string; email?: string | null } }
+  | { ok: false; error?: string };
 
 export default function Sidebar({ section, setSection }: SidebarProps) {
   const [open, setOpen] = useState<
@@ -27,43 +30,56 @@ export default function Sidebar({ section, setSection }: SidebarProps) {
       : null
   );
 
-  const [isAdmin, setIsAdmin] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
+
+  // Optional: keep open state synced when section changes
+  useEffect(() => {
+    setOpen(
+      section.main === "international"
+        ? "international"
+        : section.main === "loans"
+        ? "loans"
+        : section.main === "warehouse"
+        ? "warehouse"
+        : null
+    );
+  }, [section.main]);
 
   useEffect(() => {
+    let cancelled = false;
+
     const init = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      setAuthLoading(true);
+      try {
+        const res = await fetch("/api/auth/me", {
+          method: "GET",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          cache: "no-store",
+        });
 
-      const loggedIn = !!user;
-      setIsLoggedIn(loggedIn);
+        const json: AuthMeResponse = await res.json();
 
-      // Admin check (existing logic)
-      if (user?.email) {
-        const { data, error } = await supabase
-          .from("employees")
-          .select("is_admin")
-          .eq("email", user.email)
-          .single();
+        if (cancelled) return;
 
-        if (!error && data?.is_admin) setIsAdmin(true);
-      } else {
-        setIsAdmin(false);
+        setIsLoggedIn(res.ok && json.ok);
+      } catch {
+        if (cancelled) return;
+        setIsLoggedIn(false);
+      } finally {
+        if (!cancelled) setAuthLoading(false);
       }
     };
 
-    init();
+    void init();
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsLoggedIn(!!session?.user);
-      if (!session?.user) setIsAdmin(false);
-    });
-
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const isActive = (main: string) => section.main === main;
+  const isActive = (main: Section["main"]) => section.main === main;
 
   return (
     <aside className="w-64 hidden md:block bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white p-6 sticky top-20 h-[calc(100vh-5rem)]">
@@ -129,8 +145,15 @@ export default function Sidebar({ section, setSection }: SidebarProps) {
           )}
         </div>
 
+        {/* Tiny status text (optional, remove if you hate it) */}
+        {authLoading && (
+          <div className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">
+            Checking login…
+          </div>
+        )}
+
         {/* Warehouse – only when logged in */}
-        {isLoggedIn && (
+        {!authLoading && isLoggedIn && (
           <div>
             <button
               onClick={() => {
@@ -188,8 +211,8 @@ export default function Sidebar({ section, setSection }: SidebarProps) {
           </div>
         )}
 
-        {/* Loans / Advances – only for admins */}
-        {isAdmin && (
+        {/* Loans / Advances – only when logged in (same as warehouse for now) */}
+        {!authLoading && isLoggedIn && (
           <div>
             <button
               onClick={() => {

@@ -49,6 +49,7 @@ export type WarehousePodSummary = {
   email: string | null;
   contact: string;
 
+  billing_start_date: string | null;
   start_date: string;
   duration_months: number;
 
@@ -110,6 +111,7 @@ export type WarehouseRenewalRow = {
   rate: number;
   insurance_provider: InsuranceProvider;
   insurance_value: number;
+  insurance_idv?: number | null;
 };
 
 export type WarehouseCycleStatus = "active" | "closed";

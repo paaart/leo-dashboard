@@ -1,57 +1,72 @@
-// src/components/Header.tsx
 "use client";
 
 import Image from "next/image";
 import { Menu } from "lucide-react";
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 
-export default function Header() {
-  const [user, setUser] = useState<unknown>(null);
-  const [employeeCode, setEmployeeCode] = useState<string | null>(null);
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+type AuthMeResponse =
+  | { ok: true; user: { id: string; name: string; email?: string | null } }
+  | { ok: false; error?: string };
 
+export default function Header() {
   const router = useRouter();
 
+  const [authLoading, setAuthLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [email, setEmail] = useState<string | null>(null);
+
   useEffect(() => {
-    const loadUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+    let cancelled = false;
 
-      if (user) {
-        setUser(user);
+    const load = async () => {
+      setAuthLoading(true);
 
-        const { data, error } = await supabase
-          .from("employees")
-          .select("employee_code, is_admin")
-          .eq("email", user.email)
-          .single();
+      try {
+        const res = await fetch("/api/auth/me", {
+          method: "GET",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          cache: "no-store",
+        });
 
-        if (!error && data) {
-          setEmployeeCode(data.employee_code);
-          setIsAdmin(data.is_admin);
+        const json: AuthMeResponse = await res.json();
+
+        if (cancelled) return;
+
+        if (res.ok && json.ok) {
+          setIsLoggedIn(true);
+          setEmail(json.user.name ?? null);
+        } else {
+          setIsLoggedIn(false);
+          setEmail(null);
         }
+      } catch {
+        if (cancelled) return;
+        setIsLoggedIn(false);
+        setEmail(null);
+      } finally {
+        if (!cancelled) setAuthLoading(false);
       }
     };
 
-    loadUser();
-
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user ?? null);
-      }
-    );
+    void load();
 
     return () => {
-      listener.subscription.unsubscribe();
+      cancelled = true;
     };
   }, []);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    window.location.href = "/";
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } finally {
+      router.push("/login");
+      router.refresh();
+    }
   };
 
   return (
@@ -69,11 +84,11 @@ export default function Header() {
       </div>
 
       <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-        {user ? (
+        {authLoading ? (
+          <span className="text-xs">Checking login…</span>
+        ) : isLoggedIn ? (
           <>
-            <span>
-              {isAdmin ? "Welcome, Admin" : `Welcome, ${employeeCode}`}
-            </span>
+            <span>{email ? `Welcome, ${email}` : "Welcome"}</span>
             <button
               onClick={handleLogout}
               className="px-3 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700"

@@ -57,7 +57,7 @@ export default function WarehouseRenewals() {
         </p>
       ) : (
         <div className="overflow-auto">
-          <table className="min-w-[1050px] w-full border border-gray-200 dark:border-gray-700 rounded">
+          <table className="min-w-262.5 w-full border border-gray-200 dark:border-gray-700 rounded">
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
                 <th className="p-2 text-left">Client ID</th>
@@ -122,7 +122,7 @@ function RenewModal({
   onClose,
   onDone,
 }: {
-  row: WarehouseRenewalRow;
+  row: any; // keep as your WarehouseRenewalRow in your file
   onClose: () => void;
   onDone: () => Promise<void>;
 }) {
@@ -134,8 +134,12 @@ function RenewModal({
   const [insuranceProvider, setInsuranceProvider] = useState<InsuranceProvider>(
     (row.insurance_provider ?? "none") as InsuranceProvider
   );
+
   const [insuranceValue, setInsuranceValue] = useState(
     String(row.insurance_value ?? 0)
+  );
+  const [insuranceIdv, setInsuranceIdv] = useState(
+    String(row.insurance_idv ?? 0)
   );
 
   const [saving, setSaving] = useState(false);
@@ -147,36 +151,31 @@ function RenewModal({
     const newRate = Number(rate);
     const newDur = Number(durationMonths);
 
-    if (!newRate || Number.isNaN(newRate) || newRate <= 0) {
-      toast.error("Enter valid rate");
-      return;
-    }
-    if (!newDur || Number.isNaN(newDur) || newDur < 1) {
-      toast.error("Enter valid duration");
-      return;
-    }
+    if (!newRate || Number.isNaN(newRate) || newRate <= 0)
+      return toast.error("Enter valid rate");
+    if (!newDur || Number.isNaN(newDur) || newDur < 1)
+      return toast.error("Enter valid duration");
 
     const insVal = insuranceProvider === "leo" ? Number(insuranceValue) : 0;
-
     if (insuranceProvider === "leo" && (Number.isNaN(insVal) || insVal < 0)) {
-      toast.error("Enter valid insurance value");
-      return;
+      return toast.error("Enter valid insurance value");
+    }
+
+    const idv = insuranceProvider === "leo" ? Number(insuranceIdv) : 0;
+    if (insuranceProvider === "leo" && (Number.isNaN(idv) || idv < 0)) {
+      return toast.error("Enter valid IDV");
     }
 
     setSaving(true);
 
     const run = async () => {
-      // IMPORTANT: pick correct overload (you have 2 warehouse_renew_pod functions)
-      // Always pass p_cycle_start so Postgres doesn't get confused.
-      const cycleStart = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-
       const { error } = await supabase.rpc("warehouse_renew_pod", {
         p_pod_id: row.pod_id,
         p_new_rate: newRate,
         p_new_duration_months: newDur,
         p_new_insurance_provider: insuranceProvider,
         p_new_insurance_value: insVal,
-        p_cycle_start: cycleStart,
+        p_new_insurance_idv: idv,
       });
 
       if (error) throw error;
@@ -241,12 +240,31 @@ function RenewModal({
               onChange={(e) => {
                 const v = e.target.value as InsuranceProvider;
                 setInsuranceProvider(v);
-                if (v !== "leo") setInsuranceValue("0");
+                if (v !== "leo") {
+                  setInsuranceValue("0");
+                  setInsuranceIdv("0");
+                }
               }}
             >
               <option value="none">No (or external)</option>
               <option value="leo">Leo Insurance</option>
             </select>
+          </div>
+
+          <div>
+            <label className="block mb-1 font-medium">IDV (₹)</label>
+            <input
+              className={inputClass}
+              type="number"
+              value={insuranceIdv}
+              disabled={insuranceProvider !== "leo"}
+              onChange={(e) => setInsuranceIdv(e.target.value)}
+            />
+            {insuranceProvider !== "leo" && (
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                IDV applies only when Leo insurance is selected.
+              </p>
+            )}
           </div>
 
           <div>
@@ -260,11 +278,6 @@ function RenewModal({
               disabled={insuranceProvider !== "leo"}
               onChange={(e) => setInsuranceValue(e.target.value)}
             />
-            {insuranceProvider !== "leo" && (
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Only Leo insurance can have a value.
-              </p>
-            )}
           </div>
         </div>
 

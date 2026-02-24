@@ -39,6 +39,9 @@ export type WarehousePodSummary = {
 
   last_charge_date: string | null;
   last_payment_date: string | null;
+
+  billing_start_date: string;
+  insurance_idv: number;
 };
 
 export type WarehouseTxnType = "charge" | "payment" | "adjustment";
@@ -76,21 +79,35 @@ async function getActiveCycleIdOrThrow(podId: string): Promise<string> {
 }
 
 export async function accrueWarehouseCharges(podId?: string): Promise<void> {
-  const { error } = await supabase.rpc("warehouse_accrue_charges", {
-    p_pod_id: podId ?? null,
-  });
-  if (error) throw error;
+  const url = podId
+    ? `/api/warehouse/pods/accrue?podId=${encodeURIComponent(podId)}`
+    : `/api/warehouse/pods/accrue`;
+
+  const res = await fetch(url, { method: "POST" });
+
+  const json = (await res.json()) as
+    | { ok: true }
+    | { ok: false; error: string };
+
+  if (!res.ok || !json.ok) {
+    throw new Error(
+      ("error" in json && json.error) || "Failed to accrue charges"
+    );
+  }
 }
 
 export async function listWarehousePods(): Promise<WarehousePodSummary[]> {
-  const { data, error } = await supabase
-    .from("warehouse_pod_summaries")
-    .select("*")
-    .eq("status", "active")
-    .order("next_payment_date", { ascending: true });
+  const res = await fetch("/api/warehouse/pods?status=active", {
+    method: "GET",
+  });
 
-  if (error) throw error;
-  return (data ?? []) as WarehousePodSummary[];
+  const json = await res.json();
+
+  if (!res.ok || !json?.ok) {
+    throw new Error(json?.error || "Failed to fetch pods");
+  }
+
+  return json.data.rows; // because API returns { rows, total, ... }
 }
 
 export async function fetchPodTransactions(
