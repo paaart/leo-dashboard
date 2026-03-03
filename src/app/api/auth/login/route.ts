@@ -4,16 +4,17 @@ import { createRouteClient } from "@/lib/supabase/route";
 
 export async function POST(request: NextRequest) {
   const response = NextResponse.json({ ok: true });
+  const isDev = process.env.NODE_ENV !== "production";
 
   try {
-    console.log("HIT /api/auth/login");
-
-    // ENV check (prints true/false)
-    console.log("ENV CHECK", {
-      url: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-      anon: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      service: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-    });
+    if (isDev) {
+      console.log("HIT /api/auth/login");
+      console.log("ENV CHECK", {
+        url: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+        anon: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+        service: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+      });
+    }
 
     const body = await request.json();
     const employeeCode = String(body?.employeeCode ?? "").trim();

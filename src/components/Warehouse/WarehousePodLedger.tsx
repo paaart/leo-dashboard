@@ -3,25 +3,29 @@
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { getErrorMessage } from "@/lib/errors";
+
+import type {
+  WarehousePodSummary,
+  WarehouseTxn,
+  WarehouseCycle,
+} from "@/lib/warehouse/types";
+
 import {
   accrueWarehouseCharges,
-  type WarehousePodSummary,
-  type WarehouseTxn,
-  // ✅ new imports for cycles
   fetchPodCycles,
-  fetchCycleTransactions,
   fetchActiveCycleIdOrThrow,
-} from "@/lib/warehouse";
-import type { WarehouseCycle } from "@/lib/warehouse/types";
-import { supabase } from "@/lib/supabaseClient";
+} from "@/lib/warehouse/pods";
 
-import WarehouseTxModal from "./WarehouseTxModal";
 import {
+  fetchCycleTransactions,
   addWarehouseTransaction,
   recordWarehousePayment,
-} from "@/lib/warehouse";
+  updateWarehouseTransaction,
+  applyMidCycleRateChange,
+} from "@/lib/warehouse/ledger";
+
+import WarehouseTxModal from "./WarehouseTxModal";
 import WarehouseRateChangeModal from "./WarehouseRateChangeModal";
-import { applyMidCycleRateChange } from "@/lib/warehouse";
 
 type MonthKey = string; // "YYYY-MM-01"
 
@@ -56,9 +60,12 @@ function monthLabel(monthKey: MonthKey) {
   return dt.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
 }
 
-function fmtDate(d: string) {
-  const [y, m, day] = d.split("-").map(Number);
-  const dt = new Date(y, (m ?? 1) - 1, day ?? 1);
+function fmtDate(d?: string | null) {
+  if (!d) return "—";
+
+  const dt = new Date(d);
+  if (Number.isNaN(dt.getTime())) return "—";
+
   return dt.toLocaleDateString("en-IN", {
     year: "numeric",
     month: "short",
@@ -287,19 +294,15 @@ export default function WarehousePodLedgerView({
     setSavingId(row.id);
     try {
       const payload = {
-        amount: round2(signedAmount),
-        gst_rate: row._isDebit ? round2(gst) : 0,
+        id: row.id,
+        amount: round2(signedAmount), // SIGNED
+        gst_rate: row._isDebit ? round2(gst) : 0, // percent
         title: d.title.trim() ? d.title.trim() : "Transaction",
         note: d.note.trim() ? d.note.trim() : null,
         tx_date: d.tx_date,
       };
 
-      const { error } = await supabase
-        .from("warehouse_pod_transactions")
-        .update(payload)
-        .eq("id", row.id);
-
-      if (error) throw error;
+      await updateWarehouseTransaction(payload);
 
       setTx((prev) => {
         const next = prev.map((t) =>

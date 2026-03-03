@@ -4,10 +4,11 @@ import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { getErrorMessage } from "@/lib/errors";
 import { fetchRenewalsThisMonth } from "@/lib/warehouse/queries";
-import type { WarehouseRenewalRow } from "@/lib/warehouse/types";
+import type {
+  WarehouseRenewalRow,
+  InsuranceProvider,
+} from "@/lib/warehouse/types";
 import { supabase } from "@/lib/supabaseClient";
-
-type InsuranceProvider = "none" | "leo";
 
 export default function WarehouseRenewals() {
   const [rows, setRows] = useState<WarehouseRenewalRow[]>([]);
@@ -122,7 +123,7 @@ function RenewModal({
   onClose,
   onDone,
 }: {
-  row: any; // keep as your WarehouseRenewalRow in your file
+  row: WarehouseRenewalRow; // keep as your WarehouseRenewalRow in your file
   onClose: () => void;
   onDone: () => Promise<void>;
 }) {

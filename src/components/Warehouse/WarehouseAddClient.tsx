@@ -1,9 +1,12 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { useEffect, useState, type ChangeEvent, type ReactNode } from "react";
 import toast from "react-hot-toast";
 import { getErrorMessage } from "@/lib/errors";
+import { supabase } from "@/lib/supabaseClient";
+
+import { CreatePodBody, createWarehousePod } from "@/lib/warehouse/pods";
+import type { BillingInterval, InsuranceProvider } from "@/lib/warehouse/types";
 
 type Option = { id: number; name: string; is_active?: boolean };
 
@@ -29,9 +32,10 @@ export default function WarehouseAddClient() {
 
   const [durationMonths, setDurationMonths] = useState("12");
 
-  const [billingInterval, setBillingInterval] = useState<
-    "monthly" | "yearly" | "quarterly" | "half_yearly"
-  >("monthly");
+  const [billingInterval, setBillingInterval] =
+    useState<BillingInterval>("monthly");
+  const [insuranceProvider, setInsuranceProvider] =
+    useState<InsuranceProvider>("none");
 
   const [modeOfPayment, setModeOfPayment] = useState<PaymentMode>("cash");
   const [customPaymentMode, setCustomPaymentMode] = useState("");
@@ -40,9 +44,7 @@ export default function WarehouseAddClient() {
   const [locations, setLocations] = useState<Option[]>([]);
   const [companyId, setCompanyId] = useState<number | "">("");
   const [locationId, setLocationId] = useState<number | "">("");
-  const [insuranceProvider, setInsuranceProvider] = useState<"none" | "leo">(
-    "none"
-  );
+
   const [insuranceValue, setInsuranceValue] = useState("0");
   const [insuranceIdv, setInsuranceIdv] = useState("0");
   const [oldOutstanding, setOldOutstanding] = useState("");
@@ -56,8 +58,7 @@ export default function WarehouseAddClient() {
   }, [useCustomBillingStart, startDate]);
 
   const numericOnly =
-    (setter: (v: string) => void) =>
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    (setter: (v: string) => void) => (e: ChangeEvent<HTMLInputElement>) => {
       const value = e.target.value;
       if (/^\d*\.?\d*$/.test(value)) setter(value);
     };
@@ -130,7 +131,7 @@ export default function WarehouseAddClient() {
     setLoading(true);
 
     const run = async () => {
-      const payload = {
+      const payload: CreatePodBody = {
         name: name.trim(),
         email: email.trim() || null,
         contact: contact.trim(),
@@ -138,10 +139,7 @@ export default function WarehouseAddClient() {
         company_id: companyId === "" ? null : Number(companyId),
         location_id: Number(locationId),
 
-        // recordkeeping
         start_date: startDate,
-
-        // billing control (backend will accrue from this)
         billing_start_date: billingStartDate,
 
         duration_months: Number(durationMonths),
@@ -160,23 +158,8 @@ export default function WarehouseAddClient() {
         old_outstanding: Number(oldOutstanding || 0),
       };
 
-      const res = await fetch("/api/warehouse/pods/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const json = (await res.json()) as
-        | { ok: true; data: { id: string; client_id: string } }
-        | { ok: false; error: string };
-
-      if (!res.ok || !json.ok) {
-        throw new Error(
-          ("error" in json && json.error) || "Failed to create client"
-        );
-      }
-
-      return json.data.client_id;
+      const { client_id } = await createWarehousePod(payload);
+      return client_id;
     };
 
     try {
@@ -485,13 +468,7 @@ export default function WarehouseAddClient() {
   );
 }
 
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
+function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="block">
       <div className="block mb-1 font-medium">{label}</div>

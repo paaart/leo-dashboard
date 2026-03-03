@@ -3,14 +3,15 @@
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { getErrorMessage } from "@/lib/errors";
+import type { WarehousePodSummary } from "@/lib/warehouse/types";
 import {
   accrueWarehouseCharges,
   listWarehousePods,
-  type WarehousePodSummary,
-} from "@/lib/warehouse";
+} from "@/lib/warehouse/pods";
 import WarehousePodHistoryView from "./WarehousePodLedger";
+import type { SeverityBand } from "@/lib/warehouse/types";
 
-function rowBandClass(b: "green" | "yellow" | "red") {
+function rowBandClass(b: SeverityBand) {
   if (b === "red")
     return "bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30";
   if (b === "yellow")

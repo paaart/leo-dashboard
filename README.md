@@ -245,3 +245,17 @@ Inserts into:
 Triggered from:
 ```ts
 accrueWarehouseCharges(podId?)
+
+## Warehouse API Routes
+
+| Area | Method | Route | Purpose | Notes |
+|------|--------|-------|---------|-------|
+| Pods | POST | `/api/warehouse/pods/accrue` | Accrue pending charges | Optional `?podId=<uuid>` to accrue a single pod |
+| Pods | POST | `/api/warehouse/pods/create` | Create a new warehouse pod | Creates pod + initial cycle (as per backend logic) |
+| Pods | GET  | `/api/warehouse/pods/cycles` | List cycles for a pod | Requires `?podId=<uuid>` |
+| Pods | POST | `/api/warehouse/pods/rate-change` | Apply mid-cycle rate change | Atomic: optional adjustment + updates recurring rate |
+| Txns | GET  | `/api/warehouse/pods/transactions` | List transactions | Supports `?podId=<uuid>` OR `?cycleId=<uuid>` |
+| Txns | POST | `/api/warehouse/pods/transactions/add` | Add charge/adjustment | Debit rows (GST applies) |
+| Txns | POST | `/api/warehouse/pods/transactions/payment` | Record payment | Credit row (GST = 0) |
+| Txns | PATCH | `/api/warehouse/pods/transactions/update` | Update a transaction | Edit amount/title/note/date/GST |
+| Txns | DELETE | `/api/warehouse/pods/transactions/delete` | Delete a transaction | Requires `?id=<uuid>` |

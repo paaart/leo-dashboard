@@ -12,14 +12,13 @@ export async function POST(req: Request) {
   try {
     await client.query("BEGIN");
 
-    // Pull what we need per active pod+cycle
     const cyclesRes = await client.query<{
       cycle_id: string;
       pod_id: string;
       billing_start_date: string;
       rate: string;
       billing_interval: "monthly" | "quarterly" | "half_yearly" | "yearly";
-      gst_rate_default: string | null; // optional if you later store it
+      gst_rate_default: string | null;
     }>(
       `
       select
@@ -41,10 +40,9 @@ export async function POST(req: Request) {
     for (const row of cyclesRes.rows) {
       const billingStart = row.billing_start_date; // YYYY-MM-DD
       const rate = Number(row.rate);
-
-      // You said default GST is 18%. Keep it here for auto-charge rows.
       const gstRate = 18;
 
+      // 1) Insert missing auto-charges up to today (dedup by partial unique index)
       await client.query(
         `
         with cfg as (
@@ -60,7 +58,6 @@ export async function POST(req: Request) {
             end as step_months
         ),
         months as (
-          -- Step by billing interval months (1/3/6/12), starting from billing_start month
           select generate_series(
             date_trunc('month', (select billing_start from cfg))::date,
             date_trunc('month', current_date)::date,
@@ -68,9 +65,7 @@ export async function POST(req: Request) {
           )::date as month_start
         ),
         computed as (
-          -- Make an anchored date each cycle month (preserve day, clamp to last day of that month)
           select
-            month_start,
             make_date(
               extract(year from month_start)::int,
               extract(month from month_start)::int,
@@ -88,22 +83,22 @@ export async function POST(req: Request) {
             and tx_date <= current_date
         )
         insert into public.warehouse_pod_transactions (
-          pod_id, cycle_id, type, amount, gst_rate,
-          tx_date, tx_month, title, note, created_at
-        )
-        select
-          $2::uuid,
-          $3::uuid,
-          'charge'::warehouse_tx_type,
-          $4::numeric,
-          $6::numeric,
-          f.tx_date,
-          date_trunc('month', f.tx_date)::date,
-          'Auto charge',
-          null,
-          now()
-        from filtered f
-        on conflict (cycle_id, title, tx_month) do nothing
+  pod_id, cycle_id, type, amount, gst_rate,
+  tx_date, tx_month, title, note, created_at
+)
+select
+  $2::uuid,
+  $3::uuid,
+  'charge'::warehouse_tx_type,
+  $4::numeric,
+  $6::numeric,
+  f.tx_date,
+  date_trunc('month', f.tx_date)::date,
+  'Auto charge',
+  null,
+  now()
+from filtered f
+on conflict (cycle_id, title, tx_month) do nothing;
         `,
         [
           billingStart,
@@ -115,7 +110,7 @@ export async function POST(req: Request) {
         ]
       );
 
-      // ✅ Update next_charge_date to the *next* scheduled anchored date after today
+      // 2) Compute and store next_charge_date (future) respecting billing interval
       const nextChargeRes = await client.query<{ next_charge_date: string }>(
         `
         with cfg as (
@@ -131,21 +126,23 @@ export async function POST(req: Request) {
             end as step_months
         ),
         months as (
-            select generate_series(
+          -- generate enough future months so we always find the next candidate
+          select generate_series(
             date_trunc('month', (select billing_start from cfg))::date,
-            date_trunc('month', current_date)::date,
-            interval '1 month'
-            )::date as month_start
+            date_trunc('month', current_date + interval '18 months')::date,
+            make_interval(months => (select step_months from cfg))
+          )::date as month_start
         ),
         computed as (
-          select make_date(
-            extract(year from month_start)::int,
-            extract(month from month_start)::int,
-            least(
-              (select anchor_day from cfg),
-              extract(day from (month_start + interval '1 month - 1 day'))::int
-            )
-          )::date as candidate
+          select
+            make_date(
+              extract(year from month_start)::int,
+              extract(month from month_start)::int,
+              least(
+                (select anchor_day from cfg),
+                extract(day from (month_start + interval '1 month - 1 day'))::int
+              )
+            )::date as candidate
           from months
         )
         select candidate::text as next_charge_date
@@ -174,7 +171,7 @@ export async function POST(req: Request) {
     }
 
     await client.query("COMMIT");
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, data: null });
   } catch (err) {
     await client.query("ROLLBACK");
     const e = err instanceof Error ? err : new Error(String(err));
