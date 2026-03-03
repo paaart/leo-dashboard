@@ -4,66 +4,50 @@ import Image from "next/image";
 import { Menu } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
-type AuthMeResponse =
-  | { ok: true; user: { id: string; name: string; email?: string | null } }
-  | { ok: false; error?: string };
+import { supabase } from "@/lib/supabaseClient";
 
 export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
   const router = useRouter();
 
   const [authLoading, setAuthLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [email, setEmail] = useState<string | null>(null);
+  const [label, setLabel] = useState<string | null>(null);
 
   useEffect(() => {
-    let cancelled = false;
+    let mounted = true;
 
-    const load = async () => {
+    const init = async () => {
       setAuthLoading(true);
-      try {
-        const res = await fetch("/api/auth/me", {
-          method: "GET",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          cache: "no-store",
-        });
 
-        const json: AuthMeResponse = await res.json();
-        if (cancelled) return;
+      const { data, error } = await supabase.auth.getSession();
 
-        if (res.ok && json.ok) {
-          setIsLoggedIn(true);
-          setEmail(json.user.name ?? null);
-        } else {
-          setIsLoggedIn(false);
-          setEmail(null);
-        }
-      } catch {
-        if (cancelled) return;
-        setIsLoggedIn(false);
-        setEmail(null);
-      } finally {
-        if (!cancelled) setAuthLoading(false);
-      }
+      if (!mounted) return;
+
+      const session = !error ? data.session : null;
+      setIsLoggedIn(!!session);
+      setLabel(session?.user?.email ?? null);
+      setAuthLoading(false);
     };
 
-    void load();
+    void init();
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return;
+      setIsLoggedIn(!!session);
+      setLabel(session?.user?.email ?? null);
+      setAuthLoading(false);
+    });
+
     return () => {
-      cancelled = true;
+      mounted = false;
+      sub.subscription.unsubscribe();
     };
   }, []);
 
   const handleLogout = async () => {
-    try {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
-    } finally {
-      router.push("/login");
-      router.refresh();
-    }
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
   };
 
   return (
@@ -93,7 +77,7 @@ export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
           <span className="text-xs">Checking login…</span>
         ) : isLoggedIn ? (
           <>
-            <span>{email ? `Welcome, ${email}` : "Welcome"}</span>
+            <span>{label ? `Welcome, ${label}` : "Welcome"}</span>
             <button
               onClick={handleLogout}
               className="px-3 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700"

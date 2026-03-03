@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
 
 type Section =
   | { main: "domestic"; sub?: null }
@@ -12,14 +13,9 @@ type SidebarProps = {
   section: Section;
   setSection: (section: Section) => void;
 
-  // ✅ mobile drawer controls (from parent)
   mobileOpen: boolean;
   onMobileClose: () => void;
 };
-
-type AuthMeResponse =
-  | { ok: true; user: { id: string; email?: string | null } }
-  | { ok: false; error?: string };
 
 function SidebarNav({
   section,
@@ -110,7 +106,6 @@ function SidebarNav({
         )}
       </div>
 
-      {/* Tiny status text */}
       {authLoading && (
         <div className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">
           Checking login…
@@ -181,7 +176,7 @@ function SidebarNav({
         </div>
       )}
 
-      {/* Loans / Advances – only when logged in */}
+      {/* Loans – only when logged in */}
       {!authLoading && isLoggedIn && (
         <div>
           <button
@@ -269,7 +264,6 @@ export default function Sidebar({
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
 
-  // keep open state synced when section changes
   useEffect(() => {
     setOpen(
       section.main === "international"
@@ -283,40 +277,34 @@ export default function Sidebar({
   }, [section.main]);
 
   useEffect(() => {
-    let cancelled = false;
+    let mounted = true;
 
     const init = async () => {
       setAuthLoading(true);
-      try {
-        const res = await fetch("/api/auth/me", {
-          method: "GET",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          cache: "no-store",
-        });
+      const { data, error } = await supabase.auth.getSession();
+      if (!mounted) return;
 
-        const json: AuthMeResponse = await res.json();
-
-        if (cancelled) return;
-        setIsLoggedIn(res.ok && json.ok);
-      } catch {
-        if (cancelled) return;
-        setIsLoggedIn(false);
-      } finally {
-        if (!cancelled) setAuthLoading(false);
-      }
+      setIsLoggedIn(!error && !!data.session);
+      setAuthLoading(false);
     };
 
     void init();
 
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return;
+      setIsLoggedIn(!!session);
+      setAuthLoading(false);
+    });
+
     return () => {
-      cancelled = true;
+      mounted = false;
+      sub.subscription.unsubscribe();
     };
   }, []);
 
   return (
     <>
-      {/* ✅ Mobile overlay */}
+      {/* Mobile overlay */}
       <div
         className={`fixed inset-0 z-40 bg-black/40 md:hidden transition-opacity ${
           mobileOpen ? "opacity-100" : "pointer-events-none opacity-0"
@@ -324,7 +312,7 @@ export default function Sidebar({
         onClick={onMobileClose}
       />
 
-      {/* ✅ Mobile drawer */}
+      {/* Mobile drawer */}
       <aside
         className={`fixed top-0 left-0 z-50 h-full w-64 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white p-6 md:hidden transform transition-transform ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
@@ -353,7 +341,7 @@ export default function Sidebar({
         />
       </aside>
 
-      {/* ✅ Desktop sidebar (your original behavior) */}
+      {/* Desktop sidebar */}
       <aside className="w-64 hidden md:block bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white p-6 sticky top-20 h-[calc(100vh-5rem)]">
         <SidebarNav
           section={section}
