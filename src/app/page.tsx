@@ -27,15 +27,20 @@ export default function Dashboard() {
     sub: null,
   });
 
+  // ✅ NEW: controls mobile sidebar
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
   const renderContent = () => {
     const { main, sub } = section;
 
     switch (main) {
       case "domestic":
         return <DomesticCalculator />;
+
       case "international":
         if (sub === "history") return <HistoryView />;
         return <InternationalShipping />;
+
       case "loans":
         switch (sub) {
           case "create":
@@ -48,7 +53,6 @@ export default function Dashboard() {
             return <LoanEntryForm />;
         }
 
-      // ✅ NEW
       case "warehouse":
         switch (sub) {
           case "add":
@@ -68,10 +72,19 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+      {/* ✅ Pass toggle handler to Header */}
+      <Header onMenuClick={() => setMobileSidebarOpen((prev) => !prev)} />
+
       <div className="flex flex-1">
-        <Sidebar section={section} setSection={setSection} />
-        <main className="flex-1 overflow-y-auto ">{renderContent()}</main>
+        {/* ✅ Pass mobile props to Sidebar */}
+        <Sidebar
+          section={section}
+          setSection={setSection}
+          mobileOpen={mobileSidebarOpen}
+          onMobileClose={() => setMobileSidebarOpen(false)}
+        />
+
+        <main className="flex-1 overflow-y-auto">{renderContent()}</main>
       </div>
     </div>
   );
