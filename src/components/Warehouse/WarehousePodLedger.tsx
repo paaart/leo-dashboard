@@ -624,7 +624,7 @@ export default function WarehousePodLedgerView({
                   </div>
 
                   <div className="overflow-auto">
-                    <table className="min-w-[1100px] w-full">
+                    <table className="min-w-275 w-full">
                       <thead className="bg-gray-50 dark:bg-gray-800">
                         <tr>
                           <th className="p-2 text-left text-sm w-32">Date</th>
@@ -849,7 +849,7 @@ export default function WarehousePodLedgerView({
                         </p>
                       ) : (
                         <div className="overflow-auto">
-                          <table className="min-w-[1100px] w-full">
+                          <table className="min-w-275 w-full">
                             <thead className="bg-gray-50 dark:bg-gray-800">
                               <tr>
                                 <th className="p-2 text-left text-sm w-32">
