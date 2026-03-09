@@ -4,7 +4,6 @@ import type {
   WarehouseTxn,
   WarehouseRenewalRow,
 } from "./types";
-// import { endDateFromStart } from "./billing";
 
 export async function accrueAllWarehousePods() {
   const { error } = await supabase.rpc("warehouse_accrue_charges", {
@@ -49,14 +48,16 @@ export async function fetchPodTransactions(
   return (data ?? []) as WarehouseTxn[];
 }
 
-type PodJoin =
-  | {
-      client_id: string | null;
-      name: string | null;
-      contact: string | null;
-      locations?: { name: string | null }[] | null;
-    }
-  | PodJoin[];
+type LocationJoin = {
+  name: string | null;
+};
+
+type PodJoin = {
+  client_id: string | null;
+  name: string | null;
+  contact: string | null;
+  locations?: LocationJoin[] | null;
+};
 
 type CycleJoin = {
   pod_id: string;
@@ -67,7 +68,7 @@ type CycleJoin = {
   insurance_provider_at_start: "none" | "leo" | null;
   insurance_value_at_start: number | string | null;
   insurance_idv_at_start: number | string | null;
-  warehouse_pods: PodJoin | null;
+  warehouse_pods: PodJoin | PodJoin[] | null;
 };
 
 export async function fetchRenewalsThisMonth(): Promise<WarehouseRenewalRow[]> {
@@ -110,12 +111,12 @@ export async function fetchRenewalsThisMonth(): Promise<WarehouseRenewalRow[]> {
 
   for (const c of rows) {
     const end_date = c.cycle_end;
-    const ed = new Date(end_date + "T00:00:00");
+    const ed = new Date(`${end_date}T00:00:00`);
 
     if (ed.getFullYear() !== curY || ed.getMonth() !== curM) continue;
 
     const pod = Array.isArray(c.warehouse_pods)
-      ? c.warehouse_pods[0]
+      ? c.warehouse_pods[0] ?? null
       : c.warehouse_pods;
 
     out.push({
@@ -124,13 +125,10 @@ export async function fetchRenewalsThisMonth(): Promise<WarehouseRenewalRow[]> {
       name: pod?.name ?? "(missing)",
       contact: pod?.contact ?? "(missing)",
       location_name: pod?.locations?.[0]?.name ?? null,
-
       start_date: c.cycle_start,
       duration_months: Number(c.duration_months),
       end_date,
-
       rate: Number(c.rate_at_start),
-
       insurance_provider: (c.insurance_provider_at_start ?? "none") as
         | "none"
         | "leo",

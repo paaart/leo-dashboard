@@ -42,6 +42,7 @@ export type WarehousePod = {
 };
 
 export type WarehousePodSummary = {
+  insurance_idv: number;
   id: string;
   client_id: string | null;
 
