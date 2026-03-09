@@ -12,6 +12,7 @@ function isISODate(s: unknown): s is string {
 export async function POST(req: Request) {
   let body: {
     podId: string;
+    cycleId?: string;
     amount: number; // UI sends positive
     txDate: string; // YYYY-MM-DD
     title?: string;
@@ -25,6 +26,7 @@ export async function POST(req: Request) {
   }
 
   const podId = String(body?.podId ?? "").trim();
+  const cycleIdRaw = String(body?.cycleId ?? "").trim();
   const amount = Number(body?.amount);
   const txDate = body?.txDate;
   const title = String(body?.title ?? "Payment").trim() || "Payment";
@@ -39,21 +41,45 @@ export async function POST(req: Request) {
   try {
     await client.query("BEGIN");
 
-    const cy = await client.query<{ id: string }>(
-      `
-      select id
-      from public.warehouse_pod_cycles
-      where pod_id = $1::uuid and status = 'active'
-      order by created_at desc
-      limit 1
-      `,
-      [podId]
-    );
-    if (cy.rowCount === 0) {
-      await client.query("ROLLBACK");
-      return bad("No active cycle found for this pod", 404);
+    let cycleId = cycleIdRaw;
+
+    if (cycleId) {
+      const validCycle = await client.query<{ id: string }>(
+        `
+        select id
+        from public.warehouse_pod_cycles
+        where id = $1::uuid
+          and pod_id = $2::uuid
+        limit 1
+        `,
+        [cycleId, podId]
+      );
+
+      if (validCycle.rowCount === 0) {
+        await client.query("ROLLBACK");
+        return bad("cycleId does not belong to this pod", 404);
+      }
+    } else {
+      const cy = await client.query<{ id: string }>(
+        `
+        select id
+        from public.warehouse_pod_cycles
+        where pod_id = $1::uuid
+        order by
+          case when status = 'active' then 0 else 1 end,
+          created_at desc
+        limit 1
+        `,
+        [podId]
+      );
+
+      if (cy.rowCount === 0) {
+        await client.query("ROLLBACK");
+        return bad("No cycle found for this pod", 404);
+      }
+
+      cycleId = cy.rows[0].id;
     }
-    const cycleId = cy.rows[0].id;
 
     const signed = -Math.abs(amount);
 
@@ -73,7 +99,10 @@ export async function POST(req: Request) {
     );
 
     await client.query("COMMIT");
-    return NextResponse.json({ ok: true, data: { id: ins.rows[0].id } });
+    return NextResponse.json({
+      ok: true,
+      data: { id: ins.rows[0].id, cycleId },
+    });
   } catch (e: unknown) {
     await client.query("ROLLBACK");
     const msg = e instanceof Error ? e.message : "Failed to record payment";

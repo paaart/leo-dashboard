@@ -227,7 +227,7 @@ export async function POST(req: Request) {
     const podId = podRes.rows[0].id;
 
     // 7) Create active cycle snapshot
-    const cycleRes = await client.query<{ id: string }>(
+    const cycleRes = await client.query<{ id: string; cycle_end: string }>(
       `
       insert into public.warehouse_pod_cycles (
         pod_id, cycle_start, cycle_end, status,
@@ -252,7 +252,7 @@ export async function POST(req: Request) {
         $8,
         now()
       )
-      returning id
+      returning id, cycle_end::text as cycle_end
       `,
       [
         podId,
@@ -267,6 +267,7 @@ export async function POST(req: Request) {
     );
 
     const cycleId = cycleRes.rows[0].id;
+    const cycleEnd = cycleRes.rows[0].cycle_end; // string YYYY-MM-DD
 
     // 8) Opening outstanding (one-time) — idempotent
     if (oldOutstanding > 0) {
@@ -330,6 +331,7 @@ export async function POST(req: Request) {
       with cfg as (
         select
           $1::date as billing_start,
+          $6::date as cycle_end,
           extract(day from $1::date)::int as anchor_day,
           case $5::text
             when 'monthly' then 1
@@ -342,7 +344,7 @@ export async function POST(req: Request) {
       months as (
         select generate_series(
           date_trunc('month', (select billing_start from cfg))::date,
-          date_trunc('month', current_date)::date,
+          date_trunc('month', least(current_date, (select cycle_end from cfg)))::date,
           make_interval(months => (select step_months from cfg))
         )::date as month_start
       ),
@@ -362,7 +364,7 @@ export async function POST(req: Request) {
         select tx_date
         from computed
         where tx_date >= (select billing_start from cfg)
-          and tx_date <= current_date
+          and tx_date <= least(current_date, (select cycle_end from cfg))
       )
       insert into public.warehouse_pod_transactions (
         pod_id, cycle_id, type, amount, gst_rate,
@@ -388,7 +390,14 @@ export async function POST(req: Request) {
           and t.tx_month = date_trunc('month', f.tx_date)::date
       )
       `,
-      [body.billing_start_date, podId, cycleId, rate, body.billing_interval]
+      [
+        body.billing_start_date,
+        podId,
+        cycleId,
+        rate,
+        body.billing_interval,
+        cycleEnd,
+      ]
     );
 
     // 11) Compute next_charge_date based on billing interval + anchor day (NOT 1st of next month)
@@ -397,13 +406,21 @@ export async function POST(req: Request) {
       with cfg as (
         select
           $1::date as billing_start,
-          extract(day from $1::date)::int as anchor_day
+          $2::date as cycle_end,
+          extract(day from $1::date)::int as anchor_day,
+          case $3::text
+            when 'monthly' then 1
+            when 'quarterly' then 3
+            when 'half_yearly' then 6
+            when 'yearly' then 12
+            else 1
+          end as step_months
       ),
       months as (
         select generate_series(
-          date_trunc('month', current_date)::date,
-          date_trunc('month', current_date)::date + interval '2 years',
-          interval '1 month'
+          date_trunc('month', (select billing_start from cfg))::date,
+          date_trunc('month', (select cycle_end from cfg))::date,
+          make_interval(months => (select step_months from cfg))
         )::date as month_start
       ),
       computed as (
@@ -421,10 +438,11 @@ export async function POST(req: Request) {
       from computed
       where candidate > current_date
         and candidate >= (select billing_start from cfg)
+        and candidate <= (select cycle_end from cfg)
       order by candidate asc
       limit 1
       `,
-      [body.billing_start_date]
+      [body.billing_start_date, cycleEnd, body.billing_interval]
     );
 
     const nextChargeDate = nextChargeRes.rows[0]?.next_charge_date ?? null;

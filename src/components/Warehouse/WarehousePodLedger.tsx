@@ -22,28 +22,30 @@ import {
   recordWarehousePayment,
   updateWarehouseTransaction,
   applyMidCycleRateChange,
+  closeWarehouseCycle,
 } from "@/lib/warehouse/ledger";
 
 import WarehouseTxModal from "./WarehouseTxModal";
 import WarehouseRateChangeModal from "./WarehouseRateChangeModal";
+import WarehouseRenewModal from "./WarehouseRenewModal";
 
-type MonthKey = string; // "YYYY-MM-01"
+type MonthKey = string;
 
 type TxVM = WarehouseTxn & {
-  _amountAbs: number; // abs for UI
-  _isDebit: boolean; // debit means amount > 0
-  _gstRate: number; // % (0 for credits)
-  _gstAmount: number; // INR
-  _debitTotal: number; // amount + gst (only debit)
-  _creditAmount: number; // abs(amount) if credit else 0
+  _amountAbs: number;
+  _isDebit: boolean;
+  _gstRate: number;
+  _gstAmount: number;
+  _debitTotal: number;
+  _creditAmount: number;
 };
 
 type EditDraft = {
-  amount: string; // abs amount in UI
-  gst_rate: string; // % string
+  amount: string;
+  gst_rate: string;
   title: string;
   note: string;
-  tx_date: string; // YYYY-MM-DD
+  tx_date: string;
 };
 
 function round2(n: number) {
@@ -124,14 +126,16 @@ export default function WarehousePodLedgerView({
 }) {
   const [tx, setTx] = useState<WarehouseTxn[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [openTx, setOpenTx] = useState(false);
   const [openPay, setOpenPay] = useState(false);
+  const [openRate, setOpenRate] = useState(false);
+  const [openRenew, setOpenRenew] = useState(false);
 
   const [drafts, setDrafts] = useState<Record<string, EditDraft>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
-  const [openRate, setOpenRate] = useState(false);
+  const [closingCycle, setClosingCycle] = useState(false);
 
-  // ✅ cycles state
   const [cycles, setCycles] = useState<WarehouseCycle[]>([]);
   const [activeCycleId, setActiveCycleId] = useState<string | null>(null);
   const [openCycleId, setOpenCycleId] = useState<string | null>(null);
@@ -144,13 +148,35 @@ export default function WarehousePodLedgerView({
     [cycles, activeCycleId]
   );
 
-  const previousCycles = useMemo(
-    () => cycles.filter((c) => c.id !== activeCycleId),
-    [cycles, activeCycleId]
-  );
+  const latestCycle = useMemo(() => {
+    if (cycles.length === 0) return null;
+    return [...cycles].sort((a, b) =>
+      String(b.created_at).localeCompare(String(a.created_at))
+    )[0];
+  }, [cycles]);
+
+  const hasActiveCycle = Boolean(activeCycleId);
+  const currentCycle = activeCycle ?? latestCycle ?? null;
+
+  const previousCycles = useMemo(() => {
+    if (activeCycleId) {
+      return cycles.filter((c) => c.id !== activeCycleId);
+    }
+    return cycles;
+  }, [cycles, activeCycleId]);
+
+  const latestClosedCycleId = useMemo(() => {
+    if (hasActiveCycle) return null;
+    return cycles[0]?.id ?? null;
+  }, [hasActiveCycle, cycles]);
+
+  const isClosedView = !activeCycleId && !!latestCycle?.id;
 
   const cellInput =
     "w-full rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1 text-sm text-gray-900 dark:text-white";
+
+  const pill =
+    "text-xs rounded-full px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200";
 
   const updateDraft = (id: string, patch: Partial<EditDraft>) => {
     setDrafts((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
@@ -158,24 +184,35 @@ export default function WarehousePodLedgerView({
 
   const load = async () => {
     setLoading(true);
+
     try {
       await accrueWarehouseCharges(pod.id);
 
-      // ✅ load cycles + active cycle id
-      const [allCycles, actId] = await Promise.all([
-        fetchPodCycles(pod.id),
-        fetchActiveCycleIdOrThrow(pod.id),
-      ]);
-
+      const allCycles = await fetchPodCycles(pod.id);
       setCycles(allCycles);
+
+      let actId: string | null = null;
+      try {
+        actId = await fetchActiveCycleIdOrThrow(pod.id);
+      } catch {
+        actId = null;
+      }
+
       setActiveCycleId(actId);
 
-      // ✅ ACTIVE cycle ledger only (editable)
-      const rows = await fetchCycleTransactions(actId);
+      const cycleToShow = actId ?? allCycles[0]?.id ?? null;
+
+      if (!cycleToShow) {
+        setTx([]);
+        setDrafts({});
+        setOpenCycleId(null);
+        return;
+      }
+
+      const rows = await fetchCycleTransactions(cycleToShow);
       const sorted = [...rows].sort(sortTxAsc);
       setTx(sorted);
 
-      // init drafts from DB rows
       const init: Record<string, EditDraft> = {};
       for (const r of sorted) {
         const vm = computeVM(r);
@@ -189,7 +226,6 @@ export default function WarehousePodLedgerView({
       }
       setDrafts(init);
 
-      // Optional: reset opened previous cycle if it no longer exists
       if (openCycleId && !allCycles.some((c) => c.id === openCycleId)) {
         setOpenCycleId(null);
       }
@@ -208,6 +244,28 @@ export default function WarehousePodLedgerView({
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pod.id]);
+
+  useEffect(() => {
+    if (!hasActiveCycle && latestClosedCycleId) {
+      setOpenCycleId(latestClosedCycleId);
+
+      if (!cycleTxCache[latestClosedCycleId]) {
+        void (async () => {
+          try {
+            const rows = await fetchCycleTransactions(latestClosedCycleId);
+            setCycleTxCache((prev) => ({
+              ...prev,
+              [latestClosedCycleId]: rows,
+            }));
+          } catch (err: unknown) {
+            toast.error(
+              getErrorMessage(err) || "Failed to load closed cycle history"
+            );
+          }
+        })();
+      }
+    }
+  }, [hasActiveCycle, latestClosedCycleId, cycleTxCache]);
 
   const effectiveRows = useMemo(() => {
     return tx.map((t) => {
@@ -248,7 +306,6 @@ export default function WarehousePodLedgerView({
 
     let totalDebit = 0;
     let totalCredit = 0;
-
     let currentDebit = 0;
     let currentCredit = 0;
 
@@ -274,6 +331,11 @@ export default function WarehousePodLedgerView({
   }, [vmRows]);
 
   const saveRow = async (row: TxVM) => {
+    if (isClosedView) {
+      toast.error("Closed cycle is read-only");
+      return;
+    }
+
     const d = drafts[row.id];
     if (!d) return;
 
@@ -295,8 +357,8 @@ export default function WarehousePodLedgerView({
     try {
       const payload = {
         id: row.id,
-        amount: round2(signedAmount), // SIGNED
-        gst_rate: row._isDebit ? round2(gst) : 0, // percent
+        amount: round2(signedAmount),
+        gst_rate: row._isDebit ? round2(gst) : 0,
         title: d.title.trim() ? d.title.trim() : "Transaction",
         note: d.note.trim() ? d.note.trim() : null,
         tx_date: d.tx_date,
@@ -320,8 +382,35 @@ export default function WarehousePodLedgerView({
     }
   };
 
-  const pill =
-    "text-xs rounded-full px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200";
+  const handleCloseCycle = async () => {
+    if (!activeCycleId) {
+      toast.error("No active cycle to close");
+      return;
+    }
+
+    setClosingCycle(true);
+    try {
+      await closeWarehouseCycle(pod.id);
+      toast.success("Cycle closed");
+      await load();
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err) || "Failed to close cycle");
+    } finally {
+      setClosingCycle(false);
+    }
+  };
+
+  const handleDownloadStatement = () => {
+    window.open(`/warehouse/statement?podId=${pod.id}`, "_blank");
+  };
+
+  const handleRenewCycle = () => {
+    setOpenRenew(true);
+  };
+
+  const handleEditClient = () => {
+    toast("Edit Client Details UI/API can be connected next");
+  };
 
   if (loading) {
     return (
@@ -332,7 +421,7 @@ export default function WarehousePodLedgerView({
   }
 
   return (
-    <div className="min-h-screen mx-auto p-8 bg-white dark:bg-[#23272f] rounded shadow">
+    <div className="min-h-screen mx-auto rounded bg-white p-8 shadow dark:bg-[#23272f]">
       <div className="mb-4 flex items-center justify-between gap-3">
         <button
           onClick={onBack}
@@ -341,7 +430,7 @@ export default function WarehousePodLedgerView({
           ← Back to Pods
         </button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <button
             onClick={() => void load()}
             className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
@@ -350,49 +439,119 @@ export default function WarehousePodLedgerView({
           </button>
 
           <button
-            onClick={() => setOpenTx(true)}
-            className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
+            onClick={handleDownloadStatement}
+            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
           >
-            + Add Transaction
-          </button>
-
-          <button
-            onClick={() => setOpenPay(true)}
-            className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
-          >
-            + Record Payment
-          </button>
-
-          <button
-            onClick={() => setOpenRate(true)}
-            className="rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700"
-          >
-            Change Rate / Items
+            Download Statement
           </button>
         </div>
       </div>
 
-      <h2 className="text-xl font-semibold">{pod.name}</h2>
+      <h2 className="text-xl font-semibold">
+        {activeCycle ? "Current Cycle Ledger" : "Latest Closed Cycle Ledger"}
+      </h2>
 
-      <div className="mt-2 flex flex-wrap gap-2">
-        <span className={pill}>Client: {pod.client_id ?? "—"}</span>
-        <span className={pill}>Contact: {pod.contact}</span>
-        <span className={pill}>Company: {pod.company_name ?? "—"}</span>
-        <span className={pill}>Location: {pod.location_name ?? "—"}</span>
-        <span className={pill}>
-          Next charge: {fmtDate(pod.next_charge_date)}
-        </span>
-        <span className={pill}>
-          Next payment: {fmtDate(pod.next_payment_date)}
-        </span>
+      <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div className="space-y-2 text-sm">
+            <div className="text-lg font-semibold text-gray-900 dark:text-white">
+              {pod.name}
+            </div>
 
-        {/* ✅ Renewal date from active cycle */}
-        <span className={pill}>
-          Renewal: {activeCycle ? fmtDate(activeCycle.cycle_end) : "—"}
-        </span>
+            <div className="flex flex-wrap gap-2">
+              <span className={pill}>Client: {pod.client_id ?? "—"}</span>
+              <span className={pill}>Contact: {pod.contact}</span>
+              <span className={pill}>Company: {pod.company_name ?? "—"}</span>
+              <span className={pill}>Location: {pod.location_name ?? "—"}</span>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <span className={pill}>
+                Status:{" "}
+                <span
+                  className={
+                    activeCycle
+                      ? "font-medium text-green-600"
+                      : "font-medium text-red-600"
+                  }
+                >
+                  {activeCycle ? "Active Cycle" : "Closed / No Active Cycle"}
+                </span>
+              </span>
+
+              <span className={pill}>
+                Next charge: {fmtDate(pod.next_charge_date)}
+              </span>
+
+              <span className={pill}>
+                Next payment: {fmtDate(pod.next_payment_date)}
+              </span>
+
+              <span className={pill}>
+                Renewal: {currentCycle ? fmtDate(currentCycle.cycle_end) : "—"}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setOpenPay(true)}
+              className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+            >
+              Record Payment
+            </button>
+
+            {!isClosedView && (
+              <>
+                <button
+                  onClick={() => setOpenTx(true)}
+                  className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
+                >
+                  Add Transaction
+                </button>
+
+                <button
+                  onClick={() => setOpenRate(true)}
+                  className="rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700"
+                >
+                  Change Rate / Items
+                </button>
+
+                <button
+                  onClick={() => void handleCloseCycle()}
+                  disabled={closingCycle}
+                  className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-70"
+                >
+                  {closingCycle ? "Closing..." : "Close Cycle"}
+                </button>
+              </>
+            )}
+
+            <button
+              onClick={handleRenewCycle}
+              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              Renew Cycle
+            </button>
+
+            <button
+              onClick={handleEditClient}
+              className="rounded-md bg-gray-800 px-4 py-2 text-sm font-medium text-white hover:bg-black dark:bg-gray-600 dark:hover:bg-gray-500"
+            >
+              Edit Client
+            </button>
+          </div>
+        </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+      {!activeCycle && (
+        <div className="mt-6 rounded-md border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200">
+          This cycle is closed. Ledger is read-only. Payments can still be
+          recorded.
+        </div>
+      )}
+
+      <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
         <Stat
           title="Current Due (as of today)"
           value={fmtINR(totals.currentDue)}
@@ -417,200 +576,209 @@ export default function WarehousePodLedgerView({
         />
       </div>
 
-      {months.length === 0 ? (
-        <p className="mt-6 text-gray-600 dark:text-gray-300">
-          No transactions yet.
-        </p>
+      {hasActiveCycle ? (
+        months.length === 0 ? (
+          <p className="mt-6 text-gray-600 dark:text-gray-300">
+            No transactions yet.
+          </p>
+        ) : (
+          <div className="mt-6 space-y-4">
+            {months.map((m) => {
+              const monthDebit = m.rows.reduce(
+                (s, r) => s + (r._isDebit ? r._debitTotal : 0),
+                0
+              );
+              const monthCredit = m.rows.reduce(
+                (s, r) => s + (!r._isDebit ? r._creditAmount : 0),
+                0
+              );
+              const monthNet = round2(monthDebit - monthCredit);
+
+              return (
+                <section
+                  key={m.monthKey}
+                  className="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-[#1f2933]"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+                    <div className="font-semibold text-gray-900 dark:text-white">
+                      {monthLabel(m.monthKey)}
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 text-sm">
+                      <span className="rounded bg-blue-50 px-2 py-1 text-blue-800 dark:bg-blue-900/20 dark:text-blue-200">
+                        Debit: {fmtINR(monthDebit)}
+                      </span>
+                      <span className="rounded bg-green-50 px-2 py-1 text-green-800 dark:bg-green-900/20 dark:text-green-200">
+                        Credit: {fmtINR(monthCredit)}
+                      </span>
+                      <span
+                        className={`rounded px-2 py-1 ${
+                          monthNet > 0
+                            ? "bg-red-50 text-red-800 dark:bg-red-900/20 dark:text-red-200"
+                            : "bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-200"
+                        }`}
+                      >
+                        Net: {fmtINR(monthNet)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="overflow-auto">
+                    <table className="min-w-275 w-full">
+                      <thead className="bg-gray-50 dark:bg-gray-800">
+                        <tr>
+                          <th className="p-2 text-left text-sm w-32">Date</th>
+                          <th className="p-2 text-left text-sm">Title</th>
+                          <th className="p-2 text-left text-sm">Note</th>
+                          <th className="p-2 text-right text-sm w-28">
+                            Debit Amt
+                          </th>
+                          <th className="p-2 text-right text-sm w-24">GST %</th>
+                          <th className="p-2 text-right text-sm w-32">
+                            Debit Total
+                          </th>
+                          <th className="p-2 text-right text-sm w-28">
+                            Credit
+                          </th>
+                          <th className="p-2 text-right text-sm w-28">
+                            Action
+                          </th>
+                        </tr>
+                      </thead>
+
+                      <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                        {m.rows.map((r) => {
+                          const d = drafts[r.id];
+                          if (!d) return null;
+
+                          const amountAbs = Number(d.amount || 0);
+                          const gstRate = r._isDebit
+                            ? Number(d.gst_rate || 0)
+                            : 0;
+                          const gstAmt = r._isDebit
+                            ? round2(amountAbs * (gstRate / 100))
+                            : 0;
+                          const debitTotal = r._isDebit
+                            ? round2(amountAbs + gstAmt)
+                            : 0;
+                          const creditAmt = r._isDebit ? 0 : round2(amountAbs);
+                          const isSaving = savingId === r.id;
+
+                          return (
+                            <tr
+                              key={r.id}
+                              className="hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                            >
+                              <td className="p-2">
+                                <input
+                                  className={cellInput}
+                                  type="date"
+                                  value={d.tx_date}
+                                  onChange={(e) =>
+                                    updateDraft(r.id, {
+                                      tx_date: e.target.value,
+                                    })
+                                  }
+                                />
+                              </td>
+
+                              <td className="p-2 min-w-52">
+                                <input
+                                  className={cellInput}
+                                  value={d.title}
+                                  onChange={(e) =>
+                                    updateDraft(r.id, { title: e.target.value })
+                                  }
+                                  placeholder="Title"
+                                />
+                              </td>
+
+                              <td className="p-2 min-w-64">
+                                <input
+                                  className={cellInput}
+                                  value={d.note}
+                                  onChange={(e) =>
+                                    updateDraft(r.id, { note: e.target.value })
+                                  }
+                                  placeholder="Optional note"
+                                />
+                              </td>
+
+                              <td className="p-2 text-right">
+                                <input
+                                  className={cellInput}
+                                  inputMode="decimal"
+                                  value={d.amount}
+                                  onChange={(e) =>
+                                    updateDraft(r.id, {
+                                      amount: clampNumberString(e.target.value),
+                                    })
+                                  }
+                                />
+                              </td>
+
+                              <td className="p-2 text-right">
+                                <input
+                                  className={`${cellInput} ${
+                                    r._isDebit ? "" : "opacity-50"
+                                  }`}
+                                  inputMode="decimal"
+                                  disabled={!r._isDebit}
+                                  value={r._isDebit ? d.gst_rate : "0"}
+                                  onChange={(e) =>
+                                    updateDraft(r.id, {
+                                      gst_rate: clampNumberString(
+                                        e.target.value
+                                      ),
+                                    })
+                                  }
+                                />
+                              </td>
+
+                              <td className="p-2 text-right font-medium text-blue-700 dark:text-blue-300">
+                                {r._isDebit ? debitTotal.toFixed(2) : "—"}
+                              </td>
+
+                              <td className="p-2 text-right font-medium text-green-700 dark:text-green-300">
+                                {!r._isDebit ? creditAmt.toFixed(2) : "—"}
+                              </td>
+
+                              <td className="p-2 text-right">
+                                <button
+                                  onClick={() => void saveRow(r)}
+                                  disabled={isSaving}
+                                  className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+                                >
+                                  {isSaving ? "Saving…" : "Save"}
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <div className="px-4 py-2 text-xs text-gray-500 dark:text-gray-400">
+                    Debit Total = Amount + GST. Credit has no GST.
+                  </div>
+                </section>
+              );
+            })}
+          </div>
+        )
       ) : (
-        <div className="mt-6 space-y-4">
-          {months.map((m) => {
-            const monthDebit = m.rows.reduce(
-              (s, r) => s + (r._isDebit ? r._debitTotal : 0),
-              0
-            );
-            const monthCredit = m.rows.reduce(
-              (s, r) => s + (!r._isDebit ? r._creditAmount : 0),
-              0
-            );
-            const monthNet = round2(monthDebit - monthCredit);
-
-            return (
-              <section
-                key={m.monthKey}
-                className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1f2933]"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                  <div className="font-semibold text-gray-900 dark:text-white">
-                    {monthLabel(m.monthKey)}
-                  </div>
-
-                  <div className="flex flex-wrap gap-2 text-sm">
-                    <span className="rounded bg-blue-50 dark:bg-blue-900/20 px-2 py-1 text-blue-800 dark:text-blue-200">
-                      Debit: {fmtINR(monthDebit)}
-                    </span>
-                    <span className="rounded bg-green-50 dark:bg-green-900/20 px-2 py-1 text-green-800 dark:text-green-200">
-                      Credit: {fmtINR(monthCredit)}
-                    </span>
-                    <span
-                      className={`rounded px-2 py-1 ${
-                        monthNet > 0
-                          ? "bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200"
-                          : "bg-green-50 dark:bg-green-900/20 text-green-800 dark:text-green-200"
-                      }`}
-                    >
-                      Net: {fmtINR(monthNet)}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="overflow-auto">
-                  <table className="min-w-275 w-full">
-                    <thead className="bg-gray-50 dark:bg-gray-800">
-                      <tr>
-                        <th className="p-2 text-left text-sm w-35">Date</th>
-                        <th className="p-2 text-left text-sm">Title</th>
-                        <th className="p-2 text-left text-sm">Note</th>
-
-                        <th className="p-2 text-right text-sm w-30">
-                          Debit Amt
-                        </th>
-                        <th className="p-2 text-right text-sm w-22.5">GST %</th>
-                        <th className="p-2 text-right text-sm w-35">
-                          Debit Total
-                        </th>
-
-                        <th className="p-2 text-right text-sm w-30">Credit</th>
-
-                        <th className="p-2 text-right text-sm w-30">Action</th>
-                      </tr>
-                    </thead>
-
-                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                      {m.rows.map((r) => {
-                        const d = drafts[r.id];
-                        if (!d) return null;
-
-                        const amountAbs = Number(d.amount || 0);
-                        const gstRate = r._isDebit
-                          ? Number(d.gst_rate || 0)
-                          : 0;
-
-                        const gstAmt = r._isDebit
-                          ? round2(amountAbs * (gstRate / 100))
-                          : 0;
-
-                        const debitTotal = r._isDebit
-                          ? round2(amountAbs + gstAmt)
-                          : 0;
-
-                        const creditAmt = r._isDebit ? 0 : round2(amountAbs);
-
-                        const isSaving = savingId === r.id;
-
-                        return (
-                          <tr
-                            key={r.id}
-                            className="hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                          >
-                            <td className="p-2">
-                              <input
-                                className={cellInput}
-                                type="date"
-                                value={d.tx_date}
-                                onChange={(e) =>
-                                  updateDraft(r.id, { tx_date: e.target.value })
-                                }
-                              />
-                            </td>
-
-                            <td className="p-2 min-w-55">
-                              <input
-                                className={cellInput}
-                                value={d.title}
-                                onChange={(e) =>
-                                  updateDraft(r.id, { title: e.target.value })
-                                }
-                                placeholder="Title"
-                              />
-                            </td>
-
-                            <td className="p-2 min-w-65">
-                              <input
-                                className={cellInput}
-                                value={d.note}
-                                onChange={(e) =>
-                                  updateDraft(r.id, { note: e.target.value })
-                                }
-                                placeholder="Optional note"
-                              />
-                            </td>
-
-                            <td className="p-2 text-right">
-                              <input
-                                className={cellInput}
-                                inputMode="decimal"
-                                value={d.amount}
-                                onChange={(e) =>
-                                  updateDraft(r.id, {
-                                    amount: clampNumberString(e.target.value),
-                                  })
-                                }
-                              />
-                            </td>
-
-                            <td className="p-2 text-right">
-                              <input
-                                className={`${cellInput} ${
-                                  r._isDebit ? "" : "opacity-50"
-                                }`}
-                                inputMode="decimal"
-                                disabled={!r._isDebit}
-                                value={r._isDebit ? d.gst_rate : "0"}
-                                onChange={(e) =>
-                                  updateDraft(r.id, {
-                                    gst_rate: clampNumberString(e.target.value),
-                                  })
-                                }
-                              />
-                            </td>
-
-                            <td className="p-2 text-right font-medium text-blue-700 dark:text-blue-300">
-                              {r._isDebit ? debitTotal.toFixed(2) : "—"}
-                            </td>
-
-                            <td className="p-2 text-right font-medium text-green-700 dark:text-green-300">
-                              {!r._isDebit ? creditAmt.toFixed(2) : "—"}
-                            </td>
-
-                            <td className="p-2 text-right">
-                              <button
-                                onClick={() => void saveRow(r)}
-                                disabled={isSaving}
-                                className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
-                              >
-                                {isSaving ? "Saving…" : "Save"}
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="px-4 py-2 text-xs text-gray-500 dark:text-gray-400">
-                  Debit Total = Amount + GST. Credit has no GST.
-                </div>
-              </section>
-            );
-          })}
+        <div className="mt-6 rounded-md border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200">
+          No active cycle. The latest closed cycle is shown below in history
+          view. Payments can still be recorded.
         </div>
       )}
 
-      {/* ✅ PREVIOUS CYCLES (collapsed) */}
       <div className="mt-10">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Previous cycles</h3>
+          <h3 className="text-lg font-semibold">
+            {hasActiveCycle ? "Previous cycles" : "Cycle history"}
+          </h3>
           <span className="text-xs text-gray-500 dark:text-gray-400">
             {previousCycles.length} cycle
             {previousCycles.length === 1 ? "" : "s"}
@@ -630,7 +798,7 @@ export default function WarehousePodLedgerView({
               return (
                 <div
                   key={c.id}
-                  className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden"
+                  className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700"
                 >
                   <button
                     onClick={async () => {
@@ -653,22 +821,24 @@ export default function WarehousePodLedgerView({
                         }
                       }
                     }}
-                    className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    className="w-full bg-gray-50 px-4 py-3 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700"
                   >
-                    <div className="text-sm font-medium text-gray-900 dark:text-white">
-                      {fmtDate(c.cycle_start)} → {fmtDate(c.cycle_end)}
-                      <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
-                        ({c.status})
-                      </span>
-                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">
+                        {fmtDate(c.cycle_start)} → {fmtDate(c.cycle_end)}
+                        <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                          ({c.status})
+                        </span>
+                      </div>
 
-                    <div className="text-sm text-gray-600 dark:text-gray-300">
-                      {isOpen ? "Hide" : "View"}
+                      <div className="text-sm text-gray-600 dark:text-gray-300">
+                        {isOpen ? "Hide" : "View"}
+                      </div>
                     </div>
                   </button>
 
                   {isOpen ? (
-                    <div className="p-4 bg-white dark:bg-[#1f2933]">
+                    <div className="bg-white p-4 dark:bg-[#1f2933]">
                       {!rows ? (
                         <p className="text-sm text-gray-600 dark:text-gray-300">
                           Loading…
@@ -682,21 +852,21 @@ export default function WarehousePodLedgerView({
                           <table className="min-w-275 w-full">
                             <thead className="bg-gray-50 dark:bg-gray-800">
                               <tr>
-                                <th className="p-2 text-left text-sm w-35">
+                                <th className="p-2 text-left text-sm w-32">
                                   Date
                                 </th>
                                 <th className="p-2 text-left text-sm">Title</th>
                                 <th className="p-2 text-left text-sm">Note</th>
-                                <th className="p-2 text-right text-sm w-30">
+                                <th className="p-2 text-right text-sm w-28">
                                   Debit Amt
                                 </th>
-                                <th className="p-2 text-right text-sm w-22.5">
+                                <th className="p-2 text-right text-sm w-24">
                                   GST %
                                 </th>
-                                <th className="p-2 text-right text-sm w-35">
+                                <th className="p-2 text-right text-sm w-32">
                                   Debit Total
                                 </th>
-                                <th className="p-2 text-right text-sm w-30">
+                                <th className="p-2 text-right text-sm w-28">
                                   Credit
                                 </th>
                               </tr>
@@ -729,23 +899,19 @@ export default function WarehousePodLedgerView({
                                       <td className="p-2 text-sm text-gray-600 dark:text-gray-300">
                                         {t.note ?? "—"}
                                       </td>
-
                                       <td className="p-2 text-right text-sm font-medium text-blue-700 dark:text-blue-300">
                                         {debitAmt ? debitAmt.toFixed(2) : "—"}
                                       </td>
-
                                       <td className="p-2 text-right text-sm">
                                         {vm._isDebit
                                           ? vm._gstRate.toFixed(2)
                                           : "—"}
                                       </td>
-
                                       <td className="p-2 text-right text-sm font-medium text-blue-700 dark:text-blue-300">
                                         {debitTotal
                                           ? debitTotal.toFixed(2)
                                           : "—"}
                                       </td>
-
                                       <td className="p-2 text-right text-sm font-medium text-green-700 dark:text-green-300">
                                         {creditAmt ? creditAmt.toFixed(2) : "—"}
                                       </td>
@@ -756,8 +922,7 @@ export default function WarehousePodLedgerView({
                           </table>
 
                           <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                            Previous cycles are read-only. Current cycle is
-                            editable above.
+                            Previous cycles are read-only.
                           </p>
                         </div>
                       )}
@@ -770,22 +935,70 @@ export default function WarehousePodLedgerView({
         )}
       </div>
 
-      <WarehouseTxModal
-        open={openTx}
-        title="Add Transaction"
-        kind="transaction"
-        onClose={() => setOpenTx(false)}
-        onSubmit={async (v) => {
-          await addWarehouseTransaction({
-            podId: pod.id,
-            type: v.type ?? "charge",
-            amount: v.amount,
-            gstRate: v.gstRate ?? 18,
-            txDate: v.txDate,
-            title: v.title,
-            note: v.note,
-          });
-          toast.success("Transaction added");
+      {!isClosedView && (
+        <>
+          <WarehouseTxModal
+            open={openTx}
+            title="Add Transaction"
+            kind="transaction"
+            onClose={() => setOpenTx(false)}
+            onSubmit={async (v) => {
+              await addWarehouseTransaction({
+                podId: pod.id,
+                type: v.type ?? "charge",
+                amount: v.amount,
+                gstRate: v.gstRate ?? 18,
+                txDate: v.txDate,
+                title: v.title,
+                note: v.note,
+              });
+              toast.success("Transaction added");
+              await load();
+            }}
+          />
+
+          <WarehouseRateChangeModal
+            open={openRate}
+            onClose={() => {
+              setOpenRate(false);
+              void load();
+            }}
+            oldRate={Number(pod.rate)}
+            onSubmit={async (v) => {
+              await applyMidCycleRateChange({
+                podId: pod.id,
+                oldRate: Number(pod.rate),
+                newRate: v.newRate,
+                effectiveDate: v.effectiveDate,
+                extraDays: v.extraDays,
+                gstRate: v.gstRate,
+                addExtraChargeNow: v.addExtraChargeNow,
+                note: v.note ?? null,
+              });
+
+              toast.success("Rate change applied");
+              setOpenRate(false);
+              void load();
+            }}
+          />
+        </>
+      )}
+
+      <WarehouseRenewModal
+        open={openRenew}
+        podId={pod.id}
+        clientId={pod.client_id ?? "—"}
+        clientName={pod.name}
+        defaultRate={Number(pod.rate)}
+        defaultDurationMonths={Number(pod.duration_months ?? 12)}
+        defaultInsuranceProvider={pod.insurance_provider}
+        defaultInsuranceValue={Number(pod.insurance_value ?? 0)}
+        defaultInsuranceIdv={Number(pod.insurance_idv ?? 0)}
+        endDate={currentCycle?.cycle_end ?? null}
+        onClose={() => setOpenRenew(false)}
+        onDone={async () => {
+          setOpenRenew(false);
+          toast.success("Cycle renewed");
           await load();
         }}
       />
@@ -798,6 +1011,7 @@ export default function WarehousePodLedgerView({
         onSubmit={async (v) => {
           await recordWarehousePayment({
             podId: pod.id,
+            cycleId: activeCycleId ?? latestCycle?.id ?? undefined,
             amount: v.amount,
             txDate: v.txDate,
             title: v.title,
@@ -805,31 +1019,6 @@ export default function WarehousePodLedgerView({
           });
           toast.success("Payment recorded");
           await load();
-        }}
-      />
-
-      <WarehouseRateChangeModal
-        open={openRate}
-        onClose={() => {
-          setOpenRate(false);
-          void load();
-        }}
-        oldRate={Number(pod.rate)}
-        onSubmit={async (v) => {
-          await applyMidCycleRateChange({
-            podId: pod.id,
-            oldRate: Number(pod.rate),
-            newRate: v.newRate,
-            effectiveDate: v.effectiveDate,
-            extraDays: v.extraDays,
-            gstRate: v.gstRate,
-            addExtraChargeNow: v.addExtraChargeNow,
-            note: v.note ?? null,
-          });
-
-          toast.success("Rate change applied");
-          setOpenRate(false);
-          void load();
         }}
       />
     </div>
@@ -855,7 +1044,7 @@ function Stat({
       : "text-red-700 dark:text-red-300";
 
   return (
-    <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#1f2933] p-4 shadow-sm">
+    <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-[#1f2933]">
       <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
         {title}
       </div>
