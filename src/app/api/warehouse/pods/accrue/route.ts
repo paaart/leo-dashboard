@@ -1,4 +1,3 @@
-// src/app/api/warehouse/pods/accrue/route.ts
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
@@ -12,15 +11,13 @@ export async function POST(req: Request) {
   try {
     await client.query("BEGIN");
 
-    // Pull what we need per active pod + active cycle
     const cyclesRes = await client.query<{
       cycle_id: string;
       pod_id: string;
-      billing_start_date: string; // YYYY-MM-DD
-      cycle_end: string; // YYYY-MM-DD
+      billing_start_date: string;
+      cycle_end: string;
       rate: string;
       billing_interval: "monthly" | "quarterly" | "half_yearly" | "yearly";
-      gst_rate_default: string | null;
     }>(
       `
       select
@@ -29,8 +26,7 @@ export async function POST(req: Request) {
         p.billing_start_date::date::text as billing_start_date,
         cy.cycle_end::date::text as cycle_end,
         p.rate::text as rate,
-        p.billing_interval::text as billing_interval,
-        null::text as gst_rate_default
+        p.billing_interval::text as billing_interval
       from public.warehouse_pod_cycles cy
       join public.warehouse_pods p on p.id = cy.pod_id
       where cy.status = 'active'
@@ -41,14 +37,11 @@ export async function POST(req: Request) {
     );
 
     for (const row of cyclesRes.rows) {
-      const billingStart = row.billing_start_date; // YYYY-MM-DD
-      const cycleEnd = row.cycle_end; // YYYY-MM-DD
+      const billingStart = row.billing_start_date;
+      const cycleEnd = row.cycle_end;
       const rate = Number(row.rate);
-
-      // Default GST for auto-charges
       const gstRate = 18;
 
-      // 1) Insert missing auto-charges up to today, but NEVER after cycle_end
       await client.query(
         `
         with cfg as (
@@ -65,7 +58,6 @@ export async function POST(req: Request) {
             end as step_months
         ),
         months as (
-          -- step by interval months, but cap series end to least(today, cycle_end)
           select generate_series(
             date_trunc('month', (select billing_start from cfg))::date,
             date_trunc('month', least(current_date, (select cycle_end from cfg)))::date,
@@ -73,7 +65,6 @@ export async function POST(req: Request) {
           )::date as month_start
         ),
         computed as (
-          -- anchored day in each interval month (clamp to month-end)
           select
             make_date(
               extract(year from month_start)::int,
@@ -107,7 +98,7 @@ export async function POST(req: Request) {
           null,
           now()
         from filtered f
-        on conflict (cycle_id, title, tx_month) do nothing;
+        on conflict (cycle_id, title, tx_month) do nothing
         `,
         [
           billingStart, // $1
@@ -120,7 +111,6 @@ export async function POST(req: Request) {
         ]
       );
 
-      // 2) Compute & store next_charge_date (future) but never beyond cycle_end
       const nextChargeRes = await client.query<{ next_charge_date: string }>(
         `
         with cfg as (
@@ -138,7 +128,7 @@ export async function POST(req: Request) {
         ),
         months as (
           select generate_series(
-            date_trunc('month', (select billing_start from cfg))::date,
+            date_trunc('month', current_date)::date,
             date_trunc('month', (select cycle_end from cfg))::date,
             make_interval(months => (select step_months from cfg))
           )::date as month_start
@@ -168,7 +158,6 @@ export async function POST(req: Request) {
 
       const nextChargeDate = nextChargeRes.rows[0]?.next_charge_date ?? null;
 
-      // If cycle ended already (or no future charge), set next_charge_date = null
       await client.query(
         `
         update public.warehouse_pods

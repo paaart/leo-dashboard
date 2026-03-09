@@ -2,18 +2,6 @@
 import type { WarehouseTxn, WarehouseTxnType } from "./types";
 import { fetchJson } from "./api";
 
-export async function fetchPodTransactions(
-  podId: string
-): Promise<WarehouseTxn[]> {
-  const url = `/api/warehouse/pods/transactions?podId=${encodeURIComponent(
-    podId
-  )}`;
-  const data = await fetchJson<{ rows: WarehouseTxn[] }>(url, {
-    method: "GET",
-  });
-  return data.rows ?? [];
-}
-
 export async function fetchCycleTransactions(
   cycleId: string
 ): Promise<WarehouseTxn[]> {
@@ -28,10 +16,10 @@ export async function fetchCycleTransactions(
 
 export async function addWarehouseTransaction(args: {
   podId: string;
-  type: Exclude<WarehouseTxnType, "payment">; // "charge" | "adjustment"
-  amount: number; // POSITIVE in UI
-  gstRate?: number; // percent, default 18
-  txDate: string; // YYYY-MM-DD
+  type: Exclude<WarehouseTxnType, "payment">;
+  amount: number;
+  gstRate?: number;
+  txDate: string;
   title: string;
   note?: string | null;
 }): Promise<void> {
@@ -58,8 +46,9 @@ export async function addWarehouseTransaction(args: {
 
 export async function recordWarehousePayment(args: {
   podId: string;
-  amount: number; // POSITIVE in UI
-  txDate: string; // YYYY-MM-DD
+  cycleId?: string;
+  amount: number;
+  txDate: string;
   title?: string;
   note?: string | null;
 }): Promise<void> {
@@ -69,6 +58,7 @@ export async function recordWarehousePayment(args: {
 
   const payload = {
     podId: args.podId,
+    cycleId: args.cycleId ?? undefined,
     amount: Math.abs(args.amount),
     txDate: args.txDate,
     title: args.title ?? "Payment",
@@ -84,9 +74,9 @@ export async function recordWarehousePayment(args: {
 
 export async function updateWarehouseTransaction(args: {
   id: string;
-  amount: number; // SIGNED
-  gst_rate: number; // percent (0 for payments)
-  tx_date: string; // YYYY-MM-DD
+  amount: number;
+  gst_rate: number;
+  tx_date: string;
   title: string;
   note?: string | null;
 }): Promise<void> {
@@ -99,7 +89,6 @@ export async function updateWarehouseTransaction(args: {
     note: args.note ?? null,
   };
 
-  // If your route uses POST instead of PATCH, change this one word.
   await fetchJson<void>(`/api/warehouse/pods/transactions/update`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
@@ -107,21 +96,27 @@ export async function updateWarehouseTransaction(args: {
   });
 }
 
-export async function deleteWarehouseTransaction(id: string): Promise<void> {
-  const url = `/api/warehouse/pods/transactions/delete?id=${encodeURIComponent(
-    id
-  )}`;
-  await fetchJson<{ id: string }>(url, { method: "DELETE" });
+export async function closeWarehouseCycle(podId: string): Promise<string> {
+  const data = await fetchJson<{ cycleId: string }>(
+    `/api/warehouse/pods/cycles/close`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ podId }),
+    }
+  );
+
+  return data.cycleId;
 }
 
 export async function applyMidCycleRateChange(args: {
   podId: string;
   oldRate: number;
   newRate: number;
-  effectiveDate: string; // YYYY-MM-DD
+  effectiveDate: string;
   addExtraChargeNow?: boolean;
   extraDays?: number;
-  gstRate?: number; // percent
+  gstRate?: number;
   note?: string | null;
 }): Promise<void> {
   await fetchJson<void>(`/api/warehouse/pods/rate-change`, {
