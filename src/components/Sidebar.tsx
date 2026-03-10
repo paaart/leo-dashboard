@@ -11,6 +11,8 @@ type Section =
 type SidebarProps = {
   section: Section;
   setSection: (section: Section) => void;
+  mobileOpen: boolean;
+  onMobileClose: () => void;
 };
 
 type AuthMeResponse =
