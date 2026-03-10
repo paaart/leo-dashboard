@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
 
 type Section =
   | { main: "domestic"; sub?: null }
@@ -12,10 +11,13 @@ type Section =
 type SidebarProps = {
   section: Section;
   setSection: (section: Section) => void;
-
   mobileOpen: boolean;
   onMobileClose: () => void;
 };
+
+type AuthMeResponse =
+  | { ok: true; user: { id: string; email?: string | null } }
+  | { ok: false; error?: string };
 
 function SidebarNav({
   section,
@@ -40,22 +42,20 @@ function SidebarNav({
 
   return (
     <nav className="space-y-2">
-      {/* Domestic */}
       <button
         onClick={() => {
           setSection({ main: "domestic" });
           onAnyNavigate?.();
         }}
-        className={`w-full text-left px-3 py-2 rounded-md transition-colors ${
+        className={`w-full rounded-md px-3 py-2 text-left transition-colors ${
           isActive("domestic")
-            ? "bg-gray-300 dark:bg-gray-700 font-semibold"
+            ? "bg-gray-300 font-semibold dark:bg-gray-700"
             : "hover:bg-gray-200 dark:hover:bg-gray-700"
         }`}
       >
         Domestic Calculator
       </button>
 
-      {/* International */}
       <div>
         <button
           onClick={() => {
@@ -64,9 +64,9 @@ function SidebarNav({
               prev === "international" ? null : "international"
             );
           }}
-          className={`w-full flex justify-between items-center text-left px-3 py-2 rounded-md transition-colors ${
+          className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left transition-colors ${
             isActive("international")
-              ? "bg-gray-300 dark:bg-gray-700 font-semibold"
+              ? "bg-gray-300 font-semibold dark:bg-gray-700"
               : "hover:bg-gray-200 dark:hover:bg-gray-700"
           }`}
         >
@@ -81,7 +81,7 @@ function SidebarNav({
                 setSection({ main: "international", sub: "calculator" });
                 onAnyNavigate?.();
               }}
-              className={`block w-full text-left px-3 py-1 rounded ${
+              className={`block w-full rounded px-3 py-1 text-left ${
                 section.sub === "calculator"
                   ? "bg-gray-200 dark:bg-gray-600"
                   : "hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -94,7 +94,7 @@ function SidebarNav({
                 setSection({ main: "international", sub: "history" });
                 onAnyNavigate?.();
               }}
-              className={`block w-full text-left px-3 py-1 rounded ${
+              className={`block w-full rounded px-3 py-1 text-left ${
                 section.sub === "history"
                   ? "bg-gray-200 dark:bg-gray-600"
                   : "hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -112,7 +112,6 @@ function SidebarNav({
         </div>
       )}
 
-      {/* Warehouse – only when logged in */}
       {!authLoading && isLoggedIn && (
         <div>
           <button
@@ -120,9 +119,9 @@ function SidebarNav({
               setSection({ main: "warehouse", sub: "active" });
               setOpen((prev) => (prev === "warehouse" ? null : "warehouse"));
             }}
-            className={`w-full flex justify-between items-center text-left px-3 py-2 rounded-md transition-colors ${
+            className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left transition-colors ${
               isActive("warehouse")
-                ? "bg-gray-300 dark:bg-gray-700 font-semibold"
+                ? "bg-gray-300 font-semibold dark:bg-gray-700"
                 : "hover:bg-gray-200 dark:hover:bg-gray-700"
             }`}
           >
@@ -137,7 +136,7 @@ function SidebarNav({
                   setSection({ main: "warehouse", sub: "add" });
                   onAnyNavigate?.();
                 }}
-                className={`block w-full text-left px-3 py-1 rounded ${
+                className={`block w-full rounded px-3 py-1 text-left ${
                   section.sub === "add"
                     ? "bg-gray-200 dark:bg-gray-600"
                     : "hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -150,7 +149,7 @@ function SidebarNav({
                   setSection({ main: "warehouse", sub: "active" });
                   onAnyNavigate?.();
                 }}
-                className={`block w-full text-left px-3 py-1 rounded ${
+                className={`block w-full rounded px-3 py-1 text-left ${
                   section.sub === "active"
                     ? "bg-gray-200 dark:bg-gray-600"
                     : "hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -163,7 +162,7 @@ function SidebarNav({
                   setSection({ main: "warehouse", sub: "renewals" });
                   onAnyNavigate?.();
                 }}
-                className={`block w-full text-left px-3 py-1 rounded ${
+                className={`block w-full rounded px-3 py-1 text-left ${
                   section.sub === "renewals"
                     ? "bg-gray-200 dark:bg-gray-600"
                     : "hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -176,7 +175,6 @@ function SidebarNav({
         </div>
       )}
 
-      {/* Loans – only when logged in */}
       {!authLoading && isLoggedIn && (
         <div>
           <button
@@ -184,9 +182,9 @@ function SidebarNav({
               setSection({ main: "loans", sub: "create" });
               setOpen((prev) => (prev === "loans" ? null : "loans"));
             }}
-            className={`w-full flex justify-between items-center text-left px-3 py-2 rounded-md transition-colors ${
+            className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left transition-colors ${
               isActive("loans")
-                ? "bg-gray-300 dark:bg-gray-700 font-semibold"
+                ? "bg-gray-300 font-semibold dark:bg-gray-700"
                 : "hover:bg-gray-200 dark:hover:bg-gray-700"
             }`}
           >
@@ -201,7 +199,7 @@ function SidebarNav({
                   setSection({ main: "loans", sub: "create" });
                   onAnyNavigate?.();
                 }}
-                className={`block w-full text-left px-3 py-1 rounded ${
+                className={`block w-full rounded px-3 py-1 text-left ${
                   section.sub === "create"
                     ? "bg-gray-200 dark:bg-gray-600"
                     : "hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -214,7 +212,7 @@ function SidebarNav({
                   setSection({ main: "loans", sub: "view" });
                   onAnyNavigate?.();
                 }}
-                className={`block w-full text-left px-3 py-1 rounded ${
+                className={`block w-full rounded px-3 py-1 text-left ${
                   section.sub === "view"
                     ? "bg-gray-200 dark:bg-gray-600"
                     : "hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -227,7 +225,7 @@ function SidebarNav({
                   setSection({ main: "loans", sub: "employees" });
                   onAnyNavigate?.();
                 }}
-                className={`block w-full text-left px-3 py-1 rounded ${
+                className={`block w-full rounded px-3 py-1 text-left ${
                   section.sub === "employees"
                     ? "bg-gray-200 dark:bg-gray-600"
                     : "hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -277,44 +275,50 @@ export default function Sidebar({
   }, [section.main]);
 
   useEffect(() => {
-    let mounted = true;
+    let cancelled = false;
 
-    const init = async () => {
+    const checkAuth = async () => {
       setAuthLoading(true);
-      const { data, error } = await supabase.auth.getSession();
-      if (!mounted) return;
 
-      setIsLoggedIn(!error && !!data.session);
-      setAuthLoading(false);
+      try {
+        const res = await fetch("/api/auth/me", {
+          method: "GET",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          cache: "no-store",
+        });
+
+        const json: AuthMeResponse = await res.json();
+
+        if (cancelled) return;
+
+        setIsLoggedIn(res.ok && json.ok);
+      } catch {
+        if (cancelled) return;
+        setIsLoggedIn(false);
+      } finally {
+        if (!cancelled) setAuthLoading(false);
+      }
     };
 
-    void init();
-
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!mounted) return;
-      setIsLoggedIn(!!session);
-      setAuthLoading(false);
-    });
+    void checkAuth();
 
     return () => {
-      mounted = false;
-      sub.subscription.unsubscribe();
+      cancelled = true;
     };
   }, []);
 
   return (
     <>
-      {/* Mobile overlay */}
       <div
-        className={`fixed inset-0 z-40 bg-black/40 md:hidden transition-opacity ${
+        className={`fixed inset-0 z-40 bg-black/40 transition-opacity md:hidden ${
           mobileOpen ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
         onClick={onMobileClose}
       />
 
-      {/* Mobile drawer */}
       <aside
-        className={`fixed top-0 left-0 z-50 h-full w-64 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white p-6 md:hidden transform transition-transform ${
+        className={`fixed left-0 top-0 z-50 h-full w-64 transform bg-gray-100 p-6 text-gray-900 transition-transform dark:bg-gray-800 dark:text-white md:hidden ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -341,8 +345,7 @@ export default function Sidebar({
         />
       </aside>
 
-      {/* Desktop sidebar */}
-      <aside className="w-64 hidden md:block bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white p-6 sticky top-20 h-[calc(100vh-5rem)]">
+      <aside className="sticky top-20 hidden h-[calc(100vh-5rem)] w-64 bg-gray-100 p-6 text-gray-900 dark:bg-gray-800 dark:text-white md:block">
         <SidebarNav
           section={section}
           setSection={setSection}
