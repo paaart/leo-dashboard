@@ -4,7 +4,10 @@ import Image from "next/image";
 import { Menu } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
+
+type AuthMeResponse =
+  | { ok: true; user: { id: string; email?: string | null } }
+  | { ok: false; error?: string };
 
 export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
   const router = useRouter();
@@ -14,49 +17,68 @@ export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
   const [label, setLabel] = useState<string | null>(null);
 
   useEffect(() => {
-    let mounted = true;
+    let cancelled = false;
 
-    const init = async () => {
+    const checkAuth = async () => {
       setAuthLoading(true);
 
-      const { data, error } = await supabase.auth.getSession();
+      try {
+        const res = await fetch("/api/auth/me", {
+          method: "GET",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          cache: "no-store",
+        });
 
-      if (!mounted) return;
+        const json: AuthMeResponse = await res.json();
 
-      const session = !error ? data.session : null;
-      setIsLoggedIn(!!session);
-      setLabel(session?.user?.email ?? null);
-      setAuthLoading(false);
+        if (cancelled) return;
+
+        if (res.ok && json.ok) {
+          setIsLoggedIn(true);
+          setLabel(json.user.email ?? null);
+        } else {
+          setIsLoggedIn(false);
+          setLabel(null);
+        }
+      } catch {
+        if (cancelled) return;
+        setIsLoggedIn(false);
+        setLabel(null);
+      } finally {
+        if (!cancelled) setAuthLoading(false);
+      }
     };
 
-    void init();
-
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!mounted) return;
-      setIsLoggedIn(!!session);
-      setLabel(session?.user?.email ?? null);
-      setAuthLoading(false);
-    });
+    void checkAuth();
 
     return () => {
-      mounted = false;
-      sub.subscription.unsubscribe();
+      cancelled = true;
     };
   }, []);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push("/login");
-    router.refresh();
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+      });
+    } finally {
+      setIsLoggedIn(false);
+      setLabel(null);
+      router.push("/login");
+      router.refresh();
+    }
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-white dark:bg-gray-900 shadow px-6 py-4 flex justify-between items-center">
+    <header className="sticky top-0 z-40 flex w-full items-center justify-between bg-white px-6 py-4 shadow dark:bg-gray-900">
       <div className="flex items-center gap-4">
         <button
           type="button"
           onClick={onMenuClick}
-          className="md:hidden inline-flex items-center justify-center rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-800"
+          className="inline-flex items-center justify-center rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-800 md:hidden"
           aria-label="Open sidebar"
         >
           <Menu className="h-6 w-6" />
@@ -80,7 +102,7 @@ export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
             <span>{label ? `Welcome, ${label}` : "Welcome"}</span>
             <button
               onClick={handleLogout}
-              className="px-3 py-1 bg-red-600 text-white rounded text-xs hover:bg-red-700"
+              className="rounded bg-red-600 px-3 py-1 text-xs text-white hover:bg-red-700"
             >
               Logout
             </button>
@@ -88,7 +110,7 @@ export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
         ) : (
           <button
             onClick={() => router.push("/login")}
-            className="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700"
+            className="rounded bg-blue-600 px-3 py-1 text-xs text-white hover:bg-blue-700"
           >
             Login
           </button>
