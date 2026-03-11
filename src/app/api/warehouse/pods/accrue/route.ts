@@ -6,6 +6,17 @@ export async function POST(req: Request) {
   const podIdRaw = searchParams.get("podId");
   const podId = podIdRaw && podIdRaw.trim() ? podIdRaw.trim() : null;
 
+  if (!podId) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error:
+          "Global accrual is disabled in this route. Pass podId for single-pod accrual.",
+      },
+      { status: 400 }
+    );
+  }
+
   const client = await db.connect();
 
   try {
@@ -31,7 +42,7 @@ export async function POST(req: Request) {
       join public.warehouse_pods p on p.id = cy.pod_id
       where cy.status = 'active'
         and p.status = 'active'
-        and ($1::uuid is null or p.id = $1::uuid)
+        and p.id = $1::uuid
       `,
       [podId]
     );
@@ -101,13 +112,13 @@ export async function POST(req: Request) {
         on conflict (cycle_id, title, tx_month) do nothing
         `,
         [
-          billingStart, // $1
-          row.pod_id, // $2
-          row.cycle_id, // $3
-          rate, // $4
-          row.billing_interval, // $5
-          gstRate, // $6
-          cycleEnd, // $7
+          billingStart,
+          row.pod_id,
+          row.cycle_id,
+          rate,
+          row.billing_interval,
+          gstRate,
+          cycleEnd,
         ]
       );
 

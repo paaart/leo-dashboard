@@ -1,0 +1,17 @@
+{
+    "$schema": "https://openapi.vercel.sh/vercel.json",
+    "crons": [
+      {
+        "path": "/api/warehouse/pods/accrue-due?batchSize=50",
+        "schedule": "0 2 * * 1"
+      },
+      {
+        "path": "/api/warehouse/pods/accrue-due?batchSize=50",
+        "schedule": "0 2 * * 3"
+      },
+      {
+        "path": "/api/warehouse/pods/accrue-due?batchSize=50",
+        "schedule": "0 2 * * 5"
+      }
+    ]
+  }

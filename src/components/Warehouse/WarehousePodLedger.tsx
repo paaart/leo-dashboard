@@ -186,7 +186,11 @@ export default function WarehousePodLedgerView({
     setLoading(true);
 
     try {
-      await accrueWarehouseCharges(pod.id);
+      try {
+        await accrueWarehouseCharges(pod.id);
+      } catch (err: unknown) {
+        toast.error(getErrorMessage(err) || "Failed to refresh latest charges");
+      }
 
       const allCycles = await fetchPodCycles(pod.id);
       setCycles(allCycles);

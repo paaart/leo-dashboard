@@ -4,14 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { getErrorMessage } from "@/lib/errors";
 import type { WarehousePodSummary } from "@/lib/warehouse/types";
-import {
-  accrueWarehouseCharges,
-  listWarehousePods,
-} from "@/lib/warehouse/pods";
+import { listWarehousePods } from "@/lib/warehouse/pods";
 import WarehousePodHistoryView from "./WarehousePodLedger";
-import type { SeverityBand } from "@/lib/warehouse/types";
 
-function rowBandClass(b: SeverityBand) {
+function rowBandClass(b: "green" | "yellow" | "red") {
   if (b === "red")
     return "bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30";
   if (b === "yellow")
@@ -28,11 +24,10 @@ export default function WarehouseActivePods() {
   const load = async () => {
     setLoading(true);
     try {
-      await accrueWarehouseCharges();
       const data = await listWarehousePods();
-      setRows(data); // includes all, even total_due = 0 (as you wanted)
+      setRows(data);
     } catch (err: unknown) {
-      toast.error(getErrorMessage(err));
+      toast.error(getErrorMessage(err) || "Failed to load warehouse pods");
       setRows([]);
     } finally {
       setLoading(false);
@@ -46,6 +41,7 @@ export default function WarehouseActivePods() {
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
     if (!s) return rows;
+
     return rows.filter((r) => {
       return (
         r.name.toLowerCase().includes(s) ||
@@ -155,11 +151,17 @@ export default function WarehouseActivePods() {
                   </td>
 
                   <td className="p-2 text-sm text-gray-700 dark:text-gray-300">
-                    {new Date(r.next_charge_date).toLocaleDateString("en-IN")}
+                    {r.next_charge_date
+                      ? new Date(r.next_charge_date).toLocaleDateString("en-IN")
+                      : "—"}
                   </td>
 
                   <td className="p-2 text-sm text-gray-700 dark:text-gray-300">
-                    {new Date(r.next_payment_date).toLocaleDateString("en-IN")}
+                    {r.next_payment_date
+                      ? new Date(r.next_payment_date).toLocaleDateString(
+                          "en-IN"
+                        )
+                      : "—"}
                   </td>
 
                   <td className="p-2 font-semibold text-blue-700 dark:text-blue-300">
