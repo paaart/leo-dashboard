@@ -83,7 +83,6 @@ export async function GET(req: Request) {
 
         for (const row of cyclesRes.rows) {
           const billingStart = row.billing_start_date;
-          const cycleEnd = row.cycle_end;
           const rate = Number(row.rate);
           const gstRate = 18;
 
@@ -92,7 +91,6 @@ export async function GET(req: Request) {
             with cfg as (
               select
                 $1::date as billing_start,
-                $7::date as cycle_end,
                 extract(day from $1::date)::int as anchor_day,
                 case $5::text
                   when 'monthly' then 1
@@ -105,7 +103,7 @@ export async function GET(req: Request) {
             months as (
               select generate_series(
                 date_trunc('month', (select billing_start from cfg))::date,
-                date_trunc('month', least(current_date, (select cycle_end from cfg)))::date,
+                date_trunc('month', current_date)::date,
                 make_interval(months => (select step_months from cfg))
               )::date as month_start
             ),
@@ -125,11 +123,19 @@ export async function GET(req: Request) {
               select tx_date
               from computed
               where tx_date >= (select billing_start from cfg)
-                and tx_date <= least(current_date, (select cycle_end from cfg))
+                and tx_date <= current_date
             )
             insert into public.warehouse_pod_transactions (
-              pod_id, cycle_id, type, amount, gst_rate,
-              tx_date, tx_month, title, note, created_at
+              pod_id,
+              cycle_id,
+              type,
+              amount,
+              gst_rate,
+              tx_date,
+              tx_month,
+              title,
+              note,
+              created_at
             )
             select
               $2::uuid,
@@ -146,13 +152,12 @@ export async function GET(req: Request) {
             on conflict (cycle_id, title, tx_month) do nothing
             `,
             [
-              billingStart,
-              row.pod_id,
-              row.cycle_id,
-              rate,
-              row.billing_interval,
-              gstRate,
-              cycleEnd,
+              billingStart, // $1
+              row.pod_id, // $2
+              row.cycle_id, // $3
+              rate, // $4
+              row.billing_interval, // $5
+              gstRate, // $6
             ]
           );
 
@@ -163,7 +168,6 @@ export async function GET(req: Request) {
             with cfg as (
               select
                 $1::date as billing_start,
-                $3::date as cycle_end,
                 extract(day from $1::date)::int as anchor_day,
                 case $2::text
                   when 'monthly' then 1
@@ -176,7 +180,7 @@ export async function GET(req: Request) {
             months as (
               select generate_series(
                 date_trunc('month', current_date)::date,
-                date_trunc('month', (select cycle_end from cfg))::date,
+                date_trunc('month', current_date + interval '24 months')::date,
                 make_interval(months => (select step_months from cfg))
               )::date as month_start
             ),
@@ -196,11 +200,10 @@ export async function GET(req: Request) {
             from computed
             where candidate > current_date
               and candidate >= (select billing_start from cfg)
-              and candidate <= (select cycle_end from cfg)
             order by candidate asc
             limit 1
             `,
-            [billingStart, row.billing_interval, cycleEnd]
+            [billingStart, row.billing_interval]
           );
 
           const nextChargeDate =

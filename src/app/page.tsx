@@ -13,7 +13,7 @@ import ManageEmployees from "@/components/LoansAndAdvances/ManageEmployees";
 
 import WarehouseAddClient from "@/components/Warehouse/WarehouseAddClient";
 import WarehouseActivePods from "@/components/Warehouse/WarehouseActivePods";
-import WarehouseRenewals from "@/components/Warehouse/WarehouseRenewals";
+import WarehouseRenewals from "@/components/Warehouse/Ledger/WarehouseRenewals";
 
 type Section =
   | { main: "domestic"; sub?: null }

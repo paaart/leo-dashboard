@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { getErrorMessage } from "@/lib/errors";
 import type { InsuranceProvider } from "@/lib/warehouse/types";
-import { supabase } from "@/lib/supabaseClient";
+import { renewWarehousePod } from "@/lib/warehouse/renew";
 
 type WarehouseRenewModalProps = {
   open: boolean;
@@ -102,16 +102,14 @@ export default function WarehouseRenewModal({
     setSaving(true);
 
     const run = async () => {
-      const { error } = await supabase.rpc("warehouse_renew_pod", {
-        p_pod_id: podId,
-        p_new_rate: newRate,
-        p_new_duration_months: newDur,
-        p_new_insurance_provider: insuranceProvider,
-        p_new_insurance_value: insVal,
-        p_new_insurance_idv: idv,
+      await renewWarehousePod({
+        podId,
+        newRate,
+        newDurationMonths: newDur,
+        newInsuranceProvider: insuranceProvider,
+        newInsuranceValue: insVal,
+        newInsuranceIdv: idv,
       });
-
-      if (error) throw error;
     };
 
     try {

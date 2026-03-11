@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import { getErrorMessage } from "@/lib/errors";
 import type { WarehousePodSummary } from "@/lib/warehouse/types";
 import { listWarehousePods } from "@/lib/warehouse/pods";
-import WarehousePodHistoryView from "./WarehousePodLedger";
+import WarehousePodHistoryView from "./Ledger/WarehousePodLedger";
 
 function rowBandClass(b: "green" | "yellow" | "red") {
   if (b === "red")
