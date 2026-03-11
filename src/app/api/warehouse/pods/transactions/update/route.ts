@@ -17,6 +17,8 @@ export async function PATCH(req: Request) {
     title: string;
     note?: string | null;
     tx_date: string; // YYYY-MM-DD
+    last_known_updated_at?: string | null;
+    last_known_created_at: string;
   };
 
   try {
@@ -32,25 +34,40 @@ export async function PATCH(req: Request) {
   const note = body?.note ? String(body.note).trim() : null;
   const txDate = body?.tx_date;
 
+  const lastKnownUpdatedAt =
+    body?.last_known_updated_at == null
+      ? null
+      : String(body.last_known_updated_at).trim();
+
+  const lastKnownCreatedAt = String(body?.last_known_created_at ?? "").trim();
+
   if (!id) return bad("id is required");
-  if (!Number.isFinite(amount) || amount === 0)
+  if (!Number.isFinite(amount) || amount === 0) {
     return bad("amount must be non-zero");
-  if (!Number.isFinite(gstRate) || gstRate < 0)
+  }
+  if (!Number.isFinite(gstRate) || gstRate < 0) {
     return bad("gst_rate must be >= 0");
+  }
   if (!title) return bad("title is required");
   if (!isISODate(txDate)) return bad("tx_date must be YYYY-MM-DD");
+  if (!lastKnownCreatedAt) {
+    return bad("last_known_created_at is required");
+  }
 
   const client = await db.connect();
 
   try {
-    // Enforce payment rules:
-    // - payment => amount must be negative AND gst_rate must be 0
-    // - charge => amount positive
-    // - adjustment => either sign
-    const row = await client.query<{ type: string }>(
-      `select type::text as type from public.warehouse_pod_transactions where id = $1::uuid`,
+    const row = await client.query<{
+      type: string;
+    }>(
+      `
+      select type::text as type
+      from public.warehouse_pod_transactions
+      where id = $1::uuid
+      `,
       [id]
     );
+
     if (row.rowCount === 0) return bad("Transaction not found", 404);
 
     const type = row.rows[0].type;
@@ -59,8 +76,10 @@ export async function PATCH(req: Request) {
       if (amount >= 0) return bad("payment amount must be negative");
       if (gstRate !== 0) return bad("payment gst_rate must be 0");
     }
-    if (type === "charge" && amount <= 0)
+
+    if (type === "charge" && amount <= 0) {
       return bad("charge amount must be positive");
+    }
 
     const upd = await client.query(
       `
@@ -70,14 +89,58 @@ export async function PATCH(req: Request) {
         gst_rate = $3::numeric,
         title = $4::text,
         note = $5::text,
-        tx_date = $6::date
+        tx_date = $6::date,
+        updated_at = now()
       where id = $1::uuid
-      returning id
+        and (
+          (
+            $7::text is not null
+            and updated_at::text = $7::text
+          )
+          or
+          (
+            $7::text is null
+            and updated_at is null
+            and created_at::text = $8::text
+          )
+          or
+          (
+            $7::text is null
+            and created_at::text = $8::text
+          )
+        )
+      returning id, updated_at::text as updated_at
       `,
-      [id, amount, gstRate, title, note, txDate]
+      [
+        id,
+        amount,
+        gstRate,
+        title,
+        note,
+        txDate,
+        lastKnownUpdatedAt,
+        lastKnownCreatedAt,
+      ]
     );
 
-    return NextResponse.json({ ok: true, data: { id: upd.rows[0].id } });
+    if (upd.rowCount === 0) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            "This transaction was updated by someone else. Please refresh and try again.",
+        },
+        { status: 409 }
+      );
+    }
+
+    return NextResponse.json({
+      ok: true,
+      data: {
+        id: upd.rows[0].id,
+        updated_at: upd.rows[0].updated_at,
+      },
+    });
   } catch (e: unknown) {
     const msg = e instanceof Error ? e.message : "Failed to update transaction";
     return NextResponse.json({ ok: false, error: msg }, { status: 500 });

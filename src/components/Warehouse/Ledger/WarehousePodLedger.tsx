@@ -25,6 +25,17 @@ import {
   closeWarehouseCycle,
 } from "@/lib/warehouse/ledger";
 
+import {
+  round2,
+  fmtINR,
+  sortTxAsc,
+  toLedgerVMRows,
+  groupLedgerRowsByMonth,
+  computeLedgerTotals,
+  buildEditDraftMap,
+  type LedgerTxVM,
+} from "@/lib/warehouse/ledgerMath";
+
 import WarehouseTxModal from "./WarehouseTxModal";
 import WarehouseRateChangeModal from "./WarehouseRateChangeModal";
 import WarehouseRenewModal from "./WarehouseRenewModal";
@@ -33,17 +44,6 @@ import WarehouseLedgerTotals from "./WarehouseLedgerTotals";
 import WarehouseCurrentLedgerTable from "./WarehouseCurrentLedgerTable";
 import WarehouseCycleHistory from "./WarehouseCycleHistory";
 
-type MonthKey = string;
-
-type TxVM = WarehouseTxn & {
-  _amountAbs: number;
-  _isDebit: boolean;
-  _gstRate: number;
-  _gstAmount: number;
-  _debitTotal: number;
-  _creditAmount: number;
-};
-
 type EditDraft = {
   amount: string;
   gst_rate: string;
@@ -51,48 +51,6 @@ type EditDraft = {
   note: string;
   tx_date: string;
 };
-
-function round2(n: number) {
-  return Math.round((n + Number.EPSILON) * 100) / 100;
-}
-
-function fmtINR(n: number) {
-  return `₹${round2(n).toFixed(2)}`;
-}
-
-function toMonthKeyFromISODate(isoDate: string): MonthKey {
-  return `${isoDate.slice(0, 7)}-01`;
-}
-
-function computeVM(t: WarehouseTxn): TxVM {
-  const amtSigned = Number(t.amount) || 0;
-  const isDebit = amtSigned > 0;
-
-  const amountAbs = round2(Math.abs(amtSigned));
-  const gstRate = isDebit ? round2(Number(t.gst_rate ?? 0) || 0) : 0;
-
-  const gstAmount = isDebit ? round2(amountAbs * (gstRate / 100)) : 0;
-  const debitTotal = isDebit ? round2(amountAbs + gstAmount) : 0;
-  const creditAmount = !isDebit ? amountAbs : 0;
-
-  return {
-    ...t,
-    _amountAbs: amountAbs,
-    _isDebit: isDebit,
-    _gstRate: gstRate,
-    _gstAmount: gstAmount,
-    _debitTotal: debitTotal,
-    _creditAmount: creditAmount,
-  };
-}
-
-function sortTxAsc(a: WarehouseTxn, b: WarehouseTxn) {
-  const d = a.tx_date.localeCompare(b.tx_date);
-  if (d !== 0) return d;
-  const ca = String(a.created_at ?? "");
-  const cb = String(b.created_at ?? "");
-  return ca.localeCompare(cb);
-}
 
 export default function WarehousePodLedgerView({
   pod,
@@ -190,19 +148,7 @@ export default function WarehousePodLedgerView({
       const rows = await fetchCycleTransactions(cycleToShow);
       const sorted = [...rows].sort(sortTxAsc);
       setTx(sorted);
-
-      const init: Record<string, EditDraft> = {};
-      for (const r of sorted) {
-        const vm = computeVM(r);
-        init[r.id] = {
-          amount: vm._amountAbs ? String(vm._amountAbs) : "",
-          gst_rate: vm._isDebit ? String(vm._gstRate) : "0",
-          title: String(r.title ?? "Transaction"),
-          note: String(r.note ?? ""),
-          tx_date: r.tx_date,
-        };
-      }
-      setDrafts(init);
+      setDrafts(buildEditDraftMap(sorted));
 
       if (openCycleId && !allCycles.some((c) => c.id === openCycleId)) {
         setOpenCycleId(null);
@@ -259,56 +205,13 @@ export default function WarehousePodLedgerView({
     });
   }, [tx, drafts]);
 
-  const vmRows = useMemo(() => effectiveRows.map(computeVM), [effectiveRows]);
+  const vmRows = useMemo(() => toLedgerVMRows(effectiveRows), [effectiveRows]);
 
-  const months = useMemo(() => {
-    const map = new Map<MonthKey, TxVM[]>();
+  const months = useMemo(() => groupLedgerRowsByMonth(vmRows), [vmRows]);
 
-    for (const r of vmRows) {
-      const k = toMonthKeyFromISODate(r.tx_date);
-      const list = map.get(k) ?? [];
-      list.push(r);
-      map.set(k, list);
-    }
+  const totals = useMemo(() => computeLedgerTotals(vmRows), [vmRows]);
 
-    for (const [, list] of map) {
-      list.sort(sortTxAsc);
-    }
-
-    const keys = [...map.keys()].sort((a, b) => b.localeCompare(a));
-    return keys.map((k) => ({ monthKey: k, rows: map.get(k) ?? [] }));
-  }, [vmRows]);
-
-  const totals = useMemo(() => {
-    const todayKey = new Date().toISOString().slice(0, 10);
-
-    let totalDebit = 0;
-    let totalCredit = 0;
-    let currentDebit = 0;
-    let currentCredit = 0;
-
-    for (const r of vmRows) {
-      if (r._isDebit) totalDebit += r._debitTotal;
-      else totalCredit += r._creditAmount;
-
-      if (r.tx_date <= todayKey) {
-        if (r._isDebit) currentDebit += r._debitTotal;
-        else currentCredit += r._creditAmount;
-      }
-    }
-
-    const currentDue = round2(currentDebit - currentCredit);
-
-    return {
-      totalDebit: round2(totalDebit),
-      totalCredit: round2(totalCredit),
-      currentDebit: round2(currentDebit),
-      currentCredit: round2(currentCredit),
-      currentDue,
-    };
-  }, [vmRows]);
-
-  const saveRow = async (row: TxVM) => {
+  const saveRow = async (row: LedgerTxVM) => {
     if (isClosedView) {
       toast.error("Closed cycle is read-only");
       return;
@@ -340,13 +243,21 @@ export default function WarehousePodLedgerView({
         title: d.title.trim() ? d.title.trim() : "Transaction",
         note: d.note.trim() ? d.note.trim() : null,
         tx_date: d.tx_date,
+        last_known_updated_at: row.updated_at ?? null,
+        last_known_created_at: row.created_at ?? "",
       };
 
-      await updateWarehouseTransaction(payload);
+      const res = await updateWarehouseTransaction(payload);
 
       setTx((prev) => {
         const next = prev.map((t) =>
-          t.id === row.id ? ({ ...t, ...payload } as WarehouseTxn) : t
+          t.id === row.id
+            ? ({
+                ...t,
+                ...payload,
+                updated_at: res.updated_at ?? t.updated_at ?? null,
+              } as WarehouseTxn)
+            : t
         );
         next.sort(sortTxAsc);
         return next;
@@ -379,7 +290,19 @@ export default function WarehousePodLedgerView({
   };
 
   const handleDownloadStatement = () => {
-    window.open(`/warehouse/statement?podId=${pod.id}`, "_blank");
+    const params = new URLSearchParams({
+      podId: pod.id,
+      name: pod.name ?? "",
+      clientId: pod.client_id ?? "",
+      company: pod.company_name ?? "",
+      contact: pod.contact ?? "",
+      email: pod.email ?? "",
+      location: pod.location_name ?? "",
+      billingStartDate: pod.billing_start_date ?? "",
+      billingInterval: pod.billing_interval ?? "",
+    });
+
+    window.open(`/warehouse/statement?${params.toString()}`, "_blank");
   };
 
   const handleRenewCycle = () => {
@@ -452,6 +375,7 @@ export default function WarehousePodLedgerView({
 
       <WarehouseLedgerTotals
         currentDue={fmtINR(totals.currentDue)}
+        currentDueNumber={totals.currentDue}
         currentDebit={fmtINR(totals.currentDebit)}
         currentCredit={fmtINR(totals.currentCredit)}
         totalCredit={fmtINR(totals.totalCredit)}

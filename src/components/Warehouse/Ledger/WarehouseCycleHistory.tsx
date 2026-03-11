@@ -1,78 +1,13 @@
 "use client";
 
 import type { WarehouseCycle, WarehouseTxn } from "@/lib/warehouse/types";
-
-function round2(n: number) {
-  return Math.round((n + Number.EPSILON) * 100) / 100;
-}
-
-function fmtINR(n: number) {
-  return `₹${round2(n).toFixed(2)}`;
-}
-
-function fmtDate(d?: string | null) {
-  if (!d) return "—";
-
-  const dt = new Date(d);
-  if (Number.isNaN(dt.getTime())) return "—";
-
-  return dt.toLocaleDateString("en-IN", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function sortTxAsc(a: WarehouseTxn, b: WarehouseTxn) {
-  const d = a.tx_date.localeCompare(b.tx_date);
-  if (d !== 0) return d;
-  const ca = String(a.created_at ?? "");
-  const cb = String(b.created_at ?? "");
-  return ca.localeCompare(cb);
-}
-
-function computeCycleTotals(rows: WarehouseTxn[]) {
-  let incurred = 0;
-  let paid = 0;
-
-  for (const t of rows) {
-    const amount = Number(t.amount) || 0;
-    const gstRate = Number(t.gst_rate ?? 0) || 0;
-
-    if (amount > 0) {
-      incurred += amount + amount * (gstRate / 100);
-    } else if (amount < 0) {
-      paid += Math.abs(amount);
-    }
-  }
-
-  return {
-    incurred: round2(incurred),
-    paid: round2(paid),
-    outstanding: round2(incurred - paid),
-  };
-}
-
-function computeVM(t: WarehouseTxn) {
-  const amtSigned = Number(t.amount) || 0;
-  const isDebit = amtSigned > 0;
-
-  const amountAbs = round2(Math.abs(amtSigned));
-  const gstRate = isDebit ? round2(Number(t.gst_rate ?? 0) || 0) : 0;
-  const debitTotal = isDebit
-    ? round2(amountAbs + amountAbs * (gstRate / 100))
-    : 0;
-  const creditAmount = !isDebit ? amountAbs : 0;
-
-  return {
-    ...t,
-    _isDebit: isDebit,
-    _amountAbs: amountAbs,
-    _gstRate: gstRate,
-    _debitTotal: debitTotal,
-    _creditAmount: creditAmount,
-  };
-}
+import {
+  fmtINR,
+  fmtDate,
+  sortTxAsc,
+  computeCycleTotals,
+  toLedgerTxVM,
+} from "@/lib/warehouse/ledgerMath";
 
 export default function WarehouseCycleHistory({
   previousCycles,
@@ -220,7 +155,7 @@ export default function WarehouseCycleHistory({
                               .slice()
                               .sort(sortTxAsc)
                               .map((t) => {
-                                const vm = computeVM(t);
+                                const vm = toLedgerTxVM(t);
 
                                 return (
                                   <tr key={t.id}>

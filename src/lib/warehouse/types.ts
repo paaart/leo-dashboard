@@ -84,6 +84,7 @@ export type WarehousePodSummary = {
 export type WarehouseTxnType = "charge" | "payment" | "adjustment";
 
 export type WarehouseTxn = {
+  updated_at: string | null | undefined;
   id: string;
   pod_id: string;
   cycle_id: string;

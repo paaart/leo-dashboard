@@ -1,17 +1,13 @@
 "use client";
 
-import type { WarehouseTxn } from "@/lib/warehouse/types";
-
-type MonthKey = string;
-
-type TxVM = WarehouseTxn & {
-  _amountAbs: number;
-  _isDebit: boolean;
-  _gstRate: number;
-  _gstAmount: number;
-  _debitTotal: number;
-  _creditAmount: number;
-};
+import {
+  round2,
+  fmtINR,
+  monthLabel,
+  clampNumberString,
+  computeMonthTotals,
+  type LedgerTxVM,
+} from "@/lib/warehouse/ledgerMath";
 
 type EditDraft = {
   amount: string;
@@ -21,28 +17,6 @@ type EditDraft = {
   tx_date: string;
 };
 
-function round2(n: number) {
-  return Math.round((n + Number.EPSILON) * 100) / 100;
-}
-
-function fmtINR(n: number) {
-  return `₹${round2(n).toFixed(2)}`;
-}
-
-function monthLabel(monthKey: MonthKey) {
-  const [y, m] = monthKey.split("-").map(Number);
-  const dt = new Date(y, (m ?? 1) - 1, 1);
-  return dt.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
-}
-
-function clampNumberString(s: string) {
-  if (s.trim() === "") return "";
-  const cleaned = s.replace(/[^\d.]/g, "");
-  const parts = cleaned.split(".");
-  if (parts.length <= 2) return cleaned;
-  return `${parts[0]}.${parts.slice(1).join("")}`;
-}
-
 export default function WarehouseCurrentLedgerTable({
   months,
   drafts,
@@ -51,12 +25,12 @@ export default function WarehouseCurrentLedgerTable({
   updateDraft,
   onSaveRow,
 }: {
-  months: Array<{ monthKey: string; rows: TxVM[] }>;
+  months: Array<{ monthKey: string; rows: LedgerTxVM[] }>;
   drafts: Record<string, EditDraft>;
   cellInput: string;
   savingId: string | null;
   updateDraft: (id: string, patch: Partial<EditDraft>) => void;
-  onSaveRow: (row: TxVM) => Promise<void>;
+  onSaveRow: (row: LedgerTxVM) => Promise<void>;
 }) {
   if (months.length === 0) {
     return (
@@ -69,15 +43,7 @@ export default function WarehouseCurrentLedgerTable({
   return (
     <div className="mt-6 space-y-4">
       {months.map((m) => {
-        const monthDebit = m.rows.reduce(
-          (s, r) => s + (r._isDebit ? r._debitTotal : 0),
-          0
-        );
-        const monthCredit = m.rows.reduce(
-          (s, r) => s + (!r._isDebit ? r._creditAmount : 0),
-          0
-        );
-        const monthNet = round2(monthDebit - monthCredit);
+        const monthTotals = computeMonthTotals(m.rows);
 
         return (
           <section
@@ -91,19 +57,19 @@ export default function WarehouseCurrentLedgerTable({
 
               <div className="flex flex-wrap gap-2 text-sm">
                 <span className="rounded bg-blue-50 px-2 py-1 text-blue-800 dark:bg-blue-900/20 dark:text-blue-200">
-                  Debit: {fmtINR(monthDebit)}
+                  Debit: {fmtINR(monthTotals.debit)}
                 </span>
                 <span className="rounded bg-green-50 px-2 py-1 text-green-800 dark:bg-green-900/20 dark:text-green-200">
-                  Credit: {fmtINR(monthCredit)}
+                  Credit: {fmtINR(monthTotals.credit)}
                 </span>
                 <span
                   className={`rounded px-2 py-1 ${
-                    monthNet > 0
+                    monthTotals.net > 0
                       ? "bg-red-50 text-red-800 dark:bg-red-900/20 dark:text-red-200"
                       : "bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-200"
                   }`}
                 >
-                  Net: {fmtINR(monthNet)}
+                  Net: {fmtINR(monthTotals.net)}
                 </span>
               </div>
             </div>

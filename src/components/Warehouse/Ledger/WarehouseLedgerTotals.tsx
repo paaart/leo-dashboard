@@ -24,26 +24,30 @@ function Stat({
       <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
         {title}
       </div>
+
       <div className={`mt-1 text-2xl font-bold ${toneClass(tone)}`}>
         {value}
       </div>
-      {sub ? (
+
+      {sub && (
         <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
           {sub}
         </div>
-      ) : null}
+      )}
     </div>
   );
 }
 
 export default function WarehouseLedgerTotals({
   currentDue,
+  currentDueNumber,
   currentDebit,
   currentCredit,
   totalCredit,
   totalDebit,
 }: {
   currentDue: string;
+  currentDueNumber: number;
   currentDebit: string;
   currentCredit: string;
   totalCredit: string;
@@ -54,11 +58,7 @@ export default function WarehouseLedgerTotals({
       <Stat
         title="Current Due (as of today)"
         value={currentDue}
-        tone={
-          currentDue.startsWith("₹-") || currentDue === "₹0.00"
-            ? "green"
-            : "red"
-        }
+        tone={currentDueNumber <= 0 ? "green" : "red"}
         sub={`Debit ${currentDebit} • Credit ${currentCredit}`}
       />
 

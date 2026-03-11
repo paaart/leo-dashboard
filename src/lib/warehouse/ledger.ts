@@ -79,7 +79,9 @@ export async function updateWarehouseTransaction(args: {
   tx_date: string;
   title: string;
   note?: string | null;
-}): Promise<void> {
+  last_known_updated_at?: string | null;
+  last_known_created_at: string;
+}): Promise<{ id: string; updated_at?: string | null }> {
   const payload = {
     id: args.id,
     amount: args.amount,
@@ -87,13 +89,18 @@ export async function updateWarehouseTransaction(args: {
     tx_date: args.tx_date,
     title: args.title,
     note: args.note ?? null,
+    last_known_updated_at: args.last_known_updated_at ?? null,
+    last_known_created_at: args.last_known_created_at,
   };
 
-  await fetchJson<void>(`/api/warehouse/pods/transactions/update`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
+  return fetchJson<{ id: string; updated_at?: string | null }>(
+    `/api/warehouse/pods/transactions/update`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }
+  );
 }
 
 export async function closeWarehouseCycle(podId: string): Promise<string> {

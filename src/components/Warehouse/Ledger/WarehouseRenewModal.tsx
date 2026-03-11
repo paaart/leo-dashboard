@@ -21,6 +21,11 @@ type WarehouseRenewModalProps = {
   onDone: () => Promise<void> | void;
 };
 
+function parseNonNegativeNumber(value: string) {
+  const n = Number(value);
+  return Number.isFinite(n) && n >= 0 ? n : NaN;
+}
+
 export default function WarehouseRenewModal({
   open,
   podId,
@@ -74,50 +79,52 @@ export default function WarehouseRenewModal({
 
   const save = async () => {
     const newRate = Number(rate);
-    const newDur = Number(durationMonths);
+    const newDurationMonths = Number(durationMonths);
 
-    if (!newRate || Number.isNaN(newRate) || newRate <= 0) {
-      toast.error("Enter valid rate");
+    if (!Number.isFinite(newRate) || newRate <= 0) {
+      toast.error("Enter a valid monthly rate");
       return;
     }
 
-    if (!newDur || Number.isNaN(newDur) || newDur < 1) {
-      toast.error("Enter valid duration");
+    if (!Number.isFinite(newDurationMonths) || newDurationMonths < 1) {
+      toast.error("Enter a valid duration");
       return;
     }
 
-    const insVal = insuranceProvider === "leo" ? Number(insuranceValue) : 0;
-    const idv = insuranceProvider === "leo" ? Number(insuranceIdv) : 0;
+    const newInsuranceValue =
+      insuranceProvider === "leo" ? parseNonNegativeNumber(insuranceValue) : 0;
 
-    if (insuranceProvider === "leo" && (Number.isNaN(insVal) || insVal < 0)) {
-      toast.error("Enter valid insurance value");
+    const newInsuranceIdv =
+      insuranceProvider === "leo" ? parseNonNegativeNumber(insuranceIdv) : 0;
+
+    if (insuranceProvider === "leo" && Number.isNaN(newInsuranceValue)) {
+      toast.error("Enter a valid insurance value");
       return;
     }
 
-    if (insuranceProvider === "leo" && (Number.isNaN(idv) || idv < 0)) {
-      toast.error("Enter valid IDV");
+    if (insuranceProvider === "leo" && Number.isNaN(newInsuranceIdv)) {
+      toast.error("Enter a valid IDV");
       return;
     }
 
     setSaving(true);
 
-    const run = async () => {
-      await renewWarehousePod({
-        podId,
-        newRate,
-        newDurationMonths: newDur,
-        newInsuranceProvider: insuranceProvider,
-        newInsuranceValue: insVal,
-        newInsuranceIdv: idv,
-      });
-    };
-
     try {
-      await toast.promise(run(), {
-        loading: "Renewing...",
-        success: "Renewed ✅",
-        error: (e) => getErrorMessage(e) || "Failed to renew",
-      });
+      await toast.promise(
+        renewWarehousePod({
+          podId,
+          newRate,
+          newDurationMonths,
+          newInsuranceProvider: insuranceProvider,
+          newInsuranceValue,
+          newInsuranceIdv,
+        }),
+        {
+          loading: "Renewing...",
+          success: "Renewed ✅",
+          error: (e) => getErrorMessage(e) || "Failed to renew",
+        }
+      );
 
       await onDone();
     } finally {
@@ -126,7 +133,7 @@ export default function WarehouseRenewModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
       <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl dark:bg-[#1f2933]">
         <div className="mb-4">
           <h3 className="text-lg font-semibold">Renew Client</h3>
@@ -147,6 +154,7 @@ export default function WarehouseRenewModal({
             <input
               className={inputClass}
               type="number"
+              min={0}
               value={rate}
               onChange={(e) => setRate(e.target.value)}
             />
@@ -190,6 +198,7 @@ export default function WarehouseRenewModal({
             <input
               className={inputClass}
               type="number"
+              min={0}
               value={insuranceIdv}
               disabled={insuranceProvider !== "leo"}
               onChange={(e) => setInsuranceIdv(e.target.value)}
@@ -208,6 +217,7 @@ export default function WarehouseRenewModal({
             <input
               className={inputClass}
               type="number"
+              min={0}
               value={insuranceValue}
               disabled={insuranceProvider !== "leo"}
               onChange={(e) => setInsuranceValue(e.target.value)}
@@ -219,7 +229,7 @@ export default function WarehouseRenewModal({
           <button
             onClick={onClose}
             disabled={saving}
-            className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+            className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-70 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
           >
             Cancel
           </button>

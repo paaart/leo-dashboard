@@ -18,7 +18,6 @@ export async function GET(req: Request) {
   const client = await db.connect();
 
   try {
-    // If cycleId not provided, resolve active cycle from podId
     let resolvedCycleId = cycleId;
 
     if (!resolvedCycleId) {
@@ -33,8 +32,10 @@ export async function GET(req: Request) {
         [podId]
       );
 
-      if (cy.rowCount === 0)
+      if (cy.rowCount === 0) {
         return bad("No active cycle found for this pod", 404);
+      }
+
       resolvedCycleId = cy.rows[0].id;
     }
 
@@ -51,7 +52,8 @@ export async function GET(req: Request) {
         tx_month::text as tx_month,
         title,
         note,
-        created_at::text as created_at
+        created_at::text as created_at,
+        updated_at::text as updated_at
       from public.warehouse_pod_transactions
       where cycle_id = $1::uuid
       order by tx_date asc, created_at asc

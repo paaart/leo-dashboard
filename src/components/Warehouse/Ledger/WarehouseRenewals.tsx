@@ -32,7 +32,7 @@ export default function WarehouseRenewals() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#23272f]">
-        <div className="w-12 h-12 border-4 border-t-transparent border-blue-500 rounded-full animate-spin" />
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
       </div>
     );
   }
@@ -103,7 +103,7 @@ export default function WarehouseRenewals() {
 
       {selected && (
         <WarehouseRenewModal
-          open={Boolean(selected)}
+          open={!!selected}
           podId={selected.pod_id}
           clientId={selected.client_id}
           clientName={selected.name}

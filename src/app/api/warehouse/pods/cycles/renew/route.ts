@@ -53,7 +53,6 @@ export async function POST(req: Request) {
   try {
     await client.query("BEGIN");
 
-    // 1) Find active cycle + current pod fields
     const cycleRes = await client.query<{
       cycle_id: string;
       pod_id: string;
@@ -84,9 +83,6 @@ export async function POST(req: Request) {
     const oldCycleId = activeCycle.cycle_id;
     const billingInterval = activeCycle.billing_interval;
 
-    // 2) Calculate old cycle totals
-    // charge/adjustment debit total is GST-inclusive
-    // payment rows are negative
     const totalsRes = await client.query<{
       total_debit_gross: string;
       total_credit_abs: string;
@@ -136,7 +132,6 @@ export async function POST(req: Request) {
     const closingOutstanding =
       closingOutstandingRaw > 0 ? closingOutstandingRaw : 0;
 
-    // 3) Close old cycle
     await client.query(
       `
       update public.warehouse_pod_cycles
@@ -147,11 +142,10 @@ export async function POST(req: Request) {
       [oldCycleId]
     );
 
-    // 4) Compute new cycle dates
     const todayRes = await client.query<{
       cycle_start: string;
       cycle_end: string;
-      next_charge_date: string;
+      next_charge_date: string | null;
     }>(
       `
       with cfg as (
@@ -177,8 +171,8 @@ export async function POST(req: Request) {
       ),
       months as (
         select generate_series(
-          date_trunc('month', current_date)::date,
-          date_trunc('month', current_date + interval '24 months')::date,
+          date_trunc('month', (select cycle_start from cfg))::date,
+          date_trunc('month', (select cycle_end from cycle_calc))::date,
           make_interval(months => (select step_months from cfg))
         )::date as month_start
       ),
@@ -202,6 +196,7 @@ export async function POST(req: Request) {
           from computed
           where candidate > current_date
             and candidate >= (select cycle_start from cycle_calc)
+            and candidate <= (select cycle_end from cycle_calc)
           order by candidate asc
           limit 1
         ) as next_charge_date
@@ -213,7 +208,6 @@ export async function POST(req: Request) {
     const cycleEnd = todayRes.rows[0].cycle_end;
     const nextChargeDate = todayRes.rows[0].next_charge_date ?? null;
 
-    // 5) Create new active cycle
     const newCycleRes = await client.query<{ id: string }>(
       `
       insert into public.warehouse_pod_cycles (
@@ -261,7 +255,6 @@ export async function POST(req: Request) {
 
     const newCycleId = newCycleRes.rows[0].id;
 
-    // 6) Carry forward old outstanding into new cycle
     if (closingOutstanding > 0) {
       await client.query(
         `
@@ -275,7 +268,8 @@ export async function POST(req: Request) {
           tx_month,
           title,
           note,
-          created_at
+          created_at,
+          updated_at
         )
         values (
           $1::uuid,
@@ -287,6 +281,7 @@ export async function POST(req: Request) {
           date_trunc('month', $4::date)::date,
           'Old Outstanding',
           'Carry forward from previous cycle',
+          now(),
           now()
         )
         `,
@@ -294,7 +289,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // 7) Update pod master values to new cycle values
     await client.query(
       `
       update public.warehouse_pods

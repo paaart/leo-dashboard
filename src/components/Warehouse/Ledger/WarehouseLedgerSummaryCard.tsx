@@ -4,23 +4,7 @@ import type {
   WarehousePodSummary,
   WarehouseCycle,
 } from "@/lib/warehouse/types";
-
-function fmtDate(d?: string | null) {
-  if (!d) return "—";
-
-  const dt = new Date(d);
-  if (Number.isNaN(dt.getTime())) return "—";
-
-  return dt.toLocaleDateString("en-IN", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
-
-function fmtINR(n?: number | null) {
-  return `₹${Number(n ?? 0).toFixed(2)}`;
-}
+import { fmtDate, fmtINR } from "@/lib/warehouse/ledgerMath";
 
 function LabelValue({ label, value }: { label: string; value: string }) {
   return (
