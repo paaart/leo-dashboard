@@ -156,15 +156,14 @@ export default function WarehouseLedgerSummaryCard({
             >
               {closingCycle ? "Closing..." : "Close Cycle"}
             </button>
+            <button
+              onClick={onRenewCycle}
+              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              Renew Cycle
+            </button>
           </>
         )}
-
-        <button
-          onClick={onRenewCycle}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-        >
-          Renew Cycle
-        </button>
 
         <button
           onClick={onEditClient}
