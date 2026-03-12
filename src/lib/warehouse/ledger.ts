@@ -132,3 +132,36 @@ export async function applyMidCycleRateChange(args: {
     body: JSON.stringify(args),
   });
 }
+
+export async function updateWarehouseClient(args: {
+  podId: string;
+  name: string;
+  email?: string | null;
+  contact: string;
+}): Promise<{
+  id: string;
+  name: string;
+  email?: string | null;
+  contact: string;
+  updated_at?: string | null;
+}> {
+  const res = await fetch("/api/warehouse/pods/update-client", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      podId: args.podId,
+      name: args.name,
+      email: args.email ?? null,
+      contact: args.contact,
+    }),
+    cache: "no-store",
+  });
+
+  const json = await res.json();
+
+  if (!res.ok || !json.ok || !json.data) {
+    throw new Error(json.error || `Request failed (${res.status})`);
+  }
+
+  return json.data;
+}

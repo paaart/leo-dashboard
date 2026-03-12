@@ -43,6 +43,8 @@ import WarehouseLedgerSummaryCard from "./WarehouseLedgerSummaryCard";
 import WarehouseLedgerTotals from "./WarehouseLedgerTotals";
 import WarehouseCurrentLedgerTable from "./WarehouseCurrentLedgerTable";
 import WarehouseCycleHistory from "./WarehouseCycleHistory";
+import EditClientModal from "./EditClientModal";
+import CloseCycleConfirmModal from "./CloseCycleConfirmModal";
 
 type EditDraft = {
   amount: string;
@@ -66,6 +68,8 @@ export default function WarehousePodLedgerView({
   const [openPay, setOpenPay] = useState(false);
   const [openRate, setOpenRate] = useState(false);
   const [openRenew, setOpenRenew] = useState(false);
+  const [openEditClient, setOpenEditClient] = useState(false);
+  const [openCloseConfirm, setOpenCloseConfirm] = useState(false);
 
   const [drafts, setDrafts] = useState<Record<string, EditDraft>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
@@ -310,7 +314,7 @@ export default function WarehousePodLedgerView({
   };
 
   const handleEditClient = () => {
-    toast("Edit Client Details UI/API can be connected next");
+    setOpenEditClient(true);
   };
 
   if (loading) {
@@ -359,7 +363,7 @@ export default function WarehousePodLedgerView({
         onRecordPayment={() => setOpenPay(true)}
         onAddTransaction={() => setOpenTx(true)}
         onRateChange={() => setOpenRate(true)}
-        onCloseCycle={() => void handleCloseCycle()}
+        onCloseCycle={() => setOpenCloseConfirm(true)}
         onRenewCycle={handleRenewCycle}
         onEditClient={handleEditClient}
         closingCycle={closingCycle}
@@ -497,6 +501,30 @@ export default function WarehousePodLedgerView({
           });
           toast.success("Payment recorded");
           await load();
+        }}
+      />
+
+      <EditClientModal
+        open={openEditClient}
+        podId={pod.id}
+        defaultName={pod.name}
+        defaultEmail={pod.email ?? ""}
+        defaultContact={pod.contact}
+        onClose={() => setOpenEditClient(false)}
+        onDone={async () => {
+          setOpenEditClient(false);
+          await load();
+        }}
+      />
+
+      <CloseCycleConfirmModal
+        open={openCloseConfirm}
+        closing={closingCycle}
+        clientName={pod.name}
+        onClose={() => setOpenCloseConfirm(false)}
+        onConfirm={async () => {
+          await handleCloseCycle();
+          setOpenCloseConfirm(false);
         }}
       />
     </div>
