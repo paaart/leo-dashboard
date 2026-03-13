@@ -93,3 +93,19 @@ export async function fetchActiveCycleIdOrThrow(
   if (!active?.id) throw new Error("No active cycle found for this pod.");
   return active.id;
 }
+
+export async function deleteWarehousePod(podId: string): Promise<void> {
+  const res = await fetch(
+    `/api/warehouse/pods/delete?podId=${encodeURIComponent(podId)}`,
+    {
+      method: "DELETE",
+      cache: "no-store",
+    }
+  );
+
+  const json = await res.json();
+
+  if (!res.ok || !json.ok) {
+    throw new Error(json.error || `Request failed (${res.status})`);
+  }
+}

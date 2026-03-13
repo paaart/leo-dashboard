@@ -4,14 +4,16 @@ import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { getErrorMessage } from "@/lib/errors";
 import type { WarehousePodSummary } from "@/lib/warehouse/types";
-import { listWarehousePods } from "@/lib/warehouse/pods";
+import { listWarehousePods, deleteWarehousePod } from "@/lib/warehouse/pods";
 import WarehousePodHistoryView from "./Ledger/WarehousePodLedger";
 
 function rowBandClass(b: "green" | "yellow" | "red") {
-  if (b === "red")
+  if (b === "red") {
     return "bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30";
-  if (b === "yellow")
+  }
+  if (b === "yellow") {
     return "bg-yellow-50 dark:bg-yellow-900/20 hover:bg-yellow-100 dark:hover:bg-yellow-900/30";
+  }
   return "bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30";
 }
 
@@ -20,6 +22,7 @@ export default function WarehouseActivePods() {
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<WarehousePodSummary | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -56,6 +59,31 @@ export default function WarehouseActivePods() {
     () => filtered.reduce((sum, r) => sum + (Number(r.total_due) || 0), 0),
     [filtered]
   );
+
+  const handleDelete = async (row: WarehousePodSummary) => {
+    const ok = window.confirm(
+      `Delete "${row.name}"?\n\nThis will permanently remove the pod and related cycle/transaction data.`
+    );
+
+    if (!ok) return;
+
+    setDeletingId(row.id);
+
+    try {
+      await deleteWarehousePod(row.id);
+      toast.success("Pod deleted");
+
+      setRows((prev) => prev.filter((x) => x.id !== row.id));
+
+      if (selected?.id === row.id) {
+        setSelected(null);
+      }
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err) || "Failed to delete pod");
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   const inputClass =
     "w-full md:w-[520px] p-2 border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-400";
@@ -114,7 +142,7 @@ export default function WarehouseActivePods() {
         <p className="text-gray-600 dark:text-gray-300">No pods found.</p>
       ) : (
         <div className="overflow-auto">
-          <table className="min-w-245 w-full border border-gray-200 dark:border-gray-700 rounded">
+          <table className="min-w-260 w-full border border-gray-200 dark:border-gray-700 rounded">
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
                 <th className="p-2 text-left">Client</th>
@@ -123,6 +151,7 @@ export default function WarehouseActivePods() {
                 <th className="p-2 text-left">Next Charge</th>
                 <th className="p-2 text-left">Next Payment</th>
                 <th className="p-2 text-left">Total Due</th>
+                <th className="p-2 text-right">Action</th>
               </tr>
             </thead>
 
@@ -166,6 +195,20 @@ export default function WarehouseActivePods() {
 
                   <td className="p-2 font-semibold text-blue-700 dark:text-blue-300">
                     ₹{Number(r.total_due).toFixed(2)}
+                  </td>
+
+                  <td className="p-2 text-right">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void handleDelete(r);
+                      }}
+                      disabled={deletingId === r.id}
+                      className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-70"
+                    >
+                      {deletingId === r.id ? "Deleting..." : "Delete"}
+                    </button>
                   </td>
                 </tr>
               ))}
