@@ -95,8 +95,9 @@ export async function POST(req: Request) {
   const modeOfPayment = (body.mode_of_payment ?? "").trim() || null;
 
   const oldOutstanding = Number(body.old_outstanding ?? 0);
-  if (!Number.isFinite(oldOutstanding) || oldOutstanding < 0)
-    return bad("old_outstanding must be >= 0");
+  if (!Number.isFinite(oldOutstanding)) {
+    return bad("old_outstanding must be a valid number");
+  }
 
   let insuranceValue = Number(body.insurance_value ?? 0);
   let insuranceIdv = Number(body.insurance_idv ?? 0);
@@ -270,30 +271,45 @@ export async function POST(req: Request) {
     const cycleEnd = cycleRes.rows[0].cycle_end; // string YYYY-MM-DD
 
     // 8) Opening outstanding (one-time) — idempotent
-    if (oldOutstanding > 0) {
+    if (oldOutstanding !== 0) {
+      const isDebit = oldOutstanding > 0;
+
       await client.query(
         `
         insert into public.warehouse_pod_transactions (
           pod_id, cycle_id, type, amount, gst_rate,
-          tx_date, tx_month, title, note, created_at
+          tx_date, tx_month, title, note, created_at, updated_at
         )
         select
-          $1, $2,
-          'charge'::warehouse_tx_type,
-          $3, 0,
-          $4::date,
-          date_trunc('month', $4::date)::date,
-          'Opening outstanding',
-          'Migration: Net outstanding before billing start',
+          $1,
+          $2,
+          $3::warehouse_tx_type,
+          $4,
+          0,
+          $5::date,
+          date_trunc('month', $5::date)::date,
+          $6::text,
+          $7::text,
+          now(),
           now()
         where not exists (
           select 1
           from public.warehouse_pod_transactions t
           where t.cycle_id = $2
-            and t.title = 'Opening outstanding'
+            and t.title = $6::text
         )
         `,
-        [podId, cycleId, oldOutstanding, body.billing_start_date]
+        [
+          podId,
+          cycleId,
+          isDebit ? "charge" : "payment",
+          oldOutstanding, // can be negative for payment
+          body.billing_start_date,
+          isDebit ? "Opening outstanding" : "Opening advance",
+          isDebit
+            ? "Migration: Net outstanding before billing start"
+            : "Migration: Advance balance before billing start",
+        ]
       );
     }
 

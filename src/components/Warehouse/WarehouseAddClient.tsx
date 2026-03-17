@@ -63,6 +63,12 @@ export default function WarehouseAddClient() {
       if (/^\d*\.?\d*$/.test(value)) setter(value);
     };
 
+  const signedNumericOnly =
+    (setter: (v: string) => void) => (e: ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      if (/^-?\d*\.?\d*$/.test(value)) setter(value);
+    };
+
   useEffect(() => {
     const fetchOptions = async () => {
       try {
@@ -111,8 +117,8 @@ export default function WarehouseAddClient() {
       return;
     }
 
-    if (oldOutstanding && Number.isNaN(Number(oldOutstanding))) {
-      toast.error("Old outstanding must be a number");
+    if (oldOutstanding.trim() !== "" && Number.isNaN(Number(oldOutstanding))) {
+      toast.error("Opening balance must be a valid number");
       return;
     }
 
@@ -382,15 +388,19 @@ export default function WarehouseAddClient() {
             />
           </Field>
 
-          <Field label="Old outstanding (₹)">
+          <Field label="Opening balance (₹)">
             <input
               className={inputClass}
               type="text"
               inputMode="decimal"
               value={oldOutstanding}
-              onChange={numericOnly(setOldOutstanding)}
-              placeholder="Optional (previous dues)"
+              onChange={signedNumericOnly(setOldOutstanding)}
+              placeholder="Use negative for advance, e.g. -5000"
             />
+            <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
+              Positive means customer owes money. Negative means customer has
+              advance balance.
+            </p>
           </Field>
 
           <Field label="Mode of payment">
