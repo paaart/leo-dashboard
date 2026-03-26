@@ -18,5 +18,4 @@ export const db =
     ssl: { rejectUnauthorized: false },
   });
 
-console.log("SUPABASE_DB_URL =", process.env.SUPABASE_DB_URL);
 if (process.env.NODE_ENV !== "production") global.__pgPool = db;
