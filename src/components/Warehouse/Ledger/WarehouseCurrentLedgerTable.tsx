@@ -81,7 +81,7 @@ export default function WarehouseCurrentLedgerTable({
                     <th className="w-32 p-2 text-left text-sm">Date</th>
                     <th className="p-2 text-left text-sm">Title</th>
                     <th className="p-2 text-left text-sm">Note</th>
-                    <th className="w-28 p-2 text-right text-sm">Debit Amt</th>
+                    <th className="w-28 p-2 text-right text-sm">Amt</th>
                     <th className="w-24 p-2 text-right text-sm">GST %</th>
                     <th className="w-32 p-2 text-right text-sm">Debit Total</th>
                     <th className="w-28 p-2 text-right text-sm">Credit</th>
