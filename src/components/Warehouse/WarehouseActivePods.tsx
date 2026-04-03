@@ -119,6 +119,14 @@ export default function WarehouseActivePods() {
               ₹{totalDueAll.toFixed(2)}
             </p>
           </div>
+          <div className="rounded-lg bg-gray-100 dark:bg-gray-700 px-4 py-2 shadow-sm">
+            <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-300">
+              Total Entries
+            </p>
+            <p className="text-lg font-bold text-gray-900 dark:text-white">
+              {filtered.length}
+            </p>
+          </div>
 
           <button
             onClick={() => void load()}
