@@ -145,6 +145,7 @@ export default function WarehouseActivePods() {
           <table className="min-w-260 w-full border border-gray-200 dark:border-gray-700 rounded">
             <thead className="bg-gray-50 dark:bg-gray-800">
               <tr>
+                <th className="p-2 text-left">S.No.</th>
                 <th className="p-2 text-left">Client</th>
                 <th className="p-2 text-left">Company</th>
                 <th className="p-2 text-left">Location</th>
@@ -156,12 +157,15 @@ export default function WarehouseActivePods() {
             </thead>
 
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {filtered.map((r) => (
+              {filtered.map((r, index) => (
                 <tr
                   key={r.id}
                   onClick={() => setSelected(r)}
                   className={`cursor-pointer ${rowBandClass(r.severity_band)}`}
                 >
+                  <td className="p-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {index + 1}
+                  </td>
                   <td className="p-2">
                     <div className="font-medium text-gray-900 dark:text-white">
                       {r.name}
