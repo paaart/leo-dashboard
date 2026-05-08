@@ -1,5 +1,6 @@
 "use client";
 
+import { displayTransactionTitle } from "@/lib/utils";
 import {
   round2,
   fmtINR,
@@ -22,8 +23,10 @@ export default function WarehouseCurrentLedgerTable({
   drafts,
   cellInput,
   savingId,
+  deletingTxId,
   updateDraft,
   onSaveRow,
+  onDeleteRow,
 }: {
   months: Array<{ monthKey: string; rows: LedgerTxVM[] }>;
   drafts: Record<string, EditDraft>;
@@ -31,6 +34,8 @@ export default function WarehouseCurrentLedgerTable({
   savingId: string | null;
   updateDraft: (id: string, patch: Partial<EditDraft>) => void;
   onSaveRow: (row: LedgerTxVM) => Promise<void>;
+  deletingTxId: string | null;
+  onDeleteRow: (row: LedgerTxVM) => Promise<void> | void;
 }) {
   if (months.length === 0) {
     return (
@@ -124,7 +129,7 @@ export default function WarehouseCurrentLedgerTable({
                         <td className="p-2 min-w-52">
                           <input
                             className={cellInput}
-                            value={d.title}
+                            value={displayTransactionTitle(d.title)}
                             onChange={(e) =>
                               updateDraft(r.id, { title: e.target.value })
                             }
@@ -181,13 +186,24 @@ export default function WarehouseCurrentLedgerTable({
                         </td>
 
                         <td className="p-2 text-right">
-                          <button
-                            onClick={() => void onSaveRow(r)}
-                            disabled={isSaving}
-                            className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
-                          >
-                            {isSaving ? "Saving…" : "Save"}
-                          </button>
+                          <div className="flex justify-end gap-2">
+                            <button
+                              onClick={() => void onSaveRow(r)}
+                              disabled={isSaving || deletingTxId === r.id}
+                              className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+                            >
+                              {isSaving ? "Saving…" : "Save"}
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => void onDeleteRow(r)}
+                              disabled={isSaving || deletingTxId === r.id}
+                              className="rounded bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60"
+                            >
+                              {deletingTxId === r.id ? "Deleting…" : "Delete"}
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );

@@ -23,6 +23,7 @@ import {
   updateWarehouseTransaction,
   applyMidCycleRateChange,
   closeWarehouseCycle,
+  deleteWarehouseTransaction,
 } from "@/lib/warehouse/ledger";
 
 import {
@@ -74,6 +75,7 @@ export default function WarehousePodLedgerView({
   const [drafts, setDrafts] = useState<Record<string, EditDraft>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
   const [closingCycle, setClosingCycle] = useState(false);
+  const [deletingTxId, setDeletingTxId] = useState<string | null>(null);
 
   const [cycles, setCycles] = useState<WarehouseCycle[]>([]);
   const [activeCycleId, setActiveCycleId] = useState<string | null>(null);
@@ -317,6 +319,38 @@ export default function WarehousePodLedgerView({
     setOpenEditClient(true);
   };
 
+  const deleteRow = async (row: LedgerTxVM) => {
+    if (isClosedView) {
+      toast.error("Closed cycle is read-only");
+      return;
+    }
+
+    const ok = window.confirm(
+      `Delete transaction "${row.title}"?\n\nThis cannot be undone.`
+    );
+
+    if (!ok) return;
+
+    setDeletingTxId(row.id);
+
+    try {
+      await deleteWarehouseTransaction(row.id);
+
+      setTx((prev) => prev.filter((t) => t.id !== row.id));
+      setDrafts((prev) => {
+        const next = { ...prev };
+        delete next[row.id];
+        return next;
+      });
+
+      toast.success("Transaction deleted");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err) || "Failed to delete transaction");
+    } finally {
+      setDeletingTxId(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -392,8 +426,10 @@ export default function WarehousePodLedgerView({
           drafts={drafts}
           cellInput={cellInput}
           savingId={savingId}
+          deletingTxId={deletingTxId}
           updateDraft={updateDraft}
           onSaveRow={saveRow}
+          onDeleteRow={deleteRow}
         />
       ) : (
         <div className="mt-6 rounded-md border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200">

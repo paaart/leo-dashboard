@@ -87,10 +87,10 @@ export default function WarehouseLedgerSummaryCard({
               label="Next Charge"
               value={fmtDate(pod.next_charge_date)}
             />
-            <LabelValue
+            {/* <LabelValue
               label="Next Payment"
               value={fmtDate(pod.next_payment_date)}
-            />
+            /> */}
             <LabelValue
               label="Billing Interval"
               value={pod.billing_interval.replace("_", " ")}

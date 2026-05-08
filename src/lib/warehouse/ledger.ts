@@ -165,3 +165,19 @@ export async function updateWarehouseClient(args: {
 
   return json.data;
 }
+
+export async function deleteWarehouseTransaction(id: string): Promise<void> {
+  const res = await fetch(
+    `/api/warehouse/pods/transactions/delete?id=${encodeURIComponent(id)}`,
+    {
+      method: "DELETE",
+      cache: "no-store",
+    }
+  );
+
+  const json = await res.json();
+
+  if (!res.ok || !json.ok) {
+    throw new Error(json.error || `Request failed (${res.status})`);
+  }
+}

@@ -8,6 +8,7 @@ import {
   computeCycleTotals,
   toLedgerTxVM,
 } from "@/lib/warehouse/ledgerMath";
+import { displayTransactionTitle } from "@/lib/utils";
 
 export default function WarehouseCycleHistory({
   previousCycles,
@@ -163,7 +164,7 @@ export default function WarehouseCycleHistory({
                                       {fmtDate(t.tx_date)}
                                     </td>
                                     <td className="p-2 text-sm text-gray-900 dark:text-white">
-                                      {t.title}
+                                      {displayTransactionTitle(t.title)}
                                     </td>
                                     <td className="p-2 text-sm text-gray-600 dark:text-gray-300">
                                       {t.note ?? "—"}

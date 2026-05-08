@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { fetchPodCycles } from "@/lib/warehouse/pods";
 import { fetchCycleTransactions } from "@/lib/warehouse/ledger";
 import type { WarehouseTxn, WarehouseCycle } from "@/lib/warehouse/types";
@@ -10,6 +10,8 @@ import {
   toLedgerVMRows,
   computeLedgerTotals,
 } from "@/lib/warehouse/ledgerMath";
+
+import { displayTransactionTitle } from "@/lib/utils";
 
 type StatementPodDetails = {
   podId: string;
@@ -27,6 +29,9 @@ export default function WarehouseStatement() {
   const [tx, setTx] = useState<WarehouseTxn[]>([]);
   const [cycle, setCycle] = useState<WarehouseCycle | null>(null);
   const [pod, setPod] = useState<StatementPodDetails | null>(null);
+  const [downloadMode, setDownloadMode] = useState<"internal" | "client">(
+    "internal"
+  );
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -65,6 +70,43 @@ export default function WarehouseStatement() {
   const vmRows = useMemo(() => toLedgerVMRows(tx), [tx]);
   const totals = useMemo(() => computeLedgerTotals(vmRows), [vmRows]);
 
+  const handlePrint = useCallback(() => {
+    document.body.dataset.statementMode = downloadMode;
+
+    requestAnimationFrame(() => {
+      window.print();
+
+      setTimeout(() => {
+        delete document.body.dataset.statementMode;
+      }, 300);
+    });
+  }, [downloadMode]);
+
+  useEffect(() => {
+    const styleId = "warehouse-statement-print-mode-style";
+
+    let style = document.getElementById(styleId) as HTMLStyleElement | null;
+
+    if (!style) {
+      style = document.createElement("style");
+      style.id = styleId;
+
+      style.innerHTML = `
+        @media print {
+          body[data-statement-mode="client"] .internal-only {
+            display: none !important;
+          }
+        }
+      `;
+
+      document.head.appendChild(style);
+    }
+
+    return () => {
+      style?.remove();
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-white p-10 text-black">
       <div className="mx-auto max-w-5xl">
@@ -74,19 +116,52 @@ export default function WarehouseStatement() {
               Warehouse Ledger Statement
             </h1>
 
+            <div className="mb-3 inline-flex rounded-full border border-gray-300 px-3 py-1 text-xs font-semibold uppercase tracking-wide">
+              Statement Preview
+            </div>
+
             <div className="space-y-1 text-sm">
-              <div>Cycle Start: {fmtDate(cycle?.cycle_start)}</div>
-              <div>Cycle End: {fmtDate(cycle?.cycle_end)}</div>
+              <div>Storage Start: {fmtDate(cycle?.cycle_start)}</div>
               <div>Status: {cycle?.status ?? "—"}</div>
             </div>
           </div>
 
-          <button
-            onClick={() => window.print()}
-            className="rounded bg-black px-4 py-2 text-sm font-medium text-white"
-          >
-            Print / Save PDF
-          </button>
+          <div className="flex items-center gap-3 print:hidden">
+            <div className="flex overflow-hidden rounded border border-gray-300 dark:border-gray-700">
+              <button
+                type="button"
+                onClick={() => setDownloadMode("client")}
+                className={[
+                  "px-4 py-2 text-sm font-medium transition",
+                  downloadMode === "client"
+                    ? "bg-blue-600 text-white"
+                    : "bg-white text-black hover:bg-gray-100 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700",
+                ].join(" ")}
+              >
+                Client
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setDownloadMode("internal")}
+                className={[
+                  "border-l border-gray-300 px-4 py-2 text-sm font-medium transition dark:border-gray-700",
+                  downloadMode === "internal"
+                    ? "bg-black text-white"
+                    : "bg-white text-black hover:bg-gray-100 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700",
+                ].join(" ")}
+              >
+                Internal
+              </button>
+            </div>
+
+            <button
+              onClick={handlePrint}
+              className="rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+            >
+              Download PDF
+            </button>
+          </div>
         </div>
 
         <div className="mb-6 grid grid-cols-1 gap-4 border p-4 text-sm md:grid-cols-2">
@@ -99,10 +174,12 @@ export default function WarehouseStatement() {
           </div>
 
           <div className="space-y-1">
-            <div className="text-base font-semibold">Company Details</div>
-            <div>Company: {pod?.company || "—"}</div>
+            <div className="internal-only text-base font-semibold">
+              Company Details
+            </div>
+            <div className="internal-only">Company: {pod?.company || "—"}</div>
             <div>Location: {pod?.location || "—"}</div>
-            <div>Billing Start: {fmtDate(pod?.billingStartDate)}</div>
+            <div>Storage Start: {fmtDate(pod?.billingStartDate)}</div>
             <div>Billing Interval: {pod?.billingInterval || "—"}</div>
           </div>
         </div>
@@ -112,7 +189,9 @@ export default function WarehouseStatement() {
             <tr>
               <th className="p-2 text-left">Date</th>
               <th className="p-2 text-left">Title</th>
-              <th className="p-2 text-left">Note</th>
+
+              <th className="internal-only p-2 text-left">Note</th>
+
               <th className="p-2 text-right">Debit (incl. GST)</th>
               <th className="p-2 text-right">Credit</th>
             </tr>
@@ -122,8 +201,9 @@ export default function WarehouseStatement() {
             {vmRows.map((t) => (
               <tr key={t.id} className="border-t">
                 <td className="p-2">{fmtDate(t.tx_date)}</td>
-                <td className="p-2">{t.title}</td>
-                <td className="p-2">{t.note ?? "—"}</td>
+                <td className="p-2">{displayTransactionTitle(t.title)}</td>
+                <td className="internal-only p-2">{t.note ?? "—"}</td>
+
                 <td className="p-2 text-right">
                   {t._isDebit ? fmtINR(t._debitTotal) : "—"}
                 </td>
