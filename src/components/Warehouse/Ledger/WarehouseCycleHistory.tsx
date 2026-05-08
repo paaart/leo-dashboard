@@ -26,7 +26,7 @@ export default function WarehouseCycleHistory({
   return (
     <div className="mt-10">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">Cycle History</h3>
+        <h3 className="text-lg font-semibold">Storage History</h3>
         <span className="text-xs text-gray-500 dark:text-gray-400">
           {previousCycles.length} cycle{previousCycles.length === 1 ? "" : "s"}
         </span>

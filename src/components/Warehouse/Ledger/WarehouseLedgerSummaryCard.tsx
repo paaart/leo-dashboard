@@ -74,7 +74,7 @@ export default function WarehouseLedgerSummaryCard({
               }
             />
             <LabelValue
-              label="Cycle Start"
+              label="Storage Start"
               value={fmtDate(
                 currentCycle?.cycle_start ?? pod.billing_start_date
               )}
