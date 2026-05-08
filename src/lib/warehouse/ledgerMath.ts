@@ -83,6 +83,21 @@ export function clampNumberString(s: string): string {
   return `${parts[0]}.${parts.slice(1).join("")}`;
 }
 
+export function clampSignedNumberString(s: string) {
+  if (s.trim() === "") return "";
+
+  const isNegative = s.trim().startsWith("-");
+
+  const cleaned = s.replace(/[^\d.]/g, "");
+
+  const parts = cleaned.split(".");
+
+  const normalized =
+    parts.length <= 2 ? cleaned : `${parts[0]}.${parts.slice(1).join("")}`;
+
+  return `${isNegative ? "-" : ""}${normalized}`;
+}
+
 export function sortTxAsc(a: WarehouseTxn, b: WarehouseTxn): number {
   const d = a.tx_date.localeCompare(b.tx_date);
   if (d !== 0) return d;

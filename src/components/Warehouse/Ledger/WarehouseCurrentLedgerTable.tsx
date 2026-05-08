@@ -6,6 +6,7 @@ import {
   fmtINR,
   monthLabel,
   clampNumberString,
+  clampSignedNumberString,
   computeMonthTotals,
   type LedgerTxVM,
 } from "@/lib/warehouse/ledgerMath";
@@ -155,7 +156,7 @@ export default function WarehouseCurrentLedgerTable({
                             value={d.amount}
                             onChange={(e) =>
                               updateDraft(r.id, {
-                                amount: clampNumberString(e.target.value),
+                                amount: clampSignedNumberString(e.target.value),
                               })
                             }
                           />
