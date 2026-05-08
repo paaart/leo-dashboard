@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 import { getErrorMessage } from "@/lib/errors";
@@ -79,11 +79,11 @@ export default function WarehousePayments() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, fromDate, toDate]);
 
-  const totalPaymentsOnPage = useMemo(() => {
-    return rows.reduce((sum, row) => {
-      return sum + Math.abs(Number(row.amount || 0));
-    }, 0);
-  }, [rows]);
+  // const totalPaymentsOnPage = useMemo(() => {
+  //   return rows.reduce((sum, row) => {
+  //     return sum + Math.abs(Number(row.amount || 0));
+  //   }, 0);
+  // }, [rows]);
 
   const canGoPrev = meta.page > 1;
   const canGoNext = meta.page < meta.totalPages;
@@ -104,14 +104,14 @@ export default function WarehousePayments() {
         </div>
 
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <div className="rounded-lg bg-green-50 px-4 py-3 dark:bg-green-900/20">
+          {/* <div className="rounded-lg bg-green-50 px-4 py-3 dark:bg-green-900/20">
             <div className="text-xs uppercase tracking-wide text-green-700 dark:text-green-300">
               Payments on Page
             </div>
             <div className="text-xl font-bold text-green-700 dark:text-green-200">
               {fmtINR(totalPaymentsOnPage)}
             </div>
-          </div>
+          </div> */}
 
           <div className="rounded-lg bg-gray-100 px-4 py-3 dark:bg-gray-700">
             <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-300">
