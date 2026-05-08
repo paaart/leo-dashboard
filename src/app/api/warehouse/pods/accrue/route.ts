@@ -115,7 +115,13 @@ export async function POST(req: Request) {
           null,
           now()
         from filtered f
-        on conflict (cycle_id, title, tx_month) do nothing
+        where not exists (
+          select 1
+          from public.warehouse_pod_transactions t
+          where t.cycle_id = $3::uuid
+            and t.title = 'Auto charge'
+            and t.tx_month = date_trunc('month', f.tx_date)::date
+        )
         `,
         [
           billingStart, // $1
