@@ -14,12 +14,17 @@ import ManageEmployees from "@/components/LoansAndAdvances/ManageEmployees";
 import WarehouseAddClient from "@/components/Warehouse/WarehouseAddClient";
 import WarehouseActivePods from "@/components/Warehouse/WarehouseActivePods";
 import WarehouseRenewals from "@/components/Warehouse/Ledger/WarehouseRenewals";
+import WarehousePayments from "@/components/Warehouse/WarehousePayments";
+import WarehouseClosedPods from "@/components/Warehouse/WarehouseClosedPods";
 
 type Section =
   | { main: "domestic"; sub?: null }
   | { main: "international"; sub: "calculator" | "history" }
   | { main: "loans"; sub: "create" | "view" | "employees" }
-  | { main: "warehouse"; sub: "add" | "active" | "renewals" };
+  | {
+      main: "warehouse";
+      sub: "add" | "active" | "renewals" | "payments" | "closed";
+    };
 
 export default function Dashboard() {
   const [section, setSection] = useState<Section>({
@@ -61,8 +66,10 @@ export default function Dashboard() {
             return <WarehouseActivePods />;
           case "renewals":
             return <WarehouseRenewals />;
+          case "payments":
+            return <WarehousePayments />;
           default:
-            return <WarehouseActivePods />;
+            return <WarehouseClosedPods />;
         }
 
       default:

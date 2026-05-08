@@ -6,7 +6,10 @@ type Section =
   | { main: "domestic"; sub?: null }
   | { main: "international"; sub: "calculator" | "history" }
   | { main: "loans"; sub: "create" | "view" | "employees" }
-  | { main: "warehouse"; sub: "add" | "active" | "renewals" };
+  | {
+      main: "warehouse";
+      sub: "add" | "active" | "renewals" | "payments" | "closed";
+    };
 
 type SidebarProps = {
   section: Section;
@@ -169,6 +172,32 @@ function SidebarNav({
                 }`}
               >
                 Renewals
+              </button>
+              <button
+                onClick={() => {
+                  setSection({ main: "warehouse", sub: "payments" });
+                  onAnyNavigate?.();
+                }}
+                className={`block w-full rounded px-3 py-1 text-left ${
+                  section.sub === "payments"
+                    ? "bg-gray-200 dark:bg-gray-600"
+                    : "hover:bg-gray-100 dark:hover:bg-gray-700"
+                }`}
+              >
+                Payments
+              </button>
+              <button
+                onClick={() => {
+                  setSection({ main: "warehouse", sub: "closed" });
+                  onAnyNavigate?.();
+                }}
+                className={`block w-full rounded px-3 py-1 text-left ${
+                  section.sub === "closed"
+                    ? "bg-gray-200 dark:bg-gray-600"
+                    : "hover:bg-gray-100 dark:hover:bg-gray-700"
+                }`}
+              >
+                Closed Pods
               </button>
             </div>
           )}

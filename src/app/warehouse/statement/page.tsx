@@ -25,6 +25,12 @@ type StatementPodDetails = {
   billingInterval: string;
 };
 
+const statementFootnotes = [
+  "Monthly Storage Charge is billed from the displayed transaction date and applies to the upcoming billing period, not the previous month.",
+  "Payments and credits are adjusted against the total outstanding balance shown in this statement.",
+  "This statement is generated from the warehouse ledger records available at the time of printing.",
+];
+
 export default function WarehouseStatement() {
   const [tx, setTx] = useState<WarehouseTxn[]>([]);
   const [cycle, setCycle] = useState<WarehouseCycle | null>(null);
@@ -120,8 +126,11 @@ export default function WarehouseStatement() {
               Statement Preview
             </div>
 
-            <div className="space-y-1 text-sm">
-              <div>Storage Start: {fmtDate(cycle?.cycle_start)}</div>
+            <div className="space-y-1 text-sm text-gray-700">
+              <div>
+                Storage start date:{" "}
+                {fmtDate(pod?.billingStartDate ?? cycle?.cycle_start)}
+              </div>
               <div>Status: {cycle?.status ?? "—"}</div>
             </div>
           </div>
@@ -164,7 +173,7 @@ export default function WarehouseStatement() {
           </div>
         </div>
 
-        <div className="mb-6 grid grid-cols-1 gap-4 border p-4 text-sm md:grid-cols-2">
+        <div className="mb-6 grid grid-cols-1 gap-4 rounded-lg border border-gray-300 bg-gray-50 p-4 text-sm md:grid-cols-2">
           <div className="space-y-1">
             <div className="text-base font-semibold">Client Details</div>
             <div>Name: {pod?.name || "—"}</div>
@@ -184,8 +193,8 @@ export default function WarehouseStatement() {
           </div>
         </div>
 
-        <table className="w-full border text-sm">
-          <thead className="bg-gray-100">
+        <table className="w-full overflow-hidden rounded-lg border border-gray-300 text-sm">
+          <thead className="bg-gray-100 text-gray-900">
             <tr>
               <th className="p-2 text-left">Date</th>
               <th className="p-2 text-left">Title</th>
@@ -215,15 +224,38 @@ export default function WarehouseStatement() {
           </tbody>
         </table>
 
-        <div className="mt-6 space-y-1 text-right">
-          <div>Total Debit: {fmtINR(totals.totalDebit)}</div>
-          <div>Total Credit: {fmtINR(totals.totalCredit)}</div>
-          <div className="font-bold">
-            Balance Due: {fmtINR(totals.currentDue)}
+        <div className="mt-6 flex justify-end">
+          <div className="w-full max-w-sm rounded-lg border border-gray-300 bg-gray-50 p-4 text-sm">
+            <div className="flex justify-between gap-4">
+              <span>Total Debit</span>
+              <span className="font-medium">{fmtINR(totals.totalDebit)}</span>
+            </div>
+
+            <div className="mt-1 flex justify-between gap-4">
+              <span>Total Credit</span>
+              <span className="font-medium">{fmtINR(totals.totalCredit)}</span>
+            </div>
+
+            <div className="mt-3 flex justify-between gap-4 border-t border-gray-300 pt-3 text-base font-bold">
+              <span>Balance Due</span>
+              <span>{fmtINR(totals.currentDue)}</span>
+            </div>
           </div>
         </div>
 
-        <div className="mt-10 text-xs text-gray-500">
+        <div className="mt-8 rounded-lg border border-gray-300 bg-gray-50 p-4 text-xs text-gray-700">
+          <div className="mb-2 font-semibold uppercase tracking-wide text-gray-900">
+            Notes
+          </div>
+
+          <ol className="list-decimal space-y-1 pl-4">
+            {statementFootnotes.map((note) => (
+              <li key={note}>{note}</li>
+            ))}
+          </ol>
+        </div>
+
+        <div className="mt-6 text-xs text-gray-500">
           Generated on {new Date().toLocaleDateString("en-IN")}
         </div>
       </div>

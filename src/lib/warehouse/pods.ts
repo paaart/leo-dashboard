@@ -109,3 +109,140 @@ export async function deleteWarehousePod(podId: string): Promise<void> {
     throw new Error(json.error || `Request failed (${res.status})`);
   }
 }
+
+export type WarehousePaymentRow = {
+  id: string;
+  pod_id: string;
+  cycle_id: string | null;
+  pod_name: string;
+  client_id: string | null;
+  company_name: string | null;
+  location_name: string | null;
+  mode_of_payment: string | null;
+  amount: number;
+  tx_date: string;
+  title: string;
+  note: string | null;
+  created_at: string | null;
+};
+
+export type WarehousePaymentsFilters = {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  fromDate?: string;
+  toDate?: string;
+  locationName?: string;
+  modeOfPayment?: string;
+};
+
+export type WarehousePaymentsMeta = {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+};
+
+export async function listWarehousePayments(
+  filters: WarehousePaymentsFilters = {}
+): Promise<{ rows: WarehousePaymentRow[]; meta: WarehousePaymentsMeta }> {
+  const params = new URLSearchParams();
+
+  params.set("page", String(filters.page ?? 1));
+  params.set("pageSize", String(filters.pageSize ?? 50));
+
+  if (filters.search?.trim()) params.set("search", filters.search.trim());
+  if (filters.fromDate) params.set("fromDate", filters.fromDate);
+  if (filters.toDate) params.set("toDate", filters.toDate);
+
+  if (filters.locationName?.trim()) {
+    params.set("locationName", filters.locationName.trim());
+  }
+
+  if (filters.modeOfPayment?.trim()) {
+    params.set("modeOfPayment", filters.modeOfPayment.trim());
+  }
+
+  const res = await fetch(`/api/warehouse/pods/payments?${params.toString()}`, {
+    method: "GET",
+    cache: "no-store",
+  });
+
+  const json = (await res.json()) as {
+    ok: boolean;
+    data?: {
+      rows: WarehousePaymentRow[];
+      meta: WarehousePaymentsMeta;
+    };
+    error?: string;
+  };
+
+  if (!res.ok || !json.ok || !json.data) {
+    throw new Error(json.error || `Request failed (${res.status})`);
+  }
+
+  return json.data;
+}
+
+export type WarehouseClosedPodRow = {
+  id: string;
+  client_id: string | null;
+  name: string;
+  email: string | null;
+  contact: string;
+  company_name: string | null;
+  location_name: string | null;
+  mode_of_payment: string | null;
+  rate: number;
+  billing_interval: string;
+  start_date: string | null;
+  billing_start_date: string | null;
+  closed_at: string | null;
+  final_due: number;
+};
+
+export type WarehouseClosedPodsFilters = {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+};
+
+export type WarehouseClosedPodsMeta = {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+};
+
+export async function listClosedWarehousePods(
+  filters: WarehouseClosedPodsFilters = {}
+): Promise<{ rows: WarehouseClosedPodRow[]; meta: WarehouseClosedPodsMeta }> {
+  const params = new URLSearchParams();
+
+  params.set("page", String(filters.page ?? 1));
+  params.set("pageSize", String(filters.pageSize ?? 50));
+
+  if (filters.search?.trim()) {
+    params.set("search", filters.search.trim());
+  }
+
+  const res = await fetch(`/api/warehouse/pods/closed?${params.toString()}`, {
+    method: "GET",
+    cache: "no-store",
+  });
+
+  const json = (await res.json()) as {
+    ok: boolean;
+    data?: {
+      rows: WarehouseClosedPodRow[];
+      meta: WarehouseClosedPodsMeta;
+    };
+    error?: string;
+  };
+
+  if (!res.ok || !json.ok || !json.data) {
+    throw new Error(json.error || `Request failed (${res.status})`);
+  }
+
+  return json.data;
+}
