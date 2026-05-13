@@ -325,6 +325,13 @@ export default function WarehousePodLedgerView({
       return;
     }
 
+    if (row.title === "Auto charge") {
+      toast.error(
+        "Auto-generated storage charges cannot be deleted. Add an adjustment instead."
+      );
+      return;
+    }
+
     const ok = window.confirm(
       `Delete transaction "${row.title}"?\n\nThis cannot be undone.`
     );

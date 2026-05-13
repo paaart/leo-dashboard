@@ -42,8 +42,8 @@ export async function PATCH(req: Request) {
   const lastKnownCreatedAt = String(body?.last_known_created_at ?? "").trim();
 
   if (!id) return bad("id is required");
-  if (!Number.isFinite(amount) || amount === 0) {
-    return bad("amount must be non-zero");
+  if (!Number.isFinite(amount) || amount < 0) {
+    return bad("amount must be a number >= 0");
   }
   if (!Number.isFinite(gstRate) || gstRate < 0) {
     return bad("gst_rate must be >= 0");
@@ -77,7 +77,7 @@ export async function PATCH(req: Request) {
       if (gstRate !== 0) return bad("payment gst_rate must be 0");
     }
 
-    if (type === "charge" && amount <= 0) {
+    if (type === "charge" && amount < 0) {
       return bad("charge amount must be positive");
     }
 
