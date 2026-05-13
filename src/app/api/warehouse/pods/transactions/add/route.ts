@@ -39,7 +39,7 @@ export async function POST(req: Request) {
   if (!podId) return bad("podId is required");
   if (type !== "charge" && type !== "adjustment")
     return bad("type must be charge|adjustment");
-  if (!Number.isFinite(amount) || amount <= 0) return bad("amount must be > 0");
+  if (!Number.isFinite(amount) || amount < 0) return bad("amount must be > 0");
   if (!Number.isFinite(gstRate) || gstRate < 0)
     return bad("gstRate must be >= 0");
   if (!isISODate(txDate)) return bad("txDate must be YYYY-MM-DD");

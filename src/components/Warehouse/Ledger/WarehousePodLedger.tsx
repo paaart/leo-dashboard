@@ -227,7 +227,7 @@ export default function WarehousePodLedgerView({
     if (!d) return;
 
     const amountAbs = Number(d.amount || 0);
-    if (Number.isNaN(amountAbs) || amountAbs <= 0) {
+    if (Number.isNaN(amountAbs) || amountAbs < 0) {
       toast.error("Amount must be > 0");
       return;
     }

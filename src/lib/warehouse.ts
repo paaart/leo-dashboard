@@ -141,7 +141,7 @@ export async function addWarehouseTransaction(args: {
   title: string;
   note?: string | null;
 }): Promise<void> {
-  if (!args.amount || Number.isNaN(args.amount) || args.amount <= 0) {
+  if (!args.amount || Number.isNaN(args.amount) || args.amount < 0) {
     throw new Error("Amount must be > 0");
   }
 
@@ -178,7 +178,7 @@ export async function recordWarehousePayment(args: {
   title?: string;
   note?: string | null;
 }): Promise<void> {
-  if (!args.amount || Number.isNaN(args.amount) || args.amount <= 0) {
+  if (!args.amount || Number.isNaN(args.amount) || args.amount < 0) {
     throw new Error("Payment amount must be > 0");
   }
 

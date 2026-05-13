@@ -33,7 +33,7 @@ export async function POST(req: Request) {
   const note = body?.note ? String(body.note).trim() : null;
 
   if (!podId) return bad("podId is required");
-  if (!Number.isFinite(amount) || amount <= 0) return bad("amount must be > 0");
+  if (!Number.isFinite(amount) || amount < 0) return bad("amount must be > 0");
   if (!isISODate(txDate)) return bad("txDate must be YYYY-MM-DD");
 
   const client = await db.connect();
