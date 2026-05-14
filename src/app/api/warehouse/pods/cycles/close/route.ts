@@ -55,9 +55,8 @@ export async function POST(req: Request) {
       `
       update public.warehouse_pods
       set status = 'closed'::warehouse_pod_status,
-          next_charge_date = null,
-          next_payment_date = null,
-          updated_at = now()
+      next_charge_date = null,
+      updated_at = now()
       where id = $1::uuid
       `,
       [podId]
