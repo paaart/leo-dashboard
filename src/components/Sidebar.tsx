@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 type Section =
   | { main: "domestic"; sub?: null }
+  | { main: "fuel"; sub?: null }
   | { main: "international"; sub: "calculator" | "history" }
   | { main: "loans"; sub: "create" | "view" | "employees" }
   | {
@@ -114,6 +115,21 @@ function SidebarNav({
           Checking login…
         </div>
       )}
+
+      <button
+        onClick={() => {
+          setSection({ main: "fuel" });
+          setOpen(null);
+          onAnyNavigate?.();
+        }}
+        className={`w-full rounded-md px-3 py-2 text-left transition-colors ${
+          isActive("fuel")
+            ? "bg-gray-300 font-semibold dark:bg-gray-700"
+            : "hover:bg-gray-200 dark:hover:bg-gray-700"
+        }`}
+      >
+        Fuel Tracker
+      </button>
 
       {!authLoading && isLoggedIn && (
         <div>

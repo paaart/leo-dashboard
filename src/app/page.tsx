@@ -16,9 +16,11 @@ import WarehouseActivePods from "@/components/Warehouse/WarehouseActivePods";
 import WarehouseRenewals from "@/components/Warehouse/Ledger/WarehouseRenewals";
 import WarehousePayments from "@/components/Warehouse/WarehousePayments";
 import WarehouseClosedPods from "@/components/Warehouse/WarehouseClosedPods";
+import FuelTrackerPage from "@/features/fuel-tracker/FuelTrackerPage";
 
 type Section =
   | { main: "domestic"; sub?: null }
+  | { main: "fuel"; sub?: null }
   | { main: "international"; sub: "calculator" | "history" }
   | { main: "loans"; sub: "create" | "view" | "employees" }
   | {
@@ -41,6 +43,9 @@ export default function Dashboard() {
     switch (main) {
       case "domestic":
         return <DomesticCalculator />;
+
+      case "fuel":
+        return <FuelTrackerPage />;
 
       case "international":
         if (sub === "history") return <HistoryView />;
