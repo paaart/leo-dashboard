@@ -8,7 +8,6 @@ import { supabase } from "@/lib/supabaseClient";
 import { CreatePodBody, createWarehousePod } from "@/lib/warehouse/pods";
 import type { BillingInterval, InsuranceProvider } from "@/lib/warehouse/types";
 import { PageHeader, SectionCard } from "@/components/shared/DashboardUI";
-import WarehouseSummaryCards from "./WarehouseSummaryCards";
 
 type Option = { id: number; name: string; is_active?: boolean };
 
@@ -210,8 +209,6 @@ export default function WarehouseAddClient() {
           title="Warehouse Management"
           subtitle="Manage warehouse clients, PODs, billing, payments, and storage ledgers."
         />
-
-        <WarehouseSummaryCards />
 
         <SectionCard
           title="Create / Add Client"
