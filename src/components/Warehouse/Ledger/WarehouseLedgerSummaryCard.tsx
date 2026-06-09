@@ -45,7 +45,7 @@ export default function WarehouseLedgerSummaryCard({
   isClosedView: boolean;
 }) {
   return (
-    <section className="mt-4 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-[#1f2933]">
+    <section className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-950">
       <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-700">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="space-y-3">
@@ -128,7 +128,7 @@ export default function WarehouseLedgerSummaryCard({
       <div className="flex flex-wrap gap-2 px-5 py-4">
         <button
           onClick={onRecordPayment}
-          className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+          className="inline-flex min-h-10 items-center justify-center rounded-md bg-green-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700"
         >
           Record Payment
         </button>
@@ -137,14 +137,14 @@ export default function WarehouseLedgerSummaryCard({
           <>
             <button
               onClick={onAddTransaction}
-              className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
+              className="inline-flex min-h-10 items-center justify-center rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
             >
               Add Transaction
             </button>
 
             <button
               onClick={onRateChange}
-              className="rounded-md bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700"
+              className="inline-flex min-h-10 items-center justify-center rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
             >
               Change Rate / Items
             </button>
@@ -152,13 +152,13 @@ export default function WarehouseLedgerSummaryCard({
             <button
               onClick={onCloseCycle}
               disabled={closingCycle}
-              className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-70"
+              className="inline-flex min-h-10 items-center justify-center rounded-md border border-red-200 px-4 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/40"
             >
               {closingCycle ? "Closing..." : "Close Cycle"}
             </button>
             <button
               onClick={onRenewCycle}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              className="inline-flex min-h-10 items-center justify-center rounded-md bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
             >
               Renew Cycle
             </button>
@@ -167,7 +167,7 @@ export default function WarehouseLedgerSummaryCard({
 
         <button
           onClick={onEditClient}
-          className="rounded-md bg-gray-800 px-4 py-2 text-sm font-medium text-white hover:bg-black dark:bg-gray-600 dark:hover:bg-gray-500"
+          className="inline-flex min-h-10 items-center justify-center rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
         >
           Edit Client
         </button>

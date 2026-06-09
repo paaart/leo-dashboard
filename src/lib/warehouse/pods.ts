@@ -184,6 +184,34 @@ export async function listWarehousePayments(
   return json.data;
 }
 
+export async function exportWarehousePaymentsCsv(args: {
+  startDate: string;
+  endDate: string;
+}): Promise<Blob> {
+  const params = new URLSearchParams({
+    startDate: args.startDate,
+    endDate: args.endDate,
+  });
+
+  const res = await fetch(`/api/warehouse/payments/export?${params}`, {
+    method: "GET",
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    const contentType = res.headers.get("content-type") ?? "";
+
+    if (contentType.includes("application/json")) {
+      const json = (await res.json()) as { error?: string };
+      throw new Error(json.error || `Request failed (${res.status})`);
+    }
+
+    throw new Error(`Request failed (${res.status})`);
+  }
+
+  return res.blob();
+}
+
 export type WarehouseClosedPodRow = {
   id: string;
   client_id: string | null;

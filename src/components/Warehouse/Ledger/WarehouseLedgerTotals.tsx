@@ -20,7 +20,7 @@ function Stat({
   sub?: string;
 }) {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-[#1f2933]">
+    <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-950">
       <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
         {title}
       </div>
@@ -54,7 +54,7 @@ export default function WarehouseLedgerTotals({
   totalDebit: string;
 }) {
   return (
-    <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
+    <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
       <Stat
         title="Current Due (as of today)"
         value={currentDue}

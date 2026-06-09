@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
+import { useSelectedLayoutSegment } from "next/navigation";
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
 
@@ -57,6 +58,21 @@ function sectionFromModule(module: DashboardModule): Section {
   }
 }
 
+function moduleFromSegment(segment: string | null): DashboardModule {
+  const modules: DashboardModule[] = [
+    "domestic",
+    "international",
+    "fuel-tracker",
+    "warehouse",
+    "loans",
+    "users",
+  ];
+
+  return modules.includes(segment as DashboardModule)
+    ? (segment as DashboardModule)
+    : "domestic";
+}
+
 function isAdminSection(section: Section) {
   return (
     section.main === "warehouse" ||
@@ -65,24 +81,69 @@ function isAdminSection(section: Section) {
   );
 }
 
-export default function DashboardShell({ module }: { module: DashboardModule }) {
+function ContentLoadingState() {
+  return (
+    <div className="p-4 sm:p-6 lg:p-8">
+      <div className="mx-auto max-w-7xl space-y-6">
+        <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
+          <div className="h-3 w-24 animate-pulse rounded bg-blue-100 dark:bg-blue-950" />
+          <div className="mt-3 h-7 w-64 max-w-full animate-pulse rounded bg-gray-100 dark:bg-gray-800" />
+          <div className="mt-3 h-4 w-full max-w-xl animate-pulse rounded bg-gray-100 dark:bg-gray-800" />
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div
+              key={index}
+              className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-950"
+            >
+              <div className="h-4 w-24 animate-pulse rounded bg-gray-100 dark:bg-gray-800" />
+              <div className="mt-3 h-7 w-32 animate-pulse rounded bg-gray-100 dark:bg-gray-800" />
+              <div className="mt-4 h-3 w-36 animate-pulse rounded bg-gray-100 dark:bg-gray-800" />
+            </div>
+          ))}
+        </div>
+        <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950">
+          <div className="h-5 w-40 animate-pulse rounded bg-gray-100 dark:bg-gray-800" />
+          <div className="mt-5 space-y-3">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <div
+                key={index}
+                className="h-10 animate-pulse rounded bg-gray-100 dark:bg-gray-800"
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function DashboardShell() {
   const { user, loading: authLoading, ready } = useDashboardAuth();
+  const activeModule = moduleFromSegment(useSelectedLayoutSegment());
+  const [isPending, startTransition] = useTransition();
   const [section, setSection] = useState<Section>(() =>
-    sectionFromModule(module)
+    sectionFromModule(activeModule)
   );
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   useEffect(() => {
-    setSection(sectionFromModule(module));
-  }, [module]);
+    startTransition(() => {
+      setSection(sectionFromModule(activeModule));
+    });
+  }, [activeModule]);
 
   const setAllowedSection = (nextSection: Section) => {
     if (user?.role !== "admin" && isAdminSection(nextSection)) {
-      setSection(sectionFromModule(module));
+      startTransition(() => {
+        setSection(sectionFromModule(activeModule));
+      });
       return;
     }
 
-    setSection(nextSection);
+    startTransition(() => {
+      setSection(nextSection);
+    });
   };
 
   const renderContent = () => {
@@ -172,7 +233,9 @@ export default function DashboardShell({ module }: { module: DashboardModule }) 
           role={user.role}
         />
 
-        <main className="flex-1 overflow-y-auto">{renderContent()}</main>
+        <main className="flex-1 overflow-y-auto">
+          {isPending ? <ContentLoadingState /> : renderContent()}
+        </main>
       </div>
     </div>
   );

@@ -10,6 +10,7 @@ import {
   computeMonthTotals,
   type LedgerTxVM,
 } from "@/lib/warehouse/ledgerMath";
+import { EmptyState } from "@/components/shared/DashboardUI";
 
 type EditDraft = {
   amount: string;
@@ -40,39 +41,40 @@ export default function WarehouseCurrentLedgerTable({
 }) {
   if (months.length === 0) {
     return (
-      <p className="mt-6 text-gray-600 dark:text-gray-300">
-        No transactions yet.
-      </p>
+      <EmptyState
+        title="No ledger entries"
+        description="Charges, payments, and adjustments for this cycle will appear here."
+      />
     );
   }
 
   return (
-    <div className="mt-6 space-y-4">
+    <div className="space-y-4">
       {months.map((m) => {
         const monthTotals = computeMonthTotals(m.rows);
 
         return (
           <section
             key={m.monthKey}
-            className="rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-[#1f2933]"
+            className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-950"
           >
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-4 py-3 dark:border-gray-700">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-4 py-3 dark:border-gray-800">
               <div className="font-semibold text-gray-900 dark:text-white">
                 {monthLabel(m.monthKey)}
               </div>
 
               <div className="flex flex-wrap gap-2 text-sm">
-                <span className="rounded bg-blue-50 px-2 py-1 text-blue-800 dark:bg-blue-900/20 dark:text-blue-200">
+                <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300">
                   Debit: {fmtINR(monthTotals.debit)}
                 </span>
-                <span className="rounded bg-green-50 px-2 py-1 text-green-800 dark:bg-green-900/20 dark:text-green-200">
+                <span className="rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700 dark:border-green-900/60 dark:bg-green-950/40 dark:text-green-300">
                   Credit: {fmtINR(monthTotals.credit)}
                 </span>
                 <span
-                  className={`rounded px-2 py-1 ${
+                  className={`rounded-full border px-2.5 py-1 text-xs font-medium ${
                     monthTotals.net > 0
-                      ? "bg-red-50 text-red-800 dark:bg-red-900/20 dark:text-red-200"
-                      : "bg-green-50 text-green-800 dark:bg-green-900/20 dark:text-green-200"
+                      ? "border-red-200 bg-red-50 text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300"
+                      : "border-green-200 bg-green-50 text-green-700 dark:border-green-900/60 dark:bg-green-950/40 dark:text-green-300"
                   }`}
                 >
                   Net: {fmtINR(monthTotals.net)}
@@ -80,22 +82,38 @@ export default function WarehouseCurrentLedgerTable({
               </div>
             </div>
 
-            <div className="overflow-auto">
-              <table className="min-w-275 w-full">
-                <thead className="bg-gray-50 dark:bg-gray-800">
+            <div className="overflow-x-auto">
+              <table className="min-w-[1100px] w-full text-sm">
+                <thead className="bg-gray-50 text-gray-600 dark:bg-gray-900 dark:text-gray-300">
                   <tr>
-                    <th className="w-32 p-2 text-left text-sm">Date</th>
-                    <th className="p-2 text-left text-sm">Title</th>
-                    <th className="p-2 text-left text-sm">Note</th>
-                    <th className="w-28 p-2 text-right text-sm">Amt</th>
-                    <th className="w-24 p-2 text-right text-sm">GST %</th>
-                    <th className="w-32 p-2 text-right text-sm">Debit Total</th>
-                    <th className="w-28 p-2 text-right text-sm">Credit</th>
-                    <th className="w-28 p-2 text-right text-sm">Action</th>
+                    <th className="w-36 border-b border-gray-200 px-3 py-3 text-left font-semibold dark:border-gray-800">
+                      Date
+                    </th>
+                    <th className="border-b border-gray-200 px-3 py-3 text-left font-semibold dark:border-gray-800">
+                      Type
+                    </th>
+                    <th className="border-b border-gray-200 px-3 py-3 text-left font-semibold dark:border-gray-800">
+                      Remarks
+                    </th>
+                    <th className="w-32 border-b border-gray-200 px-3 py-3 text-right font-semibold dark:border-gray-800">
+                      Amount
+                    </th>
+                    <th className="w-24 border-b border-gray-200 px-3 py-3 text-right font-semibold dark:border-gray-800">
+                      GST
+                    </th>
+                    <th className="w-32 border-b border-gray-200 px-3 py-3 text-right font-semibold dark:border-gray-800">
+                      Balance Impact
+                    </th>
+                    <th className="w-28 border-b border-gray-200 px-3 py-3 text-right font-semibold dark:border-gray-800">
+                      Payment
+                    </th>
+                    <th className="w-40 border-b border-gray-200 px-3 py-3 text-right font-semibold dark:border-gray-800">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
 
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
                   {m.rows.map((r) => {
                     const d = drafts[r.id];
                     if (!d) return null;
@@ -114,9 +132,9 @@ export default function WarehouseCurrentLedgerTable({
                     return (
                       <tr
                         key={r.id}
-                        className="hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                        className="bg-white hover:bg-gray-50 dark:bg-gray-950 dark:hover:bg-gray-900"
                       >
-                        <td className="p-2">
+                        <td className="px-3 py-2">
                           <input
                             className={cellInput}
                             type="date"
@@ -127,7 +145,7 @@ export default function WarehouseCurrentLedgerTable({
                           />
                         </td>
 
-                        <td className="p-2 min-w-52">
+                        <td className="min-w-52 px-3 py-2">
                           <input
                             className={cellInput}
                             value={displayTransactionTitle(d.title)}
@@ -138,7 +156,7 @@ export default function WarehouseCurrentLedgerTable({
                           />
                         </td>
 
-                        <td className="p-2 min-w-64">
+                        <td className="min-w-64 px-3 py-2">
                           <input
                             className={cellInput}
                             value={d.note}
@@ -149,7 +167,7 @@ export default function WarehouseCurrentLedgerTable({
                           />
                         </td>
 
-                        <td className="p-2 text-right">
+                        <td className="px-3 py-2 text-right">
                           <input
                             className={cellInput}
                             inputMode="decimal"
@@ -162,7 +180,7 @@ export default function WarehouseCurrentLedgerTable({
                           />
                         </td>
 
-                        <td className="p-2 text-right">
+                        <td className="px-3 py-2 text-right">
                           <input
                             className={`${cellInput} ${
                               r._isDebit ? "" : "opacity-50"
@@ -178,20 +196,20 @@ export default function WarehouseCurrentLedgerTable({
                           />
                         </td>
 
-                        <td className="p-2 text-right font-medium text-blue-700 dark:text-blue-300">
+                        <td className="px-3 py-2 text-right font-semibold tabular-nums text-blue-700 dark:text-blue-300">
                           {r._isDebit ? debitTotal.toFixed(2) : "—"}
                         </td>
 
-                        <td className="p-2 text-right font-medium text-green-700 dark:text-green-300">
+                        <td className="px-3 py-2 text-right font-semibold tabular-nums text-green-700 dark:text-green-300">
                           {!r._isDebit ? creditAmt.toFixed(2) : "—"}
                         </td>
 
-                        <td className="p-2 text-right">
+                        <td className="px-3 py-2 text-right">
                           <div className="flex justify-end gap-2">
                             <button
                               onClick={() => void onSaveRow(r)}
                               disabled={isSaving || deletingTxId === r.id}
-                              className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+                              className="inline-flex min-h-9 items-center justify-center rounded-md bg-blue-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                               {isSaving ? "Saving…" : "Save"}
                             </button>
@@ -200,7 +218,7 @@ export default function WarehouseCurrentLedgerTable({
                               type="button"
                               onClick={() => void onDeleteRow(r)}
                               disabled={isSaving || deletingTxId === r.id}
-                              className="rounded bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60"
+                              className="inline-flex min-h-9 items-center justify-center rounded-md border border-red-200 px-3 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/40"
                             >
                               {deletingTxId === r.id ? "Deleting…" : "Delete"}
                             </button>
@@ -213,7 +231,7 @@ export default function WarehouseCurrentLedgerTable({
               </table>
             </div>
 
-            <div className="px-4 py-2 text-xs text-gray-500 dark:text-gray-400">
+            <div className="border-t border-gray-200 px-4 py-2 text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400">
               Debit Total = Amount + GST. Credit has no GST.
             </div>
           </section>

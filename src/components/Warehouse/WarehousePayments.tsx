@@ -5,10 +5,18 @@ import toast from "react-hot-toast";
 
 import { getErrorMessage } from "@/lib/errors";
 import {
+  exportWarehousePaymentsCsv,
   listWarehousePayments,
   type WarehousePaymentRow,
   type WarehousePaymentsMeta,
 } from "@/lib/warehouse/pods";
+import {
+  EmptyState,
+  LoadingState,
+  PageHeader,
+  SectionCard,
+} from "@/components/shared/DashboardUI";
+import WarehouseSummaryCards from "./WarehouseSummaryCards";
 
 const PAGE_SIZE = 50;
 
@@ -36,6 +44,10 @@ export default function WarehousePayments() {
   const [search, setSearch] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [exportStartDate, setExportStartDate] = useState("");
+  const [exportEndDate, setExportEndDate] = useState("");
+  const [exportError, setExportError] = useState("");
+  const [exporting, setExporting] = useState(false);
   const [page, setPage] = useState(1);
 
   const load = async () => {
@@ -88,45 +100,140 @@ export default function WarehousePayments() {
   const canGoPrev = meta.page > 1;
   const canGoNext = meta.page < meta.totalPages;
 
+  const handleExport = async () => {
+    setExportError("");
+
+    if (!exportStartDate || !exportEndDate) {
+      setExportError("Select both start and end dates to export payments.");
+      return;
+    }
+
+    if (exportStartDate > exportEndDate) {
+      setExportError("Start date must be before or equal to end date.");
+      return;
+    }
+
+    setExporting(true);
+
+    try {
+      const blob = await exportWarehousePaymentsCsv({
+        startDate: exportStartDate,
+        endDate: exportEndDate,
+      });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = `warehouse-payments-${exportStartDate}-to-${exportEndDate}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Warehouse payments CSV downloaded");
+    } catch (err: unknown) {
+      const message =
+        getErrorMessage(err) || "Failed to export warehouse payments";
+      setExportError(message);
+      toast.error(message);
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const inputClass =
-    "w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white";
+    "h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50 dark:placeholder:text-gray-500";
 
   return (
-    <div className="min-h-screen rounded bg-white p-6 shadow dark:bg-[#23272f]">
-      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
-            Payments Made
-          </h2>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-            View warehouse payment entries across clients.
-          </p>
-        </div>
+    <div className="min-h-full bg-gray-50 px-4 py-6 text-gray-950 dark:bg-gray-950 dark:text-gray-50 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-6">
+        <PageHeader
+          eyebrow="Storage"
+          title="Warehouse Management"
+          subtitle="Manage warehouse clients, PODs, billing, payments, and storage ledgers."
+        />
 
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          {/* <div className="rounded-lg bg-green-50 px-4 py-3 dark:bg-green-900/20">
-            <div className="text-xs uppercase tracking-wide text-green-700 dark:text-green-300">
-              Payments on Page
-            </div>
-            <div className="text-xl font-bold text-green-700 dark:text-green-200">
-              {fmtINR(totalPaymentsOnPage)}
-            </div>
-          </div> */}
+        <WarehouseSummaryCards />
 
-          <div className="rounded-lg bg-gray-100 px-4 py-3 dark:bg-gray-700">
-            <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-300">
-              Matching Records
+        <SectionCard
+          title="Export Payment CSV"
+          description="Download warehouse payment transactions for a selected date range."
+          action={
+            <div className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+              Admin export
             </div>
-            <div className="text-xl font-bold text-gray-900 dark:text-white">
-              {meta.total}
+          }
+        >
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-[180px_180px_auto] lg:items-end">
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-gray-800 dark:text-gray-200">
+                Start Date
+              </label>
+              <input
+                aria-label="Export start date"
+                type="date"
+                value={exportStartDate}
+                onChange={(e) => {
+                  setExportStartDate(e.target.value);
+                  setExportError("");
+                }}
+                onInput={(e) => {
+                  setExportStartDate(e.currentTarget.value);
+                  setExportError("");
+                }}
+                className={inputClass}
+              />
             </div>
+
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-gray-800 dark:text-gray-200">
+                End Date
+              </label>
+              <input
+                aria-label="Export end date"
+                type="date"
+                value={exportEndDate}
+                onChange={(e) => {
+                  setExportEndDate(e.target.value);
+                  setExportError("");
+                }}
+                onInput={(e) => {
+                  setExportEndDate(e.currentTarget.value);
+                  setExportError("");
+                }}
+                className={inputClass}
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={() => void handleExport()}
+              disabled={exporting}
+              className="inline-flex min-h-10 items-center justify-center rounded-md bg-blue-600 px-4 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-blue-500 dark:hover:bg-blue-400"
+            >
+              {exporting ? "Preparing CSV..." : "Download CSV"}
+            </button>
           </div>
-        </div>
-      </div>
 
-      <div className="mb-5 grid grid-cols-1 gap-3 lg:grid-cols-[1fr_180px_180px_auto] lg:items-end">
+          {exportError && (
+            <div className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">
+              {exportError}
+            </div>
+          )}
+        </SectionCard>
+
+        <SectionCard
+          title="Payments / Transactions"
+          description="View warehouse payment entries across clients."
+          action={
+            <div className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+              {meta.total} matching records
+            </div>
+          }
+        >
+          <div className="mb-5 grid grid-cols-1 gap-3 lg:grid-cols-[1fr_180px_180px_auto] lg:items-end">
         <div>
-          <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+          <label className="mb-1.5 block text-sm font-medium text-gray-800 dark:text-gray-200">
             Search
           </label>
           <input
@@ -138,7 +245,7 @@ export default function WarehousePayments() {
         </div>
 
         <div>
-          <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+          <label className="mb-1.5 block text-sm font-medium text-gray-800 dark:text-gray-200">
             From Date
           </label>
           <input
@@ -150,7 +257,7 @@ export default function WarehousePayments() {
         </div>
 
         <div>
-          <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+          <label className="mb-1.5 block text-sm font-medium text-gray-800 dark:text-gray-200">
             To Date
           </label>
           <input
@@ -165,55 +272,54 @@ export default function WarehousePayments() {
           type="button"
           onClick={() => void load()}
           disabled={loading}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-70"
+          className="inline-flex min-h-10 items-center justify-center rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
         >
           {loading ? "Loading..." : "Refresh"}
         </button>
       </div>
 
       {loading ? (
-        <div className="flex min-h-80 items-center justify-center">
-          <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
-        </div>
+        <LoadingState label="Loading payments" />
       ) : rows.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-gray-300 p-8 text-center text-sm text-gray-600 dark:border-gray-700 dark:text-gray-400">
-          No payment records found.
-        </div>
+        <EmptyState
+          title="No payment records"
+          description="Warehouse payment transactions will appear here."
+        />
       ) : (
         <>
-          <div className="overflow-auto rounded-lg border border-gray-200 dark:border-gray-700">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-800">
+          <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
+            <table className="min-w-[1040px] w-full text-sm">
+              <thead className="bg-gray-50 text-gray-600 dark:bg-gray-900 dark:text-gray-300">
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">
+                  <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
                     Client
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">
+                  <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
                     Company
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">
+                  <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
                     Location
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">
+                  <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
                     Payment Date
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">
+                  <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
                     Mode
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">
+                  <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
                     Title / Note
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">
+                  <th className="border-b border-gray-200 px-4 py-3 text-right font-semibold dark:border-gray-800">
                     Amount
                   </th>
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-[#23272f]">
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
                 {rows.map((row) => (
                   <tr
                     key={row.id}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-800/40"
+                    className="bg-white hover:bg-gray-50 dark:bg-gray-950 dark:hover:bg-gray-900"
                   >
                     <td className="px-4 py-3">
                       <div className="font-medium text-gray-900 dark:text-white">
@@ -271,7 +377,7 @@ export default function WarehousePayments() {
                 type="button"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={!canGoPrev || loading}
-                className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-300 disabled:opacity-60 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
+                className="inline-flex min-h-10 items-center justify-center rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
               >
                 Previous
               </button>
@@ -280,7 +386,7 @@ export default function WarehousePayments() {
                 type="button"
                 onClick={() => setPage((p) => p + 1)}
                 disabled={!canGoNext || loading}
-                className="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-300 disabled:opacity-60 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
+                className="inline-flex min-h-10 items-center justify-center rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
               >
                 Next
               </button>
@@ -288,6 +394,8 @@ export default function WarehousePayments() {
           </div>
         </>
       )}
+        </SectionCard>
+      </div>
     </div>
   );
 }

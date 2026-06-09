@@ -46,6 +46,7 @@ import WarehouseCurrentLedgerTable from "./WarehouseCurrentLedgerTable";
 import WarehouseCycleHistory from "./WarehouseCycleHistory";
 import EditClientModal from "./EditClientModal";
 import CloseCycleConfirmModal from "./CloseCycleConfirmModal";
+import { LoadingState, PageHeader } from "@/components/shared/DashboardUI";
 
 type EditDraft = {
   amount: string;
@@ -114,7 +115,7 @@ export default function WarehousePodLedgerView({
   const isClosedView = !activeCycleId && !!latestCycle?.id;
 
   const cellInput =
-    "w-full rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-2 py-1 text-sm text-gray-900 dark:text-white";
+    "h-9 w-full rounded-md border border-gray-300 bg-white px-2 text-sm text-gray-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50";
 
   const updateDraft = (id: string, patch: Partial<EditDraft>) => {
     setDrafts((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
@@ -360,42 +361,53 @@ export default function WarehousePodLedgerView({
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
+      <div className="min-h-full bg-gray-50 px-4 py-6 text-gray-950 dark:bg-gray-950 dark:text-gray-50 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl space-y-6">
+          <PageHeader
+            eyebrow="Storage"
+            title="Warehouse Management"
+            subtitle="Manage warehouse clients, PODs, billing, payments, and storage ledgers."
+          />
+          <LoadingState label="Loading warehouse ledger" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen mx-auto rounded bg-white p-8 shadow dark:bg-[#23272f]">
-      <div className="mb-4 flex items-center justify-between gap-3">
+    <div className="min-h-full bg-gray-50 px-4 py-6 text-gray-950 dark:bg-gray-950 dark:text-gray-50 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-6">
+      <PageHeader
+        eyebrow="Storage"
+        title={activeCycle ? "Current Ledger" : "Latest Closed Ledger"}
+        subtitle={`${pod.client_id ?? "-"} - ${pod.name}`}
+        action={
+          <div className="flex flex-wrap items-center gap-2">
         <button
+          type="button"
           onClick={onBack}
-          className="text-sm text-blue-600 hover:underline"
+          className="inline-flex min-h-10 items-center justify-center rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
         >
-          ← Back to Pods
+          Back
         </button>
-
-        <div className="flex items-center gap-2 flex-wrap">
           <button
+            type="button"
             onClick={() => void load()}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            className="inline-flex min-h-10 items-center justify-center rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
           >
             Refresh
           </button>
 
           <button
+            type="button"
             onClick={handleDownloadStatement}
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+            className="inline-flex min-h-10 items-center justify-center rounded-md bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
           >
             Download Statement
           </button>
         </div>
-      </div>
-
-      <h2 className="text-xl font-semibold">
-        {activeCycle ? "Current Cycle Ledger" : "Latest Closed Cycle Ledger"}
-      </h2>
+        }
+      />
 
       <WarehouseLedgerSummaryCard
         pod={pod}
@@ -412,7 +424,7 @@ export default function WarehousePodLedgerView({
       />
 
       {!activeCycle && (
-        <div className="mt-6 rounded-md border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200">
+        <div className="rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800 dark:border-yellow-900/60 dark:bg-yellow-950/40 dark:text-yellow-300">
           This cycle is closed. Ledger is read-only. Payments can still be
           recorded.
         </div>
@@ -439,7 +451,7 @@ export default function WarehousePodLedgerView({
           onDeleteRow={deleteRow}
         />
       ) : (
-        <div className="mt-6 rounded-md border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200">
+        <div className="rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800 dark:border-yellow-900/60 dark:bg-yellow-950/40 dark:text-yellow-300">
           No active cycle. The latest closed cycle is shown below in history
           view. Payments can still be recorded.
         </div>
@@ -570,6 +582,7 @@ export default function WarehousePodLedgerView({
           setOpenCloseConfirm(false);
         }}
       />
+      </div>
     </div>
   );
 }

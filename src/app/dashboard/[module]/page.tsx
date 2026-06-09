@@ -1,7 +1,5 @@
 import { notFound } from "next/navigation";
-import DashboardShell, {
-  type DashboardModule,
-} from "@/components/Dashboard/DashboardShell";
+import type { DashboardModule } from "@/components/Dashboard/DashboardShell";
 
 const modules: DashboardModule[] = [
   "domestic",
@@ -23,5 +21,5 @@ export default async function DashboardModulePage({
     notFound();
   }
 
-  return <DashboardShell module={module as DashboardModule} />;
+  return null;
 }

@@ -6,6 +6,21 @@ import { getErrorMessage } from "@/lib/errors";
 import { fetchRenewalsThisMonth } from "@/lib/warehouse/queries";
 import type { WarehouseRenewalRow } from "@/lib/warehouse/types";
 import WarehouseRenewModal from "./WarehouseRenewModal";
+import {
+  EmptyState,
+  LoadingState,
+  PageHeader,
+  SectionCard,
+} from "@/components/shared/DashboardUI";
+import WarehouseSummaryCards from "../WarehouseSummaryCards";
+
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(value || 0);
+}
 
 export default function WarehouseRenewals() {
   const [rows, setRows] = useState<WarehouseRenewalRow[]>([]);
@@ -31,75 +46,118 @@ export default function WarehouseRenewals() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#23272f]">
-        <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
+      <div className="min-h-full bg-gray-50 px-4 py-6 text-gray-950 dark:bg-gray-950 dark:text-gray-50 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl space-y-6">
+          <PageHeader
+            eyebrow="Storage"
+            title="Warehouse Management"
+            subtitle="Manage warehouse clients, PODs, billing, payments, and storage ledgers."
+          />
+          <LoadingState label="Loading renewals" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto min-h-screen rounded bg-white p-8 shadow dark:bg-[#23272f]">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Renewals (This Month)</h2>
-        <button
-          onClick={() => void load()}
-          className="rounded bg-gray-200 px-3 py-1 text-sm hover:opacity-90 dark:bg-gray-700"
-        >
-          Refresh
-        </button>
-      </div>
+    <div className="min-h-full bg-gray-50 px-4 py-6 text-gray-950 dark:bg-gray-950 dark:text-gray-50 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-6">
+        <PageHeader
+          eyebrow="Storage"
+          title="Warehouse Management"
+          subtitle="Manage warehouse clients, PODs, billing, payments, and storage ledgers."
+        />
 
-      {rows.length === 0 ? (
-        <p className="text-gray-600 dark:text-gray-300">
-          No renewals due this month.
-        </p>
-      ) : (
-        <div className="overflow-auto">
-          <table className="min-w-262.5 w-full rounded border border-gray-200 dark:border-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-800">
+        <WarehouseSummaryCards />
+
+        <SectionCard
+          title="Billing / Auto Charges"
+          description="Review renewals due this month and extend cycles without changing charge logic."
+          action={
+            <button
+              type="button"
+              onClick={() => void load()}
+              className="inline-flex min-h-10 items-center justify-center rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+            >
+              Refresh
+            </button>
+          }
+        >
+          {rows.length === 0 ? (
+            <EmptyState
+              title="No renewals due"
+              description="Warehouse renewals due this month will appear here."
+            />
+          ) : (
+            <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
+              <table className="min-w-[980px] w-full text-sm">
+                <thead className="bg-gray-50 text-gray-600 dark:bg-gray-900 dark:text-gray-300">
               <tr>
-                <th className="p-2 text-left">Client ID</th>
-                <th className="p-2 text-left">Name</th>
-                <th className="p-2 text-left">Contact</th>
-                <th className="p-2 text-left">Location</th>
-                <th className="p-2 text-left">End Date</th>
-                <th className="p-2 text-right">Monthly Rate</th>
-                <th className="p-2 text-left">Insurance</th>
+                <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                  Client
+                </th>
+                <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                  Contact
+                </th>
+                <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                  Location
+                </th>
+                <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                  End Date
+                </th>
+                <th className="border-b border-gray-200 px-4 py-3 text-right font-semibold dark:border-gray-800">
+                  Monthly Rate
+                </th>
+                <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                  Insurance
+                </th>
               </tr>
             </thead>
 
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
               {rows.map((r) => (
                 <tr
                   key={r.pod_id}
-                  className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700"
+                  className="cursor-pointer bg-white hover:bg-gray-50 dark:bg-gray-950 dark:hover:bg-gray-900"
                   onClick={() => setSelected(r)}
                 >
-                  <td className="p-2 font-semibold">{r.client_id}</td>
-                  <td className="p-2">{r.name}</td>
-                  <td className="p-2">{r.contact}</td>
-                  <td className="p-2">{r.location_name ?? "—"}</td>
-                  <td className="p-2">
+                  <td className="px-4 py-3">
+                    <div className="font-medium text-gray-950 dark:text-gray-50">
+                      {r.name}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {r.client_id}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                    {r.contact}
+                  </td>
+                  <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                    {r.location_name ?? "-"}
+                  </td>
+                  <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
                     {new Date(r.end_date).toLocaleDateString("en-IN")}
                   </td>
-                  <td className="p-2 text-right">
-                    ₹{Number(r.rate).toFixed(0)}
+                  <td className="px-4 py-3 text-right font-semibold tabular-nums text-blue-700 dark:text-blue-300">
+                    {formatCurrency(Number(r.rate))}
                   </td>
-                  <td className="p-2">
+                  <td className="px-4 py-3">
                     {r.insurance_provider === "leo" ? (
-                      <span className="font-medium">
-                        Leo (₹{Number(r.insurance_value ?? 0).toFixed(0)})
+                      <span className="inline-flex rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300">
+                        Leo ({formatCurrency(Number(r.insurance_value ?? 0))})
                       </span>
                     ) : (
-                      "—"
+                      "-"
                     )}
                   </td>
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
-      )}
+              </table>
+            </div>
+          )}
+        </SectionCard>
+      </div>
 
       {selected && (
         <WarehouseRenewModal

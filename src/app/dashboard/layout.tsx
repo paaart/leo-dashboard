@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { DashboardAuthProvider } from "@/components/Dashboard/DashboardAuthProvider";
+import DashboardShell from "@/components/Dashboard/DashboardShell";
 
 export default function DashboardLayout({
   children,
@@ -9,6 +10,7 @@ export default function DashboardLayout({
   return (
     <DashboardAuthProvider>
       <div className="min-h-screen bg-gray-50 text-gray-950 dark:bg-gray-950 dark:text-gray-50">
+        <DashboardShell />
         {children}
       </div>
     </DashboardAuthProvider>
