@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
 
@@ -19,6 +18,7 @@ import WarehousePayments from "@/components/Warehouse/WarehousePayments";
 import WarehouseClosedPods from "@/components/Warehouse/WarehouseClosedPods";
 import FuelTrackerPage from "@/features/fuel-tracker/FuelTrackerPage";
 import UserManagement from "@/components/UserManagement/UserManagement";
+import { useDashboardAuth } from "./DashboardAuthProvider";
 
 export type DashboardModule =
   | "domestic"
@@ -38,19 +38,6 @@ export type Section =
       main: "warehouse";
       sub: "add" | "active" | "renewals" | "payments" | "closed";
     };
-
-type AppUser = {
-  id: string;
-  email: string;
-  username: string;
-  fullName: string | null;
-  role: "user" | "admin";
-  status: "active";
-};
-
-type AuthMeResponse =
-  | { ok: true; user: AppUser }
-  | { ok: false; error?: string };
 
 function sectionFromModule(module: DashboardModule): Section {
   switch (module) {
@@ -79,53 +66,15 @@ function isAdminSection(section: Section) {
 }
 
 export default function DashboardShell({ module }: { module: DashboardModule }) {
-  const router = useRouter();
+  const { user, loading: authLoading, ready } = useDashboardAuth();
   const [section, setSection] = useState<Section>(() =>
     sectionFromModule(module)
   );
-  const [user, setUser] = useState<AppUser | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   useEffect(() => {
     setSection(sectionFromModule(module));
   }, [module]);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const loadUser = async () => {
-      setAuthLoading(true);
-
-      try {
-        const res = await fetch("/api/auth/me", {
-          method: "GET",
-          credentials: "include",
-          cache: "no-store",
-        });
-        const json = (await res.json()) as AuthMeResponse;
-
-        if (cancelled) return;
-
-        if (!res.ok || !json.ok) {
-          router.replace("/login");
-          return;
-        }
-
-        setUser(json.user);
-      } catch {
-        if (!cancelled) router.replace("/login");
-      } finally {
-        if (!cancelled) setAuthLoading(false);
-      }
-    };
-
-    void loadUser();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [router]);
 
   const setAllowedSection = (nextSection: Section) => {
     if (user?.role !== "admin" && isAdminSection(nextSection)) {
@@ -199,7 +148,7 @@ export default function DashboardShell({ module }: { module: DashboardModule }) 
     }
   };
 
-  if (authLoading || !user) {
+  if (!ready || !user || (authLoading && !user)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50 text-sm text-gray-600 dark:bg-gray-950 dark:text-gray-300">
         Checking access...
