@@ -1,35 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-type Section =
-  | { main: "domestic"; sub?: null }
-  | { main: "fuel"; sub?: null }
-  | { main: "international"; sub: "calculator" | "history" }
-  | { main: "loans"; sub: "create" | "view" | "employees" }
-  | {
-      main: "warehouse";
-      sub: "add" | "active" | "renewals" | "payments" | "closed";
-    };
+import Link from "next/link";
+import type { Section } from "@/components/Dashboard/DashboardShell";
 
 type SidebarProps = {
   section: Section;
   setSection: (section: Section) => void;
   mobileOpen: boolean;
   onMobileClose: () => void;
+  role: "user" | "admin";
 };
-
-type AuthMeResponse =
-  | { ok: true; user: { id: string; email?: string | null } }
-  | { ok: false; error?: string };
 
 function SidebarNav({
   section,
   setSection,
   open,
   setOpen,
-  isLoggedIn,
-  authLoading,
+  role,
   onAnyNavigate,
 }: {
   section: Section;
@@ -38,30 +26,36 @@ function SidebarNav({
   setOpen: React.Dispatch<
     React.SetStateAction<"international" | "loans" | "warehouse" | null>
   >;
-  isLoggedIn: boolean;
-  authLoading: boolean;
+  role: "user" | "admin";
   onAnyNavigate?: () => void;
 }) {
   const isActive = (main: Section["main"]) => section.main === main;
+  const isAdmin = role === "admin";
+
+  const mainLinkClass = (active: boolean) =>
+    `block w-full rounded-md px-3 py-2 text-left transition-colors ${
+      active
+        ? "bg-gray-300 font-semibold dark:bg-gray-700"
+        : "hover:bg-gray-200 dark:hover:bg-gray-700"
+    }`;
 
   return (
     <nav className="space-y-2">
-      <button
+      <Link
+        href="/dashboard/domestic"
         onClick={() => {
           setSection({ main: "domestic" });
+          setOpen(null);
           onAnyNavigate?.();
         }}
-        className={`w-full rounded-md px-3 py-2 text-left transition-colors ${
-          isActive("domestic")
-            ? "bg-gray-300 font-semibold dark:bg-gray-700"
-            : "hover:bg-gray-200 dark:hover:bg-gray-700"
-        }`}
+        className={mainLinkClass(isActive("domestic"))}
       >
         Domestic Calculator
-      </button>
+      </Link>
 
       <div>
-        <button
+        <Link
+          href="/dashboard/international"
           onClick={() => {
             setSection({ main: "international", sub: "calculator" });
             setOpen((prev) =>
@@ -76,7 +70,7 @@ function SidebarNav({
         >
           <span>International Calculator</span>
           <span>{open === "international" ? "▾" : "▸"}</span>
-        </button>
+        </Link>
 
         {open === "international" && section.main === "international" && (
           <div className="ml-4 mt-1 space-y-1">
@@ -110,30 +104,36 @@ function SidebarNav({
         )}
       </div>
 
-      {authLoading && (
-        <div className="px-3 py-2 text-xs text-gray-500 dark:text-gray-400">
-          Checking login…
-        </div>
-      )}
-
-      <button
+      <Link
+        href="/dashboard/fuel-tracker"
         onClick={() => {
           setSection({ main: "fuel" });
           setOpen(null);
           onAnyNavigate?.();
         }}
-        className={`w-full rounded-md px-3 py-2 text-left transition-colors ${
-          isActive("fuel")
-            ? "bg-gray-300 font-semibold dark:bg-gray-700"
-            : "hover:bg-gray-200 dark:hover:bg-gray-700"
-        }`}
+        className={mainLinkClass(isActive("fuel"))}
       >
         Fuel Tracker
-      </button>
+      </Link>
 
-      {!authLoading && isLoggedIn && (
+      {isAdmin && (
+        <Link
+          href="/dashboard/users"
+          onClick={() => {
+            setSection({ main: "users" });
+            setOpen(null);
+            onAnyNavigate?.();
+          }}
+          className={mainLinkClass(isActive("users"))}
+        >
+          User Management
+        </Link>
+      )}
+
+      {isAdmin && (
         <div>
-          <button
+          <Link
+            href="/dashboard/warehouse"
             onClick={() => {
               setSection({ main: "warehouse", sub: "active" });
               setOpen((prev) => (prev === "warehouse" ? null : "warehouse"));
@@ -146,7 +146,7 @@ function SidebarNav({
           >
             <span>Warehouse</span>
             <span>{open === "warehouse" ? "▾" : "▸"}</span>
-          </button>
+          </Link>
 
           {open === "warehouse" && section.main === "warehouse" && (
             <div className="ml-4 mt-1 space-y-1">
@@ -220,9 +220,10 @@ function SidebarNav({
         </div>
       )}
 
-      {!authLoading && isLoggedIn && (
+      {isAdmin && (
         <div>
-          <button
+          <Link
+            href="/dashboard/loans"
             onClick={() => {
               setSection({ main: "loans", sub: "create" });
               setOpen((prev) => (prev === "loans" ? null : "loans"));
@@ -235,7 +236,7 @@ function SidebarNav({
           >
             <span>Loans / Advances</span>
             <span>{open === "loans" ? "▾" : "▸"}</span>
-          </button>
+          </Link>
 
           {open === "loans" && section.main === "loans" && (
             <div className="ml-4 mt-1 space-y-1">
@@ -291,6 +292,7 @@ export default function Sidebar({
   setSection,
   mobileOpen,
   onMobileClose,
+  role,
 }: SidebarProps) {
   const [open, setOpen] = useState<
     "international" | "loans" | "warehouse" | null
@@ -304,9 +306,6 @@ export default function Sidebar({
       : null
   );
 
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [authLoading, setAuthLoading] = useState(true);
-
   useEffect(() => {
     setOpen(
       section.main === "international"
@@ -319,76 +318,39 @@ export default function Sidebar({
     );
   }, [section.main]);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    const checkAuth = async () => {
-      setAuthLoading(true);
-
-      try {
-        const res = await fetch("/api/auth/me", {
-          method: "GET",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          cache: "no-store",
-        });
-
-        const json: AuthMeResponse = await res.json();
-
-        if (cancelled) return;
-
-        setIsLoggedIn(res.ok && json.ok);
-      } catch {
-        if (cancelled) return;
-        setIsLoggedIn(false);
-      } finally {
-        if (!cancelled) setAuthLoading(false);
-      }
-    };
-
-    void checkAuth();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   return (
     <>
-      <div
-        className={`fixed inset-0 z-40 bg-black/40 transition-opacity md:hidden ${
-          mobileOpen ? "opacity-100" : "pointer-events-none opacity-0"
-        }`}
-        onClick={onMobileClose}
-      />
-
-      <aside
-        className={`fixed left-0 top-0 z-50 h-full w-64 transform bg-gray-100 p-6 text-gray-900 transition-transform dark:bg-gray-800 dark:text-white md:hidden ${
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <div className="mb-4 flex items-center justify-between">
-          <span className="font-semibold">Menu</span>
-          <button
-            type="button"
+      {mobileOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/40 md:hidden"
             onClick={onMobileClose}
-            className="rounded px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700"
-            aria-label="Close sidebar"
-          >
-            ✕
-          </button>
-        </div>
+          />
 
-        <SidebarNav
-          section={section}
-          setSection={setSection}
-          open={open}
-          setOpen={setOpen}
-          isLoggedIn={isLoggedIn}
-          authLoading={authLoading}
-          onAnyNavigate={onMobileClose}
-        />
-      </aside>
+          <aside className="fixed left-0 top-0 z-50 h-full w-64 bg-gray-100 p-6 text-gray-900 dark:bg-gray-800 dark:text-white md:hidden">
+            <div className="mb-4 flex items-center justify-between">
+              <span className="font-semibold">Menu</span>
+              <button
+                type="button"
+                onClick={onMobileClose}
+                className="rounded px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700"
+                aria-label="Close sidebar"
+              >
+                ✕
+              </button>
+            </div>
+
+            <SidebarNav
+              section={section}
+              setSection={setSection}
+              open={open}
+              setOpen={setOpen}
+              role={role}
+              onAnyNavigate={onMobileClose}
+            />
+          </aside>
+        </>
+      )}
 
       <aside className="sticky top-20 hidden h-[calc(100vh-5rem)] w-64 bg-gray-100 p-6 text-gray-900 dark:bg-gray-800 dark:text-white md:block">
         <SidebarNav
@@ -396,8 +358,7 @@ export default function Sidebar({
           setSection={setSection}
           open={open}
           setOpen={setOpen}
-          isLoggedIn={isLoggedIn}
-          authLoading={authLoading}
+          role={role}
         />
       </aside>
     </>

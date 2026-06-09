@@ -5,6 +5,12 @@ import { BasicDetails } from "../types";
 import PdfPreviewModal from "./PdfPreviewModal";
 import { fetchInternationalQuote } from "@/lib/api";
 import { computeDerivedValues } from "../helpers";
+import {
+  EmptyState,
+  LoadingState,
+  PageHeader,
+  SectionCard,
+} from "@/components/shared/DashboardUI";
 
 // Header definitions and mapping to data (copied from HistoryItem)
 const HEADERS: {
@@ -216,54 +222,67 @@ export default function HistoryView() {
   }, []);
 
   return (
-    <div className="p-8 overflow-auto h-full bg-white dark:bg-[#23272f] min-h-screen">
-      <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-8">
-        History
-      </h1>
-      <div
-        className="overflow-x-auto"
-        style={{ WebkitOverflowScrolling: "touch" }}
-      >
+    <div className="min-h-full bg-gray-50 px-4 py-6 text-gray-950 dark:bg-gray-950 dark:text-gray-50 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-6">
+        <PageHeader
+          eyebrow="Operations"
+          title="International Quote History"
+          subtitle="Review saved international quotes and open a PDF preview from any row."
+        />
+
         {isLoading ? (
-          <div className="flex justify-center items-center h-full">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900 dark:border-white"></div>
-          </div>
+          <LoadingState label="Loading saved quotes" />
+        ) : entries.length === 0 ? (
+          <EmptyState
+            title="No saved quotes"
+            description="Saved international quotes will appear here."
+          />
         ) : (
-          <table className="min-w-max text-xs border border-gray-300 dark:border-gray-700">
-            <thead>
-              <tr>
-                {HEADERS.map((header) => (
-                  <th
-                    key={header.label}
-                    className="px-2 py-1 border-b border-gray-300 dark:border-gray-700 bg-gray-200 dark:bg-gray-700 text-left"
-                  >
-                    {header.label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {entries.map((entry, idx) => {
-                const calculatedValues = computeDerivedValues(entry);
-                return (
-                  <tr
-                    key={idx}
-                    className="hover:bg-blue-50 dark:hover:bg-blue-900 cursor-pointer"
-                    onClick={() => setSelectedEntry(entry)}
-                  >
+          <SectionCard
+            title="Saved Quotes"
+            description="Select a row to preview the generated quote document."
+          >
+            <div
+              className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800"
+              style={{ WebkitOverflowScrolling: "touch" }}
+            >
+              <table className="min-w-max text-xs">
+                <thead className="bg-gray-50 text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+                  <tr>
                     {HEADERS.map((header) => (
-                      <td
+                      <th
                         key={header.label}
-                        className="px-2 py-1 border-b border-gray-200 dark:border-gray-700 text-left"
+                        className="border-b border-gray-200 px-3 py-2 text-left font-semibold dark:border-gray-800"
                       >
-                        {header.getValue(entry, calculatedValues)}
-                      </td>
+                        {header.label}
+                      </th>
                     ))}
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                  {entries.map((entry, idx) => {
+                    const calculatedValues = computeDerivedValues(entry);
+                    return (
+                      <tr
+                        key={idx}
+                        className="cursor-pointer bg-white hover:bg-blue-50 dark:bg-gray-950 dark:hover:bg-blue-950/40"
+                        onClick={() => setSelectedEntry(entry)}
+                      >
+                        {HEADERS.map((header) => (
+                          <td
+                            key={header.label}
+                            className="px-3 py-2 text-left text-gray-700 dark:text-gray-300"
+                          >
+                            {header.getValue(entry, calculatedValues)}
+                          </td>
+                        ))}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </SectionCard>
         )}
       </div>
       {selectedEntry && (

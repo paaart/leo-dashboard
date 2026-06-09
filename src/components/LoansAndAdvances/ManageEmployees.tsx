@@ -3,6 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import toast from "react-hot-toast";
+import {
+  EmptyState,
+  LoadingState,
+  PageHeader,
+  SectionCard,
+} from "@/components/shared/DashboardUI";
+import LoanSummaryCards from "./LoanSummaryCards";
 
 type Option = { id: number; name: string; is_active?: boolean };
 
@@ -166,162 +173,233 @@ export default function ManageEmployees() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#23272f] flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-t-transparent border-blue-500 rounded-full animate-spin" />
+      <div className="min-h-full bg-gray-50 px-4 py-6 text-gray-950 dark:bg-gray-950 dark:text-gray-50 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl space-y-6">
+          <PageHeader
+            eyebrow="Finance"
+            title="Loans & Advances"
+            subtitle="Track employee loans, advances, repayments, and outstanding balances."
+          />
+          <LoadingState label="Loading employees" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto p-8 bg-white dark:bg-[#23272f] rounded shadow min-h-screen">
-      <h2 className="text-xl font-semibold mb-4">Add New Employee</h2>
-
-      <div className="mb-6 grid gap-2 max-w-xl">
-        <label className="block font-medium">Name</label>
-        <input
-          type="text"
-          className="w-full p-2 border rounded bg-white dark:bg-gray-800"
-          placeholder="Employee Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+    <div className="min-h-full bg-gray-50 px-4 py-6 text-gray-950 dark:bg-gray-950 dark:text-gray-50 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-6">
+        <PageHeader
+          eyebrow="Finance"
+          title="Loans & Advances"
+          subtitle="Track employee loans, advances, repayments, and outstanding balances."
         />
 
-        <label className="block font-medium mt-2">Employee Code</label>
-        <input
-          type="text"
-          className="w-full p-2 border rounded bg-white dark:bg-gray-800"
-          placeholder="e.g. EMP015"
-          value={employeeCode}
-          onChange={(e) => setEmployeeCode(e.target.value.toUpperCase())}
-        />
+        <LoanSummaryCards />
 
-        <label className="block font-medium mt-2">Company</label>
-        <select
-          className="w-full p-2 border rounded bg-white dark:bg-gray-800"
-          value={companyId}
-          onChange={(e) =>
-            setCompanyId(e.target.value ? Number(e.target.value) : "")
-          }
+        <SectionCard
+          title="Manage Employees"
+          description="Add employees and maintain company or location assignment for loan tracking."
         >
-          <option value="">Select company</option>
-          {companies.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-gray-800 dark:text-gray-200">
+                Name
+              </label>
+              <input
+                type="text"
+                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50 dark:placeholder:text-gray-500"
+                placeholder="Employee name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
 
-        <label className="block font-medium mt-2">Location</label>
-        <select
-          className="w-full p-2 border rounded bg-white dark:bg-gray-800"
-          value={locationId}
-          onChange={(e) =>
-            setLocationId(e.target.value ? Number(e.target.value) : "")
-          }
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-gray-800 dark:text-gray-200">
+                Employee Code
+              </label>
+              <input
+                type="text"
+                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50 dark:placeholder:text-gray-500"
+                placeholder="e.g. EMP015"
+                value={employeeCode}
+                onChange={(e) => setEmployeeCode(e.target.value.toUpperCase())}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-gray-800 dark:text-gray-200">
+                Company
+              </label>
+              <select
+                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                value={companyId}
+                onChange={(e) =>
+                  setCompanyId(e.target.value ? Number(e.target.value) : "")
+                }
+              >
+                <option value="">Select company</option>
+                {companies.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-gray-800 dark:text-gray-200">
+                Location
+              </label>
+              <select
+                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                value={locationId}
+                onChange={(e) =>
+                  setLocationId(e.target.value ? Number(e.target.value) : "")
+                }
+              >
+                <option value="">Select location</option>
+                {locations.map((l) => (
+                  <option key={l.id} value={l.id}>
+                    {l.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="mt-5 flex justify-end border-t border-gray-200 pt-5 dark:border-gray-800">
+            <button
+              type="button"
+              onClick={handleAdd}
+              disabled={loading || !name.trim() || !employeeCode.trim()}
+              className="inline-flex min-h-10 items-center justify-center rounded-md bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              Add Employee
+            </button>
+          </div>
+        </SectionCard>
+
+        <SectionCard
+          title="Employee List"
+          description="Review active employees and update their company or location."
         >
-          <option value="">Select location</option>
-          {locations.map((l) => (
-            <option key={l.id} value={l.id}>
-              {l.name}
-            </option>
-          ))}
-        </select>
-
-        <button
-          onClick={handleAdd}
-          disabled={loading || !name.trim() || !employeeCode.trim()}
-          className="mt-3 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition disabled:opacity-30"
-        >
-          Add Employee
-        </button>
-      </div>
-
-      <h3 className="text-lg font-semibold mb-2">Current Employees</h3>
-
-      <div className="overflow-auto">
-        <table className="min-w-[820px] w-full border border-gray-200 dark:border-gray-700 rounded">
-          <thead className="bg-gray-50 dark:bg-gray-800">
-            <tr>
-              <th className="p-2 text-left">Name</th>
-              <th className="p-2 text-left">Code</th>
-              <th className="p-2 text-left">Company</th>
-              <th className="p-2 text-left">Location</th>
-              <th className="p-2 text-left">Created</th>
-              <th className="p-2"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-            {employees.map((emp, idx) => (
-              <tr key={emp.id}>
-                <td className="p-2 font-medium">{emp.name}</td>
-                <td className="p-2 text-sm text-gray-600 dark:text-gray-300">
-                  {emp.employee_code}
-                </td>
-                <td className="p-2">
-                  <select
-                    className="w-full p-1 border rounded bg-white dark:bg-gray-800"
-                    value={emp.company_id ?? ""}
-                    onChange={(e) => {
-                      const v = e.target.value ? Number(e.target.value) : null;
-                      setEmployees((prev) =>
-                        prev.map((row, i) =>
-                          i === idx ? { ...row, company_id: v } : row
-                        )
-                      );
-                    }}
-                  >
-                    <option value="">Select</option>
-                    {companies.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.name}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td className="p-2">
-                  <select
-                    className="w-full p-1 border rounded bg-white dark:bg-gray-800"
-                    value={emp.location_id ?? ""}
-                    onChange={(e) => {
-                      const v = e.target.value ? Number(e.target.value) : null;
-                      setEmployees((prev) =>
-                        prev.map((row, i) =>
-                          i === idx ? { ...row, location_id: v } : row
-                        )
-                      );
-                    }}
-                  >
-                    <option value="">Select</option>
-                    {locations.map((l) => (
-                      <option key={l.id} value={l.id}>
-                        {l.name}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td className="p-2 text-xs text-gray-500">
-                  {new Date(emp.created_at).toLocaleDateString("en-IN")}
-                </td>
-                <td className="p-2">
-                  <button
-                    onClick={() => saveRow(emp)}
-                    disabled={savingRowId === emp.id}
-                    className="text-sm bg-blue-600 text-white px-3 py-1 rounded disabled:opacity-50"
-                  >
-                    {savingRowId === emp.id ? "Saving..." : "Save"}
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {employees.length === 0 && (
-              <tr>
-                <td className="p-4 text-sm text-gray-500" colSpan={6}>
-                  No employees found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+          {employees.length === 0 ? (
+            <EmptyState
+              title="No employees"
+              description="Add employees to start recording loans, advances, and repayments."
+            />
+          ) : (
+            <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
+              <table className="min-w-[920px] w-full text-sm">
+                <thead className="bg-gray-50 text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+                  <tr>
+                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                      Employee
+                    </th>
+                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                      Status
+                    </th>
+                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                      Company
+                    </th>
+                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                      Location
+                    </th>
+                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                      Created
+                    </th>
+                    <th className="border-b border-gray-200 px-4 py-3 text-right font-semibold dark:border-gray-800">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                  {employees.map((emp, idx) => (
+                    <tr
+                      key={emp.id}
+                      className="bg-white hover:bg-gray-50 dark:bg-gray-950 dark:hover:bg-gray-900"
+                    >
+                      <td className="px-4 py-3">
+                        <p className="font-medium text-gray-950 dark:text-gray-50">
+                          {emp.name}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {emp.employee_code}
+                        </p>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="inline-flex rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700 dark:border-green-900/60 dark:bg-green-950/40 dark:text-green-300">
+                          Active
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <select
+                          className="h-9 w-full rounded-md border border-gray-300 bg-white px-2 text-sm text-gray-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                          value={emp.company_id ?? ""}
+                          onChange={(e) => {
+                            const v = e.target.value
+                              ? Number(e.target.value)
+                              : null;
+                            setEmployees((prev) =>
+                              prev.map((row, i) =>
+                                i === idx ? { ...row, company_id: v } : row
+                              )
+                            );
+                          }}
+                        >
+                          <option value="">Select</option>
+                          {companies.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.name}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="px-4 py-3">
+                        <select
+                          className="h-9 w-full rounded-md border border-gray-300 bg-white px-2 text-sm text-gray-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                          value={emp.location_id ?? ""}
+                          onChange={(e) => {
+                            const v = e.target.value
+                              ? Number(e.target.value)
+                              : null;
+                            setEmployees((prev) =>
+                              prev.map((row, i) =>
+                                i === idx ? { ...row, location_id: v } : row
+                              )
+                            );
+                          }}
+                        >
+                          <option value="">Select</option>
+                          {locations.map((l) => (
+                            <option key={l.id} value={l.id}>
+                              {l.name}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                        {new Date(emp.created_at).toLocaleDateString("en-IN")}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <button
+                          type="button"
+                          onClick={() => saveRow(emp)}
+                          disabled={savingRowId === emp.id}
+                          className="inline-flex min-h-9 items-center justify-center rounded-md bg-blue-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {savingRowId === emp.id ? "Saving..." : "Save"}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </SectionCard>
       </div>
     </div>
   );

@@ -56,12 +56,14 @@ export function EmployeeSearchSelect({
 
   return (
     <div ref={containerRef} className="relative">
-      <label className="block mb-1 font-medium">Employee</label>
+      <label className="block text-sm font-medium text-gray-800 dark:text-gray-200">
+        Employee
+      </label>
 
-      <div className="relative">
+      <div className="relative mt-1.5">
         <input
           type="text"
-          className="w-full p-2 border rounded bg-white dark:bg-gray-800 pr-8"
+          className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 pr-8 text-sm text-gray-950 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50 dark:placeholder:text-gray-500"
           placeholder="Type to search employee..."
           value={displayValue}
           onClick={() => {
@@ -81,15 +83,17 @@ export function EmployeeSearchSelect({
       </div>
 
       {open && (
-        <div className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded border bg-white dark:bg-gray-900 shadow-lg text-sm">
+        <div className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-md border border-gray-200 bg-white text-sm shadow-lg dark:border-gray-800 dark:bg-gray-950">
           {filteredEmployees.length === 0 ? (
-            <div className="px-3 py-2 text-gray-500">No employees found</div>
+            <div className="px-3 py-2 text-gray-500 dark:text-gray-400">
+              No employees found
+            </div>
           ) : (
             filteredEmployees.map((emp) => (
               <button
                 type="button"
                 key={emp.id}
-                className="flex w-full items-center justify-between px-3 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-900"
                 onClick={() => {
                   onChange(emp.id);
                   setOpen(false);
@@ -97,7 +101,7 @@ export function EmployeeSearchSelect({
                 }}
               >
                 <span>{emp.name}</span>
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-gray-500 dark:text-gray-400">
                   {emp.employee_code}
                 </span>
               </button>

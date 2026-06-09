@@ -1,5 +1,6 @@
 // src/app/api/warehouse/pods/route.ts
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
+import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 
 type PodStatus = "active" | "closed";
@@ -52,7 +53,10 @@ function toBand(paymentRatio: number): SeverityBand {
   return "red";
 }
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
+  const auth = await requireAdmin(req);
+  if (!auth.ok) return auth.response;
+
   const url = new URL(req.url);
 
   const statusParam = (

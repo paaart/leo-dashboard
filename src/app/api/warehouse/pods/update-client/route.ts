@@ -1,11 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
+import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 
 function bad(error: string, status = 400) {
   return NextResponse.json({ ok: false, error }, { status });
 }
 
-export async function PATCH(req: Request) {
+export async function PATCH(req: NextRequest) {
+  const auth = await requireAdmin(req);
+  if (!auth.ok) return auth.response;
+
   let body: {
     podId?: string;
     name?: string;

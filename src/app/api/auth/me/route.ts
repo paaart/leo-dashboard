@@ -1,20 +1,25 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { createRouteClient } from "@/lib/supabase/route";
+import { getCurrentAppUser } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
-  const response = NextResponse.json({ ok: true });
+  const user = await getCurrentAppUser(request);
 
-  const supabase = createRouteClient(request, response);
-  const { data, error } = await supabase.auth.getUser();
-
-  console.log(data.user);
-
-  if (error || !data?.user) {
-    return NextResponse.json({ ok: false }, { status: 401 });
+  if (!user) {
+    return NextResponse.json(
+      { ok: false, error: "Unauthorized" },
+      { status: 401 }
+    );
   }
 
   return NextResponse.json({
     ok: true,
-    user: { id: data.user.id, email: data.user.email ?? null },
+    user: {
+      id: user.id,
+      email: user.email,
+      username: user.username,
+      fullName: user.fullName,
+      role: user.role,
+      status: user.status,
+    },
   });
 }

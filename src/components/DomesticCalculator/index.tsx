@@ -7,6 +7,12 @@ import VehicleSizeSelector from "./VehicleSizeSelector";
 import QuoteSummary from "./QuoteSummary";
 import RateTypeToggle from "./RateTypeToggle";
 import { getDistance, getHHGQuoteMap, getVehicleQuotesDict } from "@/lib/api";
+import {
+  EmptyState,
+  LoadingState,
+  PageHeader,
+  SectionCard,
+} from "@/components/shared/DashboardUI";
 
 const DomesticCalculator = () => {
   const [source, setSource] = useState("");
@@ -141,61 +147,99 @@ const DomesticCalculator = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-t-transparent border-blue-500 rounded-full animate-spin" />
+      <div className="min-h-full bg-gray-50 px-4 py-6 text-gray-950 dark:bg-gray-950 dark:text-gray-50 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl space-y-6">
+          <PageHeader
+            eyebrow="Operations"
+            title="Domestic Calculator"
+            subtitle="Calculate household goods and vehicle transportation quotes for domestic routes."
+          />
+          <LoadingState label="Loading domestic rates" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen p-8 bg-white dark:bg-[#23272f] max-w-screen mx-auto">
-      <div className="min-h-screen px-4 py-6 max-w-2xl mx-auto">
-        <h2 className="text-xl font-semibold mb-4">Shipping Cost Calculator</h2>
-
-        {error && <div className="text-red-500 mb-4">{error}</div>}
-
-        <RateTypeToggle
-          houseRate={houseRate}
-          carRate={carRate}
-          onChange={handleRateToggle}
+    <div className="min-h-full bg-gray-50 px-4 py-6 text-gray-950 dark:bg-gray-950 dark:text-gray-50 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-6">
+        <PageHeader
+          eyebrow="Operations"
+          title="Domestic Calculator"
+          subtitle="Calculate household goods and vehicle transportation quotes for domestic routes."
         />
 
-        <CitySelector
-          label="Source City"
-          value={source}
-          options={sourceCities}
-          onChange={setSource}
-        />
+        {error ? (
+          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">
+            {error}
+          </div>
+        ) : null}
 
-        <CitySelector
-          label="Destination City"
-          value={destination}
-          options={destinationCities}
-          onChange={setDestination}
-        />
-
-        {houseRate && <CFTInput value={cft} onChange={setCft} />}
-
-        {carRate && (
-          <VehicleSizeSelector
-            carSize={carSize}
-            carOptions={carOptions}
-            onChange={setCarSize}
-          />
-        )}
-
-        <button
-          onClick={calculateCost}
-          disabled={
-            !source ||
-            !destination ||
-            (houseRate && !cft) ||
-            (carRate && !carSize)
-          }
-          className="w-full py-2 px-4 bg-blue-600 text-white rounded disabled:opacity-50"
+        <SectionCard
+          title="Quote Inputs"
+          description="Select the route, quote type, and shipment details before calculating."
         >
-          Calculate
-        </button>
+          <div className="space-y-5">
+            <div>
+              <p className="mb-3 text-sm font-medium text-gray-800 dark:text-gray-200">
+                Calculation Options
+              </p>
+              <RateTypeToggle
+                houseRate={houseRate}
+                carRate={carRate}
+                onChange={handleRateToggle}
+              />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <CitySelector
+                label="Source City"
+                value={source}
+                options={sourceCities}
+                onChange={setSource}
+              />
+
+              <CitySelector
+                label="Destination City"
+                value={destination}
+                options={destinationCities}
+                onChange={setDestination}
+              />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              {houseRate && <CFTInput value={cft} onChange={setCft} />}
+
+              {carRate && (
+                <VehicleSizeSelector
+                  carSize={carSize}
+                  carOptions={carOptions}
+                  onChange={setCarSize}
+                />
+              )}
+            </div>
+
+            <div className="flex flex-col gap-3 border-t border-gray-200 pt-5 dark:border-gray-800 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Rates are indicative and should be reviewed before final
+                customer confirmation.
+              </p>
+              <button
+                type="button"
+                onClick={calculateCost}
+                disabled={
+                  !source ||
+                  !destination ||
+                  (houseRate && !cft) ||
+                  (carRate && !carSize)
+                }
+                className="inline-flex min-h-10 items-center justify-center rounded-md bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Calculate Quote
+              </button>
+            </div>
+          </div>
+        </SectionCard>
 
         <QuoteSummary
           showHHG={houseRate}
@@ -208,13 +252,17 @@ const DomesticCalculator = () => {
           distance={distance}
         />
 
-        <div className="mt-8 text-sm text-gray-600 dark:text-gray-400 italic">
-          <p>
-            The above rates are indicative rates including our margins. <br />
-            Before giving final rates, consider additional services like
-            handyman, lift availability, extra packing for fragile items,
-            storage, etc.
-          </p>
+        {!houseRate && !carRate ? (
+          <EmptyState
+            title="No calculation option selected"
+            description="Choose household goods, vehicle transportation, or both to prepare a quote."
+          />
+        ) : null}
+
+        <div className="rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-500 shadow-sm dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400">
+          The above rates are indicative rates including our margins. Before
+          giving final rates, consider additional services like handyman, lift
+          availability, extra packing for fragile items, storage, etc.
         </div>
       </div>
     </div>

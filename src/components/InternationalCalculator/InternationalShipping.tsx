@@ -18,6 +18,7 @@ import { saveInternationalQuote } from "@/lib/api";
 import SubmitActions from "./Calculator/SubmitActions";
 import toast from "react-hot-toast";
 import { downloadPDF } from "./Calculator/DownloadDocument";
+import { EmptyState, PageHeader } from "@/components/shared/DashboardUI";
 
 const initialDetails: BasicDetails = {
   customerName: "",
@@ -81,23 +82,35 @@ export default function InternationalShipping() {
     });
   };
 
+  const hasCalculatedValues = Object.keys(calculatedValues).length > 0;
+
   return (
-    <div className="p-8 bg-white dark:bg-[#23272f] min-h-screen">
-      <h1 className="text-3xl font-bold text-gray-800 dark:text-white mb-8">
-        🌍 International Shipping Calculator
-      </h1>
+    <div className="min-h-full bg-gray-50 px-4 py-6 text-gray-950 dark:bg-gray-950 dark:text-gray-50 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-6">
+        <PageHeader
+          eyebrow="Operations"
+          title="International Calculator"
+          subtitle="Prepare international shipment quotes with origin, freight, destination, GST, and margin views."
+        />
 
-      <ClientInfoSection data={basicDetails} onChange={handleInputChange} />
-      <ChargesSection data={basicDetails} onChange={handleInputChange} />
+        <ClientInfoSection data={basicDetails} onChange={handleInputChange} />
+        <ChargesSection data={basicDetails} onChange={handleInputChange} />
 
-      {Object.keys(calculatedValues).length > 0 && (
-        <ResultsTable calculatedValues={calculatedValues} />
-      )}
-      <SubmitActions
-        onSubmit={handleSubmit}
-        onPrint={handlePDFDownload}
-        isDisabled={!isDataComplete(basicDetails)}
-      />
+        {hasCalculatedValues ? (
+          <ResultsTable calculatedValues={calculatedValues} />
+        ) : (
+          <EmptyState
+            title="No quote calculated yet"
+            description="Enter shipment and cost details to preview margin, GST, and quote totals."
+          />
+        )}
+
+        <SubmitActions
+          onSubmit={handleSubmit}
+          onPrint={handlePDFDownload}
+          isDisabled={!isDataComplete(basicDetails)}
+        />
+      </div>
     </div>
   );
 }

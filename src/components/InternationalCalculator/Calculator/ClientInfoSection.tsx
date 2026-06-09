@@ -1,6 +1,7 @@
 // components/InternationalCalculator/ClientInfoSection.tsx
 import React from "react";
 import { BasicDetails } from "../types";
+import { SectionCard } from "@/components/shared/DashboardUI";
 
 type Props = {
   data: BasicDetails;
@@ -36,14 +37,14 @@ const fields = [
 
 export default function ClientInfoSection({ data, onChange }: Props) {
   return (
-    <section className="bg-gray-100 dark:bg-gray-800 rounded-lg p-6 mb-6">
-      <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-4">
-        Client & Shipping Info
-      </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+    <SectionCard
+      title="Customer & Shipment Details"
+      description="Capture the customer, route, mode, and shipment volume for this international quote."
+    >
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {fields.map(({ label, key, placeholder }) => (
-          <div key={key}>
-            <label className="block font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <div key={key} className="space-y-1.5">
+            <label className="block text-sm font-medium text-gray-800 dark:text-gray-200">
               {label}
             </label>
             <input
@@ -51,11 +52,11 @@ export default function ClientInfoSection({ data, onChange }: Props) {
               value={data[key]}
               placeholder={placeholder}
               onChange={(e) => onChange(key, e.target.value)}
-              className="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-white"
+              className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50 dark:placeholder:text-gray-500"
             />
           </div>
         ))}
       </div>
-    </section>
+    </SectionCard>
   );
 }

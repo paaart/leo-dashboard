@@ -4,66 +4,102 @@ import { createRouteClient } from "@/lib/supabase/route";
 
 export async function POST(request: NextRequest) {
   const response = NextResponse.json({ ok: true });
-  const isDev = process.env.NODE_ENV !== "production";
+
+  function jsonWithAuthCookies(
+    body: Record<string, unknown>,
+    init?: ResponseInit
+  ) {
+    const nextResponse = NextResponse.json(body, init);
+
+    response.cookies.getAll().forEach((cookie) => {
+      nextResponse.cookies.set(cookie.name, cookie.value, cookie);
+    });
+
+    return nextResponse;
+  }
 
   try {
-    if (isDev) {
-      console.log("HIT /api/auth/login");
-      console.log("ENV CHECK", {
-        url: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-        anon: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-        service: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-      });
-    }
-
     const body = await request.json();
-    const employeeCode = String(body?.employeeCode ?? "").trim();
+    const identifier = String(body?.username ?? body?.identifier ?? "")
+      .trim()
+      .toLowerCase();
     const password = String(body?.password ?? "");
 
-    if (!employeeCode || !password) {
+    if (!identifier || !password) {
       return NextResponse.json(
-        { ok: false, error: "Missing employee code or password" },
+        { ok: false, error: "Missing username or password" },
         { status: 400 }
       );
     }
 
     const admin = createAdminClient();
+    const { data: profiles, error: profileError } = await admin
+      .from("profiles")
+      .select("id, auth_user_id, email, username, full_name, role, status")
+      .eq("username", identifier)
+      .limit(10);
 
-    const { data: emp, error: empErr } = await admin
-      .from("employees")
-      .select("email")
-      .eq("employee_code", employeeCode)
-      .maybeSingle();
+    const profile = profiles?.find(
+      (candidate) => candidate.username.toLowerCase() === identifier
+    );
 
-    if (empErr) {
+    if (profileError || !profile) {
       return NextResponse.json(
-        { ok: false, error: `Employee lookup failed: ${empErr.message}` },
-        { status: 500 }
+        { ok: false, error: "Invalid username or password" },
+        { status: 401 }
       );
     }
 
-    if (!emp?.email) {
+    if (profile.status !== "active") {
       return NextResponse.json(
-        { ok: false, error: "Invalid employee code" },
-        { status: 401 }
+        { ok: false, error: "Account is not active. Please contact admin." },
+        { status: 403 }
       );
     }
 
     const supabase = createRouteClient(request, response);
 
-    const { error: signInErr } = await supabase.auth.signInWithPassword({
-      email: emp.email,
+    const { data, error: signInErr } = await supabase.auth.signInWithPassword({
+      email: profile.email,
       password,
     });
 
     if (signInErr) {
       return NextResponse.json(
-        { ok: false, error: `Login failed: ${signInErr.message}` },
+        { ok: false, error: "Invalid username or password" },
         { status: 401 }
       );
     }
 
-    return response;
+    if (!data.user) {
+      await supabase.auth.signOut();
+      return jsonWithAuthCookies(
+        { ok: false, error: "Invalid username or password" },
+        { status: 401 }
+      );
+    }
+
+    if (data.user.id !== profile.auth_user_id) {
+      await supabase.auth.signOut();
+      return jsonWithAuthCookies(
+        { ok: false, error: "Account profile mismatch" },
+        { status: 403 }
+      );
+    }
+
+    return jsonWithAuthCookies(
+      {
+        ok: true,
+        user: {
+          id: profile.id,
+          email: profile.email,
+          username: profile.username,
+          fullName: profile.full_name,
+          role: profile.role,
+          status: profile.status,
+        },
+      }
+    );
   } catch (err) {
     console.error("LOGIN ROUTE CRASH:", err);
     const msg = err instanceof Error ? err.message : String(err);

@@ -2,60 +2,24 @@
 
 import Image from "next/image";
 import { Menu } from "lucide-react";
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-type AuthMeResponse =
-  | { ok: true; user: { id: string; email?: string | null } }
-  | { ok: false; error?: string };
+type HeaderUser = {
+  email: string;
+  username: string;
+  fullName: string | null;
+  role: "user" | "admin";
+};
 
-export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
+export default function Header({
+  onMenuClick,
+  user,
+}: {
+  onMenuClick: () => void;
+  user: HeaderUser;
+}) {
   const router = useRouter();
-
-  const [authLoading, setAuthLoading] = useState(true);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [label, setLabel] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const checkAuth = async () => {
-      setAuthLoading(true);
-
-      try {
-        const res = await fetch("/api/auth/me", {
-          method: "GET",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          cache: "no-store",
-        });
-
-        const json: AuthMeResponse = await res.json();
-
-        if (cancelled) return;
-
-        if (res.ok && json.ok) {
-          setIsLoggedIn(true);
-          setLabel(json.user.email ?? null);
-        } else {
-          setIsLoggedIn(false);
-          setLabel(null);
-        }
-      } catch {
-        if (cancelled) return;
-        setIsLoggedIn(false);
-        setLabel(null);
-      } finally {
-        if (!cancelled) setAuthLoading(false);
-      }
-    };
-
-    void checkAuth();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const displayName = user.username || user.fullName || user.email || "User";
 
   const handleLogout = async () => {
     try {
@@ -65,8 +29,6 @@ export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
         headers: { "Content-Type": "application/json" },
       });
     } finally {
-      setIsLoggedIn(false);
-      setLabel(null);
       router.push("/login");
       router.refresh();
     }
@@ -95,26 +57,19 @@ export default function Header({ onMenuClick }: { onMenuClick: () => void }) {
       </div>
 
       <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-        {authLoading ? (
-          <span className="text-xs">Checking login…</span>
-        ) : isLoggedIn ? (
-          <>
-            <span>{label ? `Welcome, ${label}` : "Welcome"}</span>
-            <button
-              onClick={handleLogout}
-              className="rounded bg-red-600 px-3 py-1 text-xs text-white hover:bg-red-700"
-            >
-              Logout
-            </button>
-          </>
-        ) : (
-          <button
-            onClick={() => router.push("/login")}
-            className="rounded bg-blue-600 px-3 py-1 text-xs text-white hover:bg-blue-700"
-          >
-            Login
-          </button>
-        )}
+        <div className="flex flex-col items-start leading-tight">
+          <span className="font-medium">Welcome, {displayName}</span>
+
+          <span className="text-xs capitalize text-gray-500 dark:text-gray-400">
+            {user.role}
+          </span>
+        </div>
+        <button
+          onClick={handleLogout}
+          className="rounded bg-red-600 px-3 py-1 text-xs text-white hover:bg-red-700"
+        >
+          Logout
+        </button>
       </div>
     </header>
   );

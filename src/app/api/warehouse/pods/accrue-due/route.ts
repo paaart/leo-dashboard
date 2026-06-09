@@ -1,9 +1,13 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
+import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 
 const DEFAULT_BATCH_SIZE = 50;
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
+  const auth = await requireAdmin(req);
+  if (!auth.ok) return auth.response;
+
   const { searchParams } = new URL(req.url);
 
   const batchSizeRaw = Number(

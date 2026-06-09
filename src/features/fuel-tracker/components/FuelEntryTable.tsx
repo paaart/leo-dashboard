@@ -79,7 +79,7 @@ export function FuelEntryTable({
   return (
     <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
       <div className="overflow-x-auto">
-        <table className="min-w-[1380px] w-full text-left text-sm">
+        <table className="min-w-345 w-full text-left text-sm">
           <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
             <tr>
               <th className="px-4 py-3 font-semibold">Date</th>
@@ -92,9 +92,7 @@ export function FuelEntryTable({
               <th className="px-4 py-3 font-semibold">
                 Distance Since Last Refill
               </th>
-              <th className="px-4 py-3 font-semibold">
-                Approx. Entry Mileage
-              </th>
+              <th className="px-4 py-3 font-semibold">Approx. Entry Mileage</th>
               <th className="px-4 py-3 font-semibold">Warning</th>
               <th className="px-4 py-3 font-semibold">Proof</th>
             </tr>
@@ -139,7 +137,7 @@ export function FuelEntryTable({
                         status={entry.warning_flag ? "warning" : "normal"}
                       />
                       {entry.warning_flag && entry.warning_reason ? (
-                        <p className="max-w-[220px] text-xs text-amber-700 dark:text-amber-300">
+                        <p className="max-w-55 text-xs text-amber-700 dark:text-amber-300">
                           {entry.warning_reason}
                         </p>
                       ) : null}

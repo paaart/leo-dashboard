@@ -1,7 +1,8 @@
 "use client";
 
-import Image from "next/image";
+import { Boxes, IndianRupee, Route, Truck } from "lucide-react";
 import React from "react";
+import { MetricCard, SectionCard } from "@/components/shared/DashboardUI";
 
 interface QuoteSummaryProps {
   showHHG: boolean;
@@ -27,50 +28,67 @@ const QuoteSummary = ({
   if (!showHHG && !showVehicle) return null;
 
   return (
-    <div className="mt-6 space-y-6">
+    <div className="space-y-6">
       {showHHG && (
-        <div className="p-4 border rounded bg-gray-100 dark:bg-gray-800">
-          <div className="flex justify-between mb-2">
-            <h1 className="text-lg font-semibold">
-              Total HHG Quote: ₹{totalCost.toFixed(2)}
-            </h1>
-            <h1 className="text-lg font-semibold">
-              Total Distance: {distance} km
-            </h1>
+        <SectionCard
+          title="Household Goods Quote"
+          description="Indicative domestic HHG cost split for the selected route."
+        >
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <MetricCard
+              label="Total HHG Quote"
+              value={`₹${totalCost.toFixed(2)}`}
+              hint="Packaging plus transportation"
+              icon={<IndianRupee className="h-5 w-5" />}
+            />
+            <MetricCard
+              label="Distance"
+              value={`${distance} km`}
+              hint="Route distance"
+              icon={<Route className="h-5 w-5" />}
+            />
+            <MetricCard
+              label="Packaging Cost"
+              value={`₹${packagingCost.toFixed(2)}`}
+              hint="Calculated from CFT"
+              icon={<Boxes className="h-5 w-5" />}
+            />
+            <MetricCard
+              label="Transportation Cost"
+              value={`₹${transportCost.toFixed(2)}`}
+              hint="Calculated from CFT"
+              icon={<Truck className="h-5 w-5" />}
+            />
           </div>
-          <div className="text-[18px]">
-            📦 Packaging Cost: ₹{packagingCost.toFixed(2)}
-          </div>
-          <div className="text-[18px]">
-            🚚 Transportation Cost: ₹{transportCost.toFixed(2)}
-          </div>
-        </div>
+        </SectionCard>
       )}
 
       {showVehicle && (
-        <div className="p-4 border rounded bg-gray-100 dark:bg-gray-800">
-          <div className="flex justify-between mb-2">
-            <h2 className="text-lg font-semibold mb-2">
-              Vehicle Transportation Quote
-            </h2>
-            <h1 className="text-lg font-semibold">
-              Total Distance: {distance} km
-            </h1>
-          </div>
-          <div className="flex text-[18px]">
-            <Image
-              src="/favicon.png"
-              alt="Leo Cost Icon"
-              className="w-5 h-5 mr-2"
-              width={18}
-              height={18}
+        <SectionCard
+          title="Vehicle Transportation Quote"
+          description="Indicative vehicle movement costs for the selected route and size."
+        >
+          <div className="grid gap-4 sm:grid-cols-3">
+            <MetricCard
+              label="Leo Cost"
+              value={`₹${leoCost.toFixed(2)}`}
+              hint="Customer quote"
+              icon={<IndianRupee className="h-5 w-5" />}
             />
-            Leo Cost: ₹{leoCost.toFixed(2)}
+            <MetricCard
+              label="Carrier Cost"
+              value={`₹${carrierCost.toFixed(2)}`}
+              hint="Carrier rate"
+              icon={<Truck className="h-5 w-5" />}
+            />
+            <MetricCard
+              label="Distance"
+              value={`${distance} km`}
+              hint="Route distance"
+              icon={<Route className="h-5 w-5" />}
+            />
           </div>
-          <div className="text-[18px]">
-            🟨 Carrier Cost: ₹{carrierCost.toFixed(2)}
-          </div>
-        </div>
+        </SectionCard>
       )}
     </div>
   );

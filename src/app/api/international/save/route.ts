@@ -1,8 +1,12 @@
 // src/app/api/international/save/route.ts
+import { requireAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabaseClient";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (!auth.ok) return auth.response;
+
   const values = await req.json();
 
   const payload = {

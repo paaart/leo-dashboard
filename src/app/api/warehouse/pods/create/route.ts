@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
+import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 
 type BillingInterval = "monthly" | "quarterly" | "half_yearly" | "yearly";
@@ -49,7 +50,10 @@ function monthsToAdd(interval: BillingInterval) {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  const auth = await requireAdmin(req);
+  if (!auth.ok) return auth.response;
+
   let body: CreatePodBody;
 
   try {

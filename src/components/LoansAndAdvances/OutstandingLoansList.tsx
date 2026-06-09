@@ -4,6 +4,14 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import EmployeeHistoryView from "./EmployeeHistoryView";
 import toast from "react-hot-toast";
+import { Download, Eye, X } from "lucide-react";
+import {
+  EmptyState,
+  LoadingState,
+  PageHeader,
+  SectionCard,
+} from "@/components/shared/DashboardUI";
+import LoanSummaryCards from "./LoanSummaryCards";
 
 interface EmployeeInfo {
   id: string;
@@ -68,11 +76,15 @@ export default function OutstandingLoansList() {
   const getOutstandingValue = (loan: OutstandingLoan) =>
     loan.total_outstanding ?? loan.balance ?? 0;
 
-  // Total outstanding across all employees
-  const totalOutstanding = loans.reduce(
-    (sum, loan) => sum + getOutstandingValue(loan),
-    0
-  );
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 0,
+    }).format(value);
+
+  const formatDate = (value?: string) =>
+    value ? new Date(value).toLocaleDateString("en-IN") : "-";
 
   // Download CSV of ALL transactions from employee_loans for date range
   const handleDownloadCsv = async () => {
@@ -199,99 +211,173 @@ export default function OutstandingLoansList() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-t-transparent border-blue-500 rounded-full animate-spin" />
+      <div className="min-h-full bg-gray-50 px-4 py-6 text-gray-950 dark:bg-gray-950 dark:text-gray-50 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl space-y-6">
+          <PageHeader
+            eyebrow="Finance"
+            title="Loans & Advances"
+            subtitle="Track employee loans, advances, repayments, and outstanding balances."
+          />
+          <LoadingState label="Loading outstanding balances" />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen mx-auto p-8 bg-white dark:bg-[#23272f] rounded shadow relative">
-      {/* Header: title + total + download */}
-      <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <h2 className="text-xl font-semibold">Outstanding Loans</h2>
+    <div className="min-h-full bg-gray-50 px-4 py-6 text-gray-950 dark:bg-gray-950 dark:text-gray-50 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-6">
+        <PageHeader
+          eyebrow="Finance"
+          title="Loans & Advances"
+          subtitle="Track employee loans, advances, repayments, and outstanding balances."
+          action={
+            <button
+              type="button"
+              onClick={() => setIsDownloadModalOpen(true)}
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+            >
+              <Download className="h-4 w-4" />
+              Download CSV
+            </button>
+          }
+        />
 
-        <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-4">
-          {/* Total outstanding card */}
-          <div className="rounded-lg bg-gray-100 dark:bg-gray-700 px-4 py-2 shadow-sm">
-            <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-300">
-              Total Outstanding
-            </p>
-            <p className="text-lg font-bold text-blue-700 dark:text-blue-300">
-              ₹{totalOutstanding.toFixed(2)}
-            </p>
-          </div>
+        <LoanSummaryCards />
 
-          {/* Download button */}
-          <button
-            onClick={() => setIsDownloadModalOpen(true)}
-            className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-[#23272f]"
-          >
-            Download CSV
-          </button>
-        </div>
+        <SectionCard
+          title="View Total Outstanding"
+          description="Review each employee balance and open transaction history."
+        >
+          {loans.length === 0 ? (
+            <EmptyState
+              title="No outstanding balances"
+              description="Employees with active loan or advance balances will appear here."
+            />
+          ) : (
+            <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
+              <table className="min-w-[820px] w-full text-sm">
+                <thead className="bg-gray-50 text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+                  <tr>
+                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                      Employee Name
+                    </th>
+                    <th className="border-b border-gray-200 px-4 py-3 text-right font-semibold dark:border-gray-800">
+                      Total Outstanding
+                    </th>
+                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                      Last Transaction Date
+                    </th>
+                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                      Transaction Count
+                    </th>
+                    <th className="border-b border-gray-200 px-4 py-3 text-right font-semibold dark:border-gray-800">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                  {loans.map((loan) => {
+                    const outstanding = getOutstandingValue(loan);
+                    return (
+                      <tr
+                        key={loan.employee_id}
+                        className="bg-white hover:bg-gray-50 dark:bg-gray-950 dark:hover:bg-gray-900"
+                      >
+                        <td className="px-4 py-3">
+                          <div>
+                            <p className="font-medium text-gray-950 dark:text-gray-50">
+                              {loan.name}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {loan.employee_code}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <span
+                            className={`font-semibold tabular-nums ${
+                              outstanding > 0
+                                ? "text-blue-700 dark:text-blue-300"
+                                : "text-gray-700 dark:text-gray-300"
+                            }`}
+                          >
+                            {formatCurrency(outstanding)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                          {formatDate(loan.last_txn_date)}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="inline-flex rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs font-medium text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                            {loan.txn_count ?? 0} transactions
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            type="button"
+                            onClick={() => setSelectedEmployee(loan)}
+                            className="inline-flex min-h-9 items-center justify-center gap-2 rounded-md border border-gray-300 px-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                          >
+                            <Eye className="h-4 w-4" />
+                            View History
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </SectionCard>
       </div>
-
-      {loans.length === 0 ? (
-        <p className="text-gray-600 dark:text-gray-300">
-          No outstanding loans.
-        </p>
-      ) : (
-        <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-          {loans.map((loan) => {
-            const outstanding = getOutstandingValue(loan);
-            return (
-              <li
-                key={loan.employee_id}
-                className="py-3 flex justify-between items-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 px-2 rounded"
-                onClick={() => setSelectedEmployee(loan)}
-              >
-                <div>
-                  <p className="font-medium">
-                    {loan.employee_code} - {loan.name}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-blue-600 dark:text-blue-400 font-semibold">
-                    ₹{outstanding.toFixed(2)}
-                  </p>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      )}
 
       {/* Download modal */}
       {isDownloadModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-[#1f2933]">
-            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
-              Download Transactions (CSV)
-            </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-lg border border-gray-200 bg-white p-5 shadow-xl dark:border-gray-800 dark:bg-gray-950">
+            <div className="mb-5 flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-950 dark:text-gray-50">
+                  Download Transactions
+                </h3>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  Export all transactions in a selected date range.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsDownloadModalOpen(false)}
+                disabled={isDownloading}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
 
             <div className="space-y-4">
               <div className="flex flex-col gap-1">
-                <label className="text-sm text-gray-600 dark:text-gray-300">
+                <label className="text-sm font-medium text-gray-800 dark:text-gray-200">
                   From date
                 </label>
                 <input
                   type="date"
                   value={fromDate}
                   onChange={(e) => setFromDate(e.target.value)}
-                  className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-[#111827] dark:text-gray-100"
+                  className="h-10 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
                 />
               </div>
 
               <div className="flex flex-col gap-1">
-                <label className="text-sm text-gray-600 dark:text-gray-300">
+                <label className="text-sm font-medium text-gray-800 dark:text-gray-200">
                   To date
                 </label>
                 <input
                   type="date"
                   value={toDate}
                   onChange={(e) => setToDate(e.target.value)}
-                  className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-[#111827] dark:text-gray-100"
+                  className="h-10 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
                 />
               </div>
             </div>
@@ -300,7 +386,7 @@ export default function OutstandingLoansList() {
               <button
                 type="button"
                 onClick={() => setIsDownloadModalOpen(false)}
-                className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+                className="inline-flex min-h-10 items-center justify-center rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
                 disabled={isDownloading}
               >
                 Cancel
@@ -308,9 +394,10 @@ export default function OutstandingLoansList() {
               <button
                 type="button"
                 onClick={handleDownloadCsv}
-                className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
                 disabled={isDownloading}
               >
+                <Download className="h-4 w-4" />
                 {isDownloading ? "Downloading..." : "Download"}
               </button>
             </div>

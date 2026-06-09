@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
+import { requireAuth } from "@/lib/auth";
 import { getErrorMessage } from "@/lib/errors";
 import {
   createFuelEntry,
@@ -36,7 +37,10 @@ function paginationFromUrl(url: URL) {
   };
 }
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (!auth.ok) return auth.response;
+
   const url = new URL(req.url);
 
   try {
@@ -51,7 +55,10 @@ export async function GET(req: Request) {
   }
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (!auth.ok) return auth.response;
+
   let body: CreateFuelEntryInput;
 
   try {

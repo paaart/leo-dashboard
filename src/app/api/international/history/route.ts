@@ -1,12 +1,16 @@
 // src/app/api/international/history/route.ts
+import { requireAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabaseClient";
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import {
   BasicDetails,
   QuoteRow,
 } from "@/components/InternationalCalculator/types";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (!auth.ok) return auth.response;
+
   const { data, error } = await supabase
     .from("international_quotes")
     .select("*")

@@ -1,4 +1,5 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
+import { requireAuth } from "@/lib/auth";
 import { getErrorMessage } from "@/lib/errors";
 import { getFuelDashboardAnalytics, isISODate } from "@/lib/fuel";
 
@@ -9,7 +10,10 @@ function optionalDate(value: string | null) {
   return isISODate(value) ? value : null;
 }
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (!auth.ok) return auth.response;
+
   const url = new URL(req.url);
   const dateFrom = url.searchParams.get("dateFrom");
   const dateTo = url.searchParams.get("dateTo");

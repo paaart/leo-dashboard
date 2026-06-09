@@ -1,5 +1,7 @@
 // components/InternationalCalculator/ResultsTable.tsx
 import React from "react";
+import { Calculator, IndianRupee, Percent } from "lucide-react";
+import { MetricCard, SectionCard } from "@/components/shared/DashboardUI";
 
 const margins = ["10%", "20%", "25%", "30%"];
 
@@ -50,52 +52,88 @@ type Props = {
 };
 
 export default function ResultsTable({ calculatedValues }: Props) {
+  const primaryMargin = "10%";
+  const primaryValues = calculatedValues[primaryMargin];
+
   return (
-    <section className="bg-gray-100 dark:bg-gray-800 rounded-lg p-6">
-      <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-4">
-        Cost Breakdown
-      </h2>
-      <table className="w-full border border-gray-300 dark:border-gray-600">
-        <thead>
-          <tr>
-            <th className="border px-4 py-2 text-left">Item</th>
-            {margins.map((m) => (
-              <th key={m} className="border px-4 py-2 text-center">
-                {m}
+    <SectionCard
+      title="Margin, GST & Summary"
+      description="Review the calculated quote across configured margin bands."
+    >
+      {primaryValues ? (
+        <div className="mb-5 grid gap-4 sm:grid-cols-3">
+          <MetricCard
+            label="Total at 10%"
+            value={`₹${primaryValues.total}`}
+            hint="Net total plus GST"
+            icon={<IndianRupee className="h-5 w-5" />}
+          />
+          <MetricCard
+            label="GST to Pay"
+            value={`₹${primaryValues.gstToPay}`}
+            hint="For reference"
+            icon={<Calculator className="h-5 w-5" />}
+          />
+          <MetricCard
+            label="Combined Margin"
+            value={`₹${primaryValues.combinedMargin}`}
+            hint="At 10% margin"
+            icon={<Percent className="h-5 w-5" />}
+          />
+        </div>
+      ) : null}
+
+      <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
+        <table className="min-w-[760px] w-full text-sm">
+          <thead className="bg-gray-50 text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+            <tr>
+              <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                Item
               </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {Object.entries(sectionMap).map(([sectionKey, rows]) => (
-            <React.Fragment key={sectionKey}>
-              <tr className="bg-blue-100 dark:bg-blue-900">
-                <td
-                  colSpan={margins.length + 1}
-                  className="font-bold px-4 py-2 text-gray-800 dark:text-white"
+              {margins.map((m) => (
+                <th
+                  key={m}
+                  className="border-b border-gray-200 px-4 py-3 text-right font-semibold dark:border-gray-800"
                 >
-                  {sectionLabels[sectionKey]}
-                </td>
-              </tr>
-              {rows.map((key) => (
-                <tr key={key}>
-                  <td className="border px-4 py-2 text-gray-700 dark:text-gray-300">
-                    {rowLabels[key]}
-                  </td>
-                  {margins.map((m) => (
-                    <td
-                      key={m}
-                      className="border px-4 py-2 text-center text-gray-700 dark:text-gray-300"
-                    >
-                      {calculatedValues[m][key]}
-                    </td>
-                  ))}
-                </tr>
+                  {m}
+                </th>
               ))}
-            </React.Fragment>
-          ))}
-        </tbody>
-      </table>
-    </section>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+            {Object.entries(sectionMap).map(([sectionKey, rows]) => (
+              <React.Fragment key={sectionKey}>
+                <tr className="bg-blue-50 dark:bg-blue-950/40">
+                  <td
+                    colSpan={margins.length + 1}
+                    className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-300"
+                  >
+                    {sectionLabels[sectionKey]}
+                  </td>
+                </tr>
+                {rows.map((key) => (
+                  <tr
+                    key={key}
+                    className="bg-white hover:bg-gray-50 dark:bg-gray-950 dark:hover:bg-gray-900"
+                  >
+                    <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                      {rowLabels[key]}
+                    </td>
+                    {margins.map((m) => (
+                      <td
+                        key={m}
+                        className="px-4 py-3 text-right font-medium tabular-nums text-gray-950 dark:text-gray-50"
+                      >
+                        {calculatedValues[m][key]}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </React.Fragment>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </SectionCard>
   );
 }

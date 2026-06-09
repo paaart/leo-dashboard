@@ -1,6 +1,7 @@
 // components/InternationalCalculator/ChargesSection.tsx
 import React from "react";
 import { BasicDetails } from "../types";
+import { SectionCard } from "@/components/shared/DashboardUI";
 
 type Props = {
   data: BasicDetails;
@@ -34,14 +35,14 @@ const fields = [
 
 export default function ChargesSection({ data, onChange }: Props) {
   return (
-    <section className="bg-gray-100 dark:bg-gray-800 rounded-lg p-6 mb-6">
-      <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-4">
-        Charges
-      </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+    <SectionCard
+      title="Cost Sections"
+      description="Enter origin, freight, destination, and vendor tax inputs used by the quote."
+    >
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {fields.map(({ label, key, placeholder }) => (
-          <div key={key}>
-            <label className="block font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <div key={key} className="space-y-1.5">
+            <label className="block text-sm font-medium text-gray-800 dark:text-gray-200">
               {label}
             </label>
             <input
@@ -50,22 +51,21 @@ export default function ChargesSection({ data, onChange }: Props) {
               value={data[key] as string}
               placeholder={placeholder}
               onChange={(e) => onChange(key, e.target.value)}
-              className="w-full px-4 py-2 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-800 dark:text-white"
+              className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50 dark:placeholder:text-gray-500"
             />
           </div>
         ))}
 
-        <div className="flex items-center space-x-2 col-span-full mt-4">
+        <label className="col-span-full flex min-h-12 items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-4 text-sm font-medium text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
           <input
             type="checkbox"
             checked={data.calculateGSTVal}
             onChange={(e) => onChange("calculateGSTVal", e.target.checked)}
+            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-700"
           />
-          <label className="text-gray-700 dark:text-gray-300">
-            Include GST (Vendor)
-          </label>
-        </div>
+          <span>Include GST (Vendor)</span>
+        </label>
       </div>
-    </section>
+    </SectionCard>
   );
 }

@@ -3,7 +3,13 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import toast from "react-hot-toast";
-import { Trash2 } from "lucide-react";
+import { ArrowLeft, Trash2 } from "lucide-react";
+import {
+  EmptyState,
+  LoadingState,
+  PageHeader,
+  SectionCard,
+} from "@/components/shared/DashboardUI";
 
 type Props = {
   employee: {
@@ -121,114 +127,188 @@ export default function EmployeeHistoryView({ employee, onBack }: Props) {
 
   const companyName = empMeta?.company?.name ?? "—";
   const locationName = empMeta?.location?.name ?? "—";
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      maximumFractionDigits: 0,
+    }).format(Math.abs(value));
+
+  const typeBadgeClass = (type: Transaction["type"]) =>
+    type === "repayment"
+      ? "border-green-200 bg-green-50 text-green-700 dark:border-green-900/60 dark:bg-green-950/40 dark:text-green-300"
+      : "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300";
 
   return (
-    <div className="min-h-screen mx-auto p-8 bg-white dark:bg-[#23272f] rounded shadow">
-      <button
-        onClick={onBack}
-        className="text-sm text-blue-600 hover:underline mb-4"
-      >
-        ← Back to Outstanding List
-      </button>
-
-      <h2 className="text-xl font-semibold mb-1">
-        {employee.employee_code} — {employee.name}
-      </h2>
-
-      {/* NEW: Company • Location row */}
-      <div className="flex flex-wrap items-center gap-2 mb-4">
-        <span className="text-sm text-gray-500">Details:</span>
-        {metaLoading ? (
-          <span className="text-sm text-gray-400">Loading…</span>
-        ) : (
-          <>
-            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
-              Company: {companyName}
-            </span>
-            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300">
-              Location: {locationName}
-            </span>
-          </>
-        )}
-      </div>
-
-      <p className="text-sm text-gray-500 mb-4">Loan History</p>
-
-      {loading ? (
-        <p className="text-gray-600 dark:text-gray-300">Loading...</p>
-      ) : transactions.length === 0 ? (
-        <p className="text-gray-600 dark:text-gray-300">
-          No transactions found.
-        </p>
-      ) : (
-        <>
-          <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-            {transactions.map((txn) => (
-              <li
-                key={txn.id}
-                className="py-3 flex items-start justify-between gap-4"
-              >
-                <div className="min-w-0">
-                  <p className="font-medium capitalize">{txn.type}</p>
-                  {txn.remarks && (
-                    <p className="text-sm text-gray-500 dark:text-gray-400 break-words">
-                      {txn.remarks}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <p
-                      className={`font-semibold ${
-                        txn.amount > 0
-                          ? "text-blue-600 dark:text-blue-400"
-                          : "text-green-600 dark:text-green-400"
-                      }`}
-                    >
-                      ₹{Math.abs(txn.amount).toFixed(2)}
-                    </p>
-                    <p className="text-sm text-gray-400">
-                      {new Date(txn.payment_date).toLocaleDateString("en-IN", {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </p>
-                  </div>
-
-                  <button
-                    onClick={() => handleDelete(txn.id)}
-                    disabled={deletingId === txn.id}
-                    className="shrink-0 inline-flex items-center rounded-md border px-2 py-1 text-xs font-medium hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200 text-red-600 disabled:opacity-50"
-                    title="Delete"
-                  >
-                    <Trash2 className="h-4 w-4 mr-1" />
-                    {deletingId === txn.id ? "Deleting..." : "Delete"}
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-
-          <div className="flex justify-between mt-4">
+    <div className="min-h-full bg-gray-50 px-4 py-6 text-gray-950 dark:bg-gray-950 dark:text-gray-50 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-6">
+        <PageHeader
+          eyebrow="Finance"
+          title="Transaction History"
+          subtitle={`${employee.employee_code} - ${employee.name}`}
+          action={
             <button
-              disabled={page === 0}
-              onClick={() => setPage((p) => p - 1)}
-              className="text-sm text-blue-600 disabled:text-gray-400 disabled:cursor-not-allowed"
+              type="button"
+              onClick={onBack}
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
             >
-              ← Previous
+              <ArrowLeft className="h-4 w-4" />
+              Back
             </button>
-            <button
-              disabled={transactions.length < pageSize}
-              onClick={() => setPage((p) => p + 1)}
-              className="text-sm text-blue-600 disabled:text-gray-400 disabled:cursor-not-allowed"
-            >
-              Next →
-            </button>
+          }
+        />
+
+        <SectionCard
+          title="Employee Details"
+          description="Company and location details for this employee."
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            {metaLoading ? (
+              <span className="inline-flex rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
+                Loading details...
+              </span>
+            ) : (
+              <>
+                <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-medium text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                  Company: {companyName}
+                </span>
+                <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-medium text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                  Location: {locationName}
+                </span>
+              </>
+            )}
           </div>
-        </>
-      )}
+        </SectionCard>
+
+        <SectionCard
+          title="Transaction History"
+          description="Loans and advances increase outstanding balance; repayments reduce it."
+        >
+          {loading ? (
+            <LoadingState label="Loading transactions" />
+          ) : transactions.length === 0 ? (
+            <EmptyState
+              title="No transactions"
+              description="Loan, advance, and repayment entries for this employee will appear here."
+            />
+          ) : (
+            <>
+              <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
+                <table className="min-w-[780px] w-full text-sm">
+                  <thead className="bg-gray-50 text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+                    <tr>
+                      <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                        Date
+                      </th>
+                      <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                        Employee
+                      </th>
+                      <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                        Type
+                      </th>
+                      <th className="border-b border-gray-200 px-4 py-3 text-right font-semibold dark:border-gray-800">
+                        Amount
+                      </th>
+                      <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                        Remarks
+                      </th>
+                      <th className="border-b border-gray-200 px-4 py-3 text-right font-semibold dark:border-gray-800">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                    {transactions.map((txn) => (
+                      <tr
+                        key={txn.id}
+                        className="bg-white hover:bg-gray-50 dark:bg-gray-950 dark:hover:bg-gray-900"
+                      >
+                        <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                          {new Date(txn.payment_date).toLocaleDateString(
+                            "en-IN",
+                            {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            }
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <p className="font-medium text-gray-950 dark:text-gray-50">
+                            {employee.name}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {employee.employee_code}
+                          </p>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium capitalize ${typeBadgeClass(
+                              txn.type
+                            )}`}
+                          >
+                            {txn.type}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <span
+                            className={`font-semibold tabular-nums ${
+                              txn.amount > 0
+                                ? "text-blue-700 dark:text-blue-300"
+                                : "text-green-700 dark:text-green-300"
+                            }`}
+                          >
+                            {formatCurrency(txn.amount)}
+                          </span>
+                        </td>
+                        <td className="max-w-xs px-4 py-3 text-gray-500 dark:text-gray-400">
+                          <span className="line-clamp-2">
+                            {txn.remarks || "-"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(txn.id)}
+                            disabled={deletingId === txn.id}
+                            className="inline-flex min-h-9 items-center justify-center gap-2 rounded-md border border-red-200 px-3 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/40"
+                            title="Delete"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            {deletingId === txn.id ? "Deleting..." : "Delete"}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <button
+                  type="button"
+                  disabled={page === 0}
+                  onClick={() => setPage((p) => p - 1)}
+                  className="inline-flex min-h-10 items-center justify-center rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                >
+                  Previous
+                </button>
+                <span className="text-center text-sm text-gray-500 dark:text-gray-400">
+                  Page {page + 1}
+                </span>
+                <button
+                  type="button"
+                  disabled={transactions.length < pageSize}
+                  onClick={() => setPage((p) => p + 1)}
+                  className="inline-flex min-h-10 items-center justify-center rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                >
+                  Next
+                </button>
+              </div>
+            </>
+          )}
+        </SectionCard>
+      </div>
     </div>
   );
 }
