@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createFuelEntry, validateFuelEntryInput } from "@/lib/fuel";
+import { createFuelEntry, validateFuelEntryInput } from "@/lib/fuel-tracker";
 import { getErrorMessage } from "@/lib/errors";
 
 export const runtime = "nodejs";

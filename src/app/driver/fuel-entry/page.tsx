@@ -1,4 +1,4 @@
-import DriverFuelEntryPage from "@/features/driver-fuel-entry/DriverFuelEntryPage";
+import DriverFuelEntryPage from "@/components/FuelTracker/Public/DriverFuelEntryPage";
 
 export const metadata = {
   title: "Driver Fuel Entry | Leo Dashboard",

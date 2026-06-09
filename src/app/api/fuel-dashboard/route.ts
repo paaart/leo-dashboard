@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { getErrorMessage } from "@/lib/errors";
-import { getFuelDashboardSummary } from "@/lib/fuel";
+import { getFuelDashboardSummary } from "@/lib/fuel-tracker";
 
 export const runtime = "nodejs";
 

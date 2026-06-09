@@ -1,7 +1,7 @@
 import { ExternalLink, Plus } from "lucide-react";
 import { FuelEmptyState } from "./FuelEmptyState";
 import { FuelStatusBadge } from "./FuelStatusBadge";
-import type { FuelEntry, Vehicle } from "../types/fuelTracker.types";
+import type { FuelEntry, Vehicle } from "@/lib/fuel-tracker/types";
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("en-IN", {

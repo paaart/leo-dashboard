@@ -149,3 +149,30 @@ export type FuelEntryCalculations = {
   warning_flag: boolean;
   warning_reason: string | null;
 };
+
+export type CreateVehiclePayload = {
+  vehicleNo: string;
+  vehicleType: string;
+  assignedDriver: string | null;
+  startingOdometer: number;
+  status: VehicleStatus;
+};
+
+export type CreateFuelEntryPayload = {
+  vehicleId: string;
+  fuelDate: string;
+  fuelAmount: number;
+  fuelLiters: number;
+  odometerReading: number;
+  driverName: string;
+  driverMobile: string;
+  billImagePath: string | null;
+  meterImagePath: string | null;
+  remarks: string | null;
+};
+
+export type FuelTab = "dashboard" | "vehicles" | "fuel-entries";
+
+export type FuelApiResponse<T> =
+  | { ok: true; data: T }
+  | { ok: false; error: string };

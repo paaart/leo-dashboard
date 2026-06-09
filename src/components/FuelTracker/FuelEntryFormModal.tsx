@@ -4,7 +4,7 @@ import type { FormEvent } from "react";
 import type {
   CreateFuelEntryPayload,
   Vehicle,
-} from "../types/fuelTracker.types";
+} from "@/lib/fuel-tracker/types";
 
 const initialForm = {
   vehicleId: "",

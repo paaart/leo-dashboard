@@ -17,7 +17,7 @@ import WarehouseActivePods from "@/components/Warehouse/WarehouseActivePods";
 import WarehouseRenewals from "@/components/Warehouse/Ledger/WarehouseRenewals";
 import WarehousePayments from "@/components/Warehouse/WarehousePayments";
 import WarehouseClosedPods from "@/components/Warehouse/WarehouseClosedPods";
-import FuelTrackerPage from "@/features/fuel-tracker/FuelTrackerPage";
+import FuelTrackerPage from "@/components/FuelTracker/FuelTrackerPage";
 import UserManagement from "@/components/UserManagement/UserManagement";
 import { useDashboardAuth } from "./DashboardAuthProvider";
 

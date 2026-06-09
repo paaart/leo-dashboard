@@ -1,4 +1,4 @@
-import type { FuelTab } from "../types/fuelTracker.types";
+import type { FuelTab } from "@/lib/fuel-tracker/types";
 
 const tabs: { id: FuelTab; label: string }[] = [
   { id: "dashboard", label: "Dashboard" },

@@ -6,7 +6,7 @@ import {
   listVehicles,
   validateVehicleInput,
   type CreateVehicleInput,
-} from "@/lib/fuel";
+} from "@/lib/fuel-tracker";
 
 export const runtime = "nodejs";
 

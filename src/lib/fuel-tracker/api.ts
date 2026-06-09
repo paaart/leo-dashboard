@@ -6,7 +6,7 @@ import type {
   FuelDashboardSummary,
   FuelEntry,
   Vehicle,
-} from "../types/fuelTracker.types";
+} from "./types";
 
 async function requestJson<T>(
   url: string,

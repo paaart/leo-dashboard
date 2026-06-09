@@ -4,23 +4,23 @@ import { Plus, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import toast from "react-hot-toast";
-import { FuelAnalyticsDashboard } from "./components/FuelAnalyticsDashboard";
-import { FuelEntryFormModal } from "./components/FuelEntryFormModal";
-import { FuelEntryTable } from "./components/FuelEntryTable";
-import { FuelTrackerTabs } from "./components/FuelTrackerTabs";
-import { VehicleFormModal } from "./components/VehicleFormModal";
-import { VehicleTable } from "./components/VehicleTable";
+import { FuelTrackerDashboard } from "./FuelTrackerDashboard";
+import { FuelEntryFormModal } from "./FuelEntryFormModal";
+import { FuelEntryTable } from "./FuelEntryTable";
+import { FuelTrackerTabs } from "./FuelTrackerTabs";
+import { VehicleFormModal } from "./VehicleFormModal";
+import { VehicleTable } from "./VehicleTable";
 import {
   createFuelEntry,
   createVehicle,
   fetchFuelDashboardAnalytics,
   fetchFuelEntries,
   fetchVehicles,
-} from "./services/fuelTracker.api";
+} from "@/lib/fuel-tracker/api";
 import {
   createFuelImageSignedUrl,
   uploadFuelImage,
-} from "./services/fuelUpload.api";
+} from "@/lib/fuel-tracker/uploads";
 import type {
   CreateFuelEntryPayload,
   CreateVehiclePayload,
@@ -28,7 +28,7 @@ import type {
   FuelEntry,
   FuelTab,
   Vehicle,
-} from "./types/fuelTracker.types";
+} from "@/lib/fuel-tracker/types";
 
 function SectionHeader({
   title,
@@ -273,7 +273,7 @@ export default function FuelTrackerPage() {
               title="Analytics Dashboard"
               description="Fleet-level fuel spend, mileage, cost, warnings, and operational deviation."
             />
-            <FuelAnalyticsDashboard
+            <FuelTrackerDashboard
               analytics={analytics}
               vehicles={vehicles}
               loading={analyticsLoading}

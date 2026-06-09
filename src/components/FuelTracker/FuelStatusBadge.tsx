@@ -1,4 +1,4 @@
-import type { VehicleStatus } from "../types/fuelTracker.types";
+import type { VehicleStatus } from "@/lib/fuel-tracker/types";
 
 export function FuelStatusBadge({
   status,

@@ -3,7 +3,7 @@ import type {
   FuelDashboardSummary,
   FuelEntry,
   Vehicle,
-} from "../types/fuelTracker.types";
+} from "@/lib/fuel-tracker/types";
 
 function formatNumber(value: number | null, digits = 2) {
   if (value === null) return "-";

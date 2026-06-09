@@ -11,7 +11,7 @@ import type {
   FuelDashboardAnalytics,
   FuelDeviationStatus,
   Vehicle,
-} from "../types/fuelTracker.types";
+} from "@/lib/fuel-tracker/types";
 
 function formatNumber(value: number | null, digits = 2) {
   if (value === null || !Number.isFinite(value)) return "-";
@@ -87,7 +87,7 @@ function SkeletonBlock() {
   );
 }
 
-export function FuelAnalyticsDashboard({
+export function FuelTrackerDashboard({
   analytics,
   vehicles,
   loading,

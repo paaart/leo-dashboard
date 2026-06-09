@@ -3,7 +3,7 @@
 import { CheckCircle2, ImagePlus, Loader2, Truck } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
-import { uploadFuelImage } from "@/features/fuel-tracker/services/fuelUpload.api";
+import { uploadFuelImage } from "@/lib/fuel-tracker/uploads";
 
 type PublicVehicle = {
   id: string;
