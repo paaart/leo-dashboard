@@ -21,11 +21,13 @@ function FilePicker({
   id,
   label,
   file,
+  error,
   onChange,
 }: {
   id: string;
   label: string;
   file: File | null;
+  error?: string;
   onChange: (file: File | null) => void;
 }) {
   return (
@@ -49,6 +51,11 @@ function FilePicker({
         className="sr-only"
         onChange={(event) => onChange(event.target.files?.[0] ?? null)}
       />
+      {error ? (
+        <span className="text-xs text-red-600 dark:text-red-400">
+          {error}
+        </span>
+      ) : null}
     </label>
   );
 }
@@ -73,6 +80,10 @@ export function FuelEntryFormModal({
   const [billFile, setBillFile] = useState<File | null>(null);
   const [meterFile, setMeterFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [fileErrors, setFileErrors] = useState({
+    bill: "",
+    meter: "",
+  });
 
   const activeVehicles = useMemo(
     () => vehicles.filter((vehicle) => vehicle.status === "active"),
@@ -88,6 +99,7 @@ export function FuelEntryFormModal({
       setBillFile(null);
       setMeterFile(null);
       setError(null);
+      setFileErrors({ bill: "", meter: "" });
     }
   }, [activeVehicles, open, vehicles]);
 
@@ -96,6 +108,7 @@ export function FuelEntryFormModal({
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
+    setFileErrors({ bill: "", meter: "" });
 
     const fuelAmount = Number(form.fuelAmount);
     const fuelLiters = Number(form.fuelLiters);
@@ -123,12 +136,15 @@ export function FuelEntryFormModal({
       setError("Odometer reading must be greater than zero.");
       return;
     }
-    if (driverName.length < 2) {
-      setError("Driver name must be at least 2 characters.");
+    if (driverMobile && !/^\d{10,}$/.test(driverMobile)) {
+      setError("Driver mobile must contain at least 10 digits.");
       return;
     }
-    if (!/^\d{10,}$/.test(driverMobile)) {
-      setError("Driver mobile must contain at least 10 digits.");
+    if (!billFile || !meterFile) {
+      setFileErrors({
+        bill: billFile ? "" : "Bill image is required.",
+        meter: meterFile ? "" : "Meter image is required.",
+      });
       return;
     }
 
@@ -139,8 +155,8 @@ export function FuelEntryFormModal({
         fuelAmount,
         fuelLiters,
         odometerReading,
-        driverName,
-        driverMobile,
+        driverName: driverName || null,
+        driverMobile: driverMobile || null,
         remarks: form.remarks.trim() || null,
       },
       { bill: billFile, meter: meterFile }
@@ -314,15 +330,27 @@ export function FuelEntryFormModal({
           <div className="grid gap-4 sm:grid-cols-2">
             <FilePicker
               id="fuel-bill-image"
-              label="Bill Image"
+              label="Bill Image *"
               file={billFile}
-              onChange={setBillFile}
+              error={fileErrors.bill}
+              onChange={(file) => {
+                setBillFile(file);
+                if (file) {
+                  setFileErrors((prev) => ({ ...prev, bill: "" }));
+                }
+              }}
             />
             <FilePicker
               id="fuel-meter-image"
-              label="Meter Image"
+              label="Meter Image *"
               file={meterFile}
-              onChange={setMeterFile}
+              error={fileErrors.meter}
+              onChange={(file) => {
+                setMeterFile(file);
+                if (file) {
+                  setFileErrors((prev) => ({ ...prev, meter: "" }));
+                }
+              }}
             />
           </div>
 

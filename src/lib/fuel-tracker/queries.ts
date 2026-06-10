@@ -40,8 +40,8 @@ function toFuelEntry(row: Record<string, unknown>): FuelEntry {
   return {
     id: String(row.id),
     vehicle_id: String(row.vehicle_id),
-    driver_name: String(row.driver_name ?? ""),
-    driver_mobile: String(row.driver_mobile ?? ""),
+    driver_name: row.driver_name ? String(row.driver_name) : null,
+    driver_mobile: row.driver_mobile ? String(row.driver_mobile) : null,
     fuel_date: toDateOnly(row.fuel_date),
     fuel_amount: Number(row.fuel_amount),
     fuel_liters: Number(row.fuel_liters),

@@ -130,7 +130,7 @@ export function VehicleFormModal({
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="space-y-1.5">
               <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                Assigned Driver
+                Leo Company
               </span>
               <input
                 value={form.assignedDriver}
@@ -141,8 +141,11 @@ export function VehicleFormModal({
                   }))
                 }
                 className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
-                placeholder="Ramesh"
+                placeholder="LEO PACKERS AND MOVERS"
               />
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                Company/entity this vehicle belongs to.
+              </span>
             </label>
 
             <label className="space-y-1.5">

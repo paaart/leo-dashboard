@@ -14,8 +14,8 @@ export type Vehicle = {
 export type FuelEntry = {
   id: string;
   vehicle_id: string;
-  driver_name: string;
-  driver_mobile: string;
+  driver_name: string | null;
+  driver_mobile: string | null;
   fuel_date: string;
   fuel_amount: number;
   fuel_liters: number;
@@ -164,8 +164,8 @@ export type CreateFuelEntryPayload = {
   fuelAmount: number;
   fuelLiters: number;
   odometerReading: number;
-  driverName: string;
-  driverMobile: string;
+  driverName: string | null;
+  driverMobile: string | null;
   billImagePath: string | null;
   meterImagePath: string | null;
   remarks: string | null;

@@ -3,12 +3,6 @@ import { FuelEmptyState } from "./FuelEmptyState";
 import { FuelStatusBadge } from "./FuelStatusBadge";
 import type { Vehicle } from "@/lib/fuel-tracker/types";
 
-function formatNumber(value: number) {
-  return new Intl.NumberFormat("en-IN", {
-    maximumFractionDigits: 2,
-  }).format(value);
-}
-
 export function VehicleTable({
   vehicles,
   loading,
@@ -65,15 +59,14 @@ export function VehicleTable({
   return (
     <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
       <div className="overflow-x-auto">
-        <table className="min-w-205 w-full text-left text-sm">
+        <table className="min-w-[720px] w-full text-left text-sm">
           <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
             <tr>
               <th className="px-4 py-3 font-semibold">Vehicle Number</th>
               <th className="px-4 py-3 font-semibold">Vehicle Type</th>
-              <th className="px-4 py-3 font-semibold">Assigned Driver</th>
+              <th className="px-4 py-3 font-semibold">Leo Company</th>
               <th className="px-4 py-3 font-semibold">Starting Odometer</th>
               <th className="px-4 py-3 font-semibold">Status</th>
-              <th className="px-4 py-3 font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
@@ -87,16 +80,13 @@ export function VehicleTable({
                 </td>
                 <td className="px-4 py-3">{vehicle.vehicle_type}</td>
                 <td className="px-4 py-3">
-                  {vehicle.assigned_driver || "Unassigned"}
+                  {vehicle.assigned_driver || "-"}
                 </td>
                 <td className="px-4 py-3">
-                  {formatNumber(vehicle.starting_odometer)}
+                  {String(vehicle.starting_odometer)}
                 </td>
                 <td className="px-4 py-3">
                   <FuelStatusBadge status={vehicle.status} />
-                </td>
-                <td className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                  View
                 </td>
               </tr>
             ))}

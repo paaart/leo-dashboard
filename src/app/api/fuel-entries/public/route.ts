@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { createFuelEntry, validateFuelEntryInput } from "@/lib/fuel-tracker";
+import {
+  REQUIRED_FUEL_IMAGES_ERROR,
+  createFuelEntry,
+  validateFuelEntryInput,
+} from "@/lib/fuel-tracker";
 import { getErrorMessage } from "@/lib/errors";
 
 export const runtime = "nodejs";
@@ -12,13 +16,20 @@ type PublicFuelEntryBody = {
   odometerReading?: number | string;
   billImagePath?: string | null;
   meterImagePath?: string | null;
-  driverName?: string;
-  driverMobile?: string;
+  driverName?: string | null;
+  driverMobile?: string | null;
   remarks?: string | null;
 };
 
 function jsonError(message: string, status = 400) {
   return NextResponse.json({ ok: false, error: message }, { status });
+}
+
+function requiredImagesError() {
+  return NextResponse.json(
+    { error: REQUIRED_FUEL_IMAGES_ERROR },
+    { status: 400 }
+  );
 }
 
 function optionalTrim(value: unknown) {
@@ -52,14 +63,8 @@ export async function POST(req: Request) {
   const driverName = optionalTrim(body.driverName);
   const driverMobile = optionalTrim(body.driverMobile);
 
-  if (!billImagePath) return jsonError("billImagePath is required");
-  if (!meterImagePath) return jsonError("meterImagePath is required");
-  if (!driverName) return jsonError("driverName is required");
-  if (driverName.length < 2) {
-    return jsonError("driverName must be at least 2 characters");
-  }
-  if (!driverMobile) return jsonError("driverMobile is required");
-  if (!/^\d{10,}$/.test(driverMobile)) {
+  if (!billImagePath || !meterImagePath) return requiredImagesError();
+  if (driverMobile && !/^\d{10,}$/.test(driverMobile)) {
     return jsonError("driverMobile must contain at least 10 digits");
   }
 
@@ -69,14 +74,19 @@ export async function POST(req: Request) {
     fuelAmount: body.fuelAmount,
     fuelLiters: body.fuelLiters,
     odometerReading: body.odometerReading,
-    driverName,
-    driverMobile,
+    driverName: driverName || null,
+    driverMobile: driverMobile || null,
     billImagePath,
     meterImagePath,
     remarks: optionalTrim(body.remarks) || null,
   });
 
-  if (!validation.ok) return jsonError(validation.error);
+  if (!validation.ok) {
+    if (validation.error === REQUIRED_FUEL_IMAGES_ERROR) {
+      return requiredImagesError();
+    }
+    return jsonError(validation.error);
+  }
 
   try {
     const data = await createFuelEntry(validation.value);

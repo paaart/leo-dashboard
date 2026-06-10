@@ -45,8 +45,8 @@ async function submitPublicFuelEntry(payload: {
   odometerReading: number;
   billImagePath: string;
   meterImagePath: string;
-  driverName: string;
-  driverMobile: string;
+  driverName: string | null;
+  driverMobile: string | null;
   remarks: string | null;
 }) {
   const response = await fetch("/api/fuel-entries/public", {
@@ -120,18 +120,14 @@ export default function DriverFuelEntryPage() {
     const fuelAmount = Number(form.fuelAmount);
     const fuelLiters = Number(form.fuelLiters);
     const odometerReading = Number(form.odometerReading);
-    const driverName = form.driverName.trim();
     const driverMobile = form.driverMobile.trim();
 
     return {
       vehicleId: form.vehicleId ? "" : "Vehicle is required.",
-      driverName:
-        driverName.length >= 2
-          ? ""
-          : "Driver name must be at least 2 characters.",
-      driverMobile: /^\d{10,}$/.test(driverMobile)
+      driverName: "",
+      driverMobile: !driverMobile || /^\d{10,}$/.test(driverMobile)
         ? ""
-        : "Enter at least 10 digits.",
+        : "Enter at least 10 digits, or leave blank.",
       fuelDate: form.fuelDate ? "" : "Fuel date is required.",
       fuelAmount:
         Number.isFinite(fuelAmount) && fuelAmount > 0
@@ -215,8 +211,8 @@ export default function DriverFuelEntryPage() {
         odometerReading: Number(form.odometerReading),
         billImagePath,
         meterImagePath,
-        driverName: form.driverName.trim(),
-        driverMobile: form.driverMobile.trim(),
+        driverName: form.driverName.trim() || null,
+        driverMobile: form.driverMobile.trim() || null,
         remarks: form.remarks.trim() || null,
       });
 
@@ -412,7 +408,7 @@ export default function DriverFuelEntryPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             <FilePicker
               id="driver-bill-image"
-              label="Bill Image"
+              label="Bill Image *"
               file={billFile}
               onChange={setBillFile}
             />
@@ -423,7 +419,7 @@ export default function DriverFuelEntryPage() {
             ) : null}
             <FilePicker
               id="driver-meter-image"
-              label="Meter/Odometer Image"
+              label="Meter Image *"
               file={meterFile}
               onChange={setMeterFile}
             />
@@ -517,7 +513,7 @@ export default function DriverFuelEntryPage() {
 
           <button
             type="submit"
-            disabled={submitting || vehiclesLoading || !formIsValid}
+            disabled={submitting || vehiclesLoading}
             className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 text-base font-semibold text-white shadow-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {submitting ? (

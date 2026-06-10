@@ -4,6 +4,9 @@ type ValidationResult<T> =
   | { ok: true; value: T }
   | { ok: false; error: string };
 
+export const REQUIRED_FUEL_IMAGES_ERROR =
+  "Bill image and meter image are required.";
+
 export type ValidVehicleInput = {
   vehicle_no: string;
   vehicle_type: string;
@@ -14,8 +17,8 @@ export type ValidVehicleInput = {
 
 export type ValidFuelEntryInput = {
   vehicle_id: string;
-  driver_name: string;
-  driver_mobile: string;
+  driver_name: string | null;
+  driver_mobile: string | null;
   fuel_date: string;
   fuel_amount: number;
   fuel_liters: number;
@@ -36,11 +39,6 @@ export function isISODate(value: unknown): value is string {
 function optionalText(value: unknown): string | null {
   if (typeof value !== "string") return null;
   return value.trim() || null;
-}
-
-function requiredText(value: unknown): string {
-  if (typeof value !== "string") return "";
-  return value.trim();
 }
 
 function toNumber(value: unknown): number {
@@ -94,12 +92,22 @@ export function validateFuelEntryInput(
   const odometerReading = toNumber(
     input.odometer_reading ?? input.odometerReading
   );
-  const driverName = requiredText(input.driver_name ?? input.driverName);
-  const driverMobile = requiredText(input.driver_mobile ?? input.driverMobile);
+  const driverName = optionalText(input.driver_name ?? input.driverName);
+  const driverMobile = optionalText(input.driver_mobile ?? input.driverMobile);
+  const billImagePath = optionalText(
+    input.bill_image_path ?? input.billImagePath
+  );
+  const meterImagePath = optionalText(
+    input.meter_image_path ?? input.meterImagePath
+  );
 
   if (!vehicleId) return { ok: false, error: "vehicle_id is required" };
-  if (!driverName) return { ok: false, error: "driver_name is required" };
-  if (!driverMobile) return { ok: false, error: "driver_mobile is required" };
+  if (!billImagePath || !meterImagePath) {
+    return {
+      ok: false,
+      error: REQUIRED_FUEL_IMAGES_ERROR,
+    };
+  }
   if (!isISODate(fuelDate)) {
     return { ok: false, error: "fuel_date must be YYYY-MM-DD" };
   }
@@ -123,10 +131,8 @@ export function validateFuelEntryInput(
       fuel_amount: fuelAmount,
       fuel_liters: fuelLiters,
       odometer_reading: odometerReading,
-      bill_image_path: optionalText(input.bill_image_path ?? input.billImagePath),
-      meter_image_path: optionalText(
-        input.meter_image_path ?? input.meterImagePath
-      ),
+      bill_image_path: billImagePath,
+      meter_image_path: meterImagePath,
       remarks: optionalText(input.remarks),
     },
   };

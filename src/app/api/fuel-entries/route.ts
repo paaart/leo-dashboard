@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { requireAuth } from "@/lib/auth";
 import { getErrorMessage } from "@/lib/errors";
 import {
+  REQUIRED_FUEL_IMAGES_ERROR,
   createFuelEntry,
   listFuelEntries,
   validateFuelEntryInput,
@@ -12,6 +13,13 @@ export const runtime = "nodejs";
 
 function jsonError(message: string, status = 400) {
   return NextResponse.json({ ok: false, error: message }, { status });
+}
+
+function requiredImagesError() {
+  return NextResponse.json(
+    { error: REQUIRED_FUEL_IMAGES_ERROR },
+    { status: 400 }
+  );
 }
 
 function getStatus(error: unknown): number {
@@ -68,7 +76,12 @@ export async function POST(req: NextRequest) {
   }
 
   const validation = validateFuelEntryInput(body);
-  if (!validation.ok) return jsonError(validation.error);
+  if (!validation.ok) {
+    if (validation.error === REQUIRED_FUEL_IMAGES_ERROR) {
+      return requiredImagesError();
+    }
+    return jsonError(validation.error);
+  }
 
   try {
     const data = await createFuelEntry(validation.value);
