@@ -1,0 +1,115 @@
+import { NextResponse, type NextRequest } from "next/server";
+import type { PoolClient } from "pg";
+import { requireAdmin } from "@/lib/auth";
+import { db } from "@/lib/db";
+
+export type WarehousePaymentAlertStatus = "overdue" | "due_today" | "upcoming";
+
+export type WarehousePaymentAlertRow = {
+  pod_id: string;
+  client_id: string | null;
+  name: string;
+  contact: string;
+  company_name: string | null;
+  location_name: string | null;
+  next_payment_date: string;
+  total_due: number;
+  alert_status: WarehousePaymentAlertStatus;
+};
+
+async function ensureDismissalsTable(client: PoolClient) {
+  await client.query(`
+    create table if not exists public.warehouse_payment_alert_dismissals (
+      id uuid primary key default gen_random_uuid(),
+      pod_id uuid not null,
+      next_payment_date date not null,
+      dismissed_by uuid null,
+      dismissed_at timestamptz default now(),
+      created_at timestamptz default now(),
+      unique (pod_id, next_payment_date)
+    )
+  `);
+}
+
+export async function GET(req: NextRequest) {
+  const auth = await requireAdmin(req);
+  if (!auth.ok) return auth.response;
+
+  const client = await db.connect();
+
+  try {
+    await ensureDismissalsTable(client);
+
+    const res = await client.query<WarehousePaymentAlertRow>(
+      `
+      with active_cycle as (
+        select cy.id as cycle_id, cy.pod_id
+        from public.warehouse_pod_cycles cy
+        where cy.status = 'active'
+      ),
+      tx as (
+        select
+          ac.pod_id,
+          coalesce(
+            sum(
+              case
+                when t.type in ('charge','adjustment')
+                  then t.amount * (1 + (coalesce(t.gst_rate, 0) / 100.0))
+                else t.amount
+              end
+            ),
+          0)::numeric(12,2) as total_due
+        from active_cycle ac
+        left join public.warehouse_pod_transactions t
+          on t.cycle_id = ac.cycle_id
+        group by ac.pod_id
+      )
+      select
+        p.id::text as pod_id,
+        p.client_id,
+        p.name,
+        p.contact,
+        c.name as company_name,
+        l.name as location_name,
+        p.next_payment_date::date::text as next_payment_date,
+        coalesce(tx.total_due, 0)::numeric(12,2)::float8 as total_due,
+        case
+          when p.next_payment_date::date < current_date then 'overdue'
+          when p.next_payment_date::date = current_date then 'due_today'
+          else 'upcoming'
+        end as alert_status
+      from public.warehouse_pods p
+      left join public.companies c on c.id = p.company_id
+      left join public.locations l on l.id = p.location_id
+      left join tx on tx.pod_id = p.id
+      left join public.warehouse_payment_alert_dismissals d
+        on d.pod_id = p.id
+       and d.next_payment_date = p.next_payment_date::date
+      where p.status = 'active'::warehouse_pod_status
+        and p.next_payment_date is not null
+        and p.next_payment_date::date <= current_date + interval '7 days'
+        and d.id is null
+      order by
+        p.next_payment_date asc,
+        p.created_at asc nulls last,
+        p.id asc
+      `
+    );
+
+    return NextResponse.json({
+      ok: true,
+      data: {
+        rows: res.rows.map((row) => ({
+          ...row,
+          total_due: Number(row.total_due ?? 0),
+        })),
+      },
+    });
+  } catch (e: unknown) {
+    const msg =
+      e instanceof Error ? e.message : "Failed to fetch payment alerts";
+    return NextResponse.json({ ok: false, error: msg }, { status: 500 });
+  } finally {
+    client.release();
+  }
+}

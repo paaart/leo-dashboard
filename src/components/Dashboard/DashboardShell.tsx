@@ -17,6 +17,7 @@ import WarehouseActivePods from "@/components/Warehouse/WarehouseActivePods";
 import WarehouseRenewals from "@/components/Warehouse/Ledger/WarehouseRenewals";
 import WarehousePayments from "@/components/Warehouse/WarehousePayments";
 import WarehouseClosedPods from "@/components/Warehouse/WarehouseClosedPods";
+import WarehousePaymentAlerts from "@/components/Warehouse/WarehousePaymentAlerts";
 import FuelTrackerPage from "@/components/FuelTracker/FuelTrackerPage";
 import UserManagement from "@/components/UserManagement/UserManagement";
 import { useDashboardAuth } from "./DashboardAuthProvider";
@@ -37,7 +38,13 @@ export type Section =
   | { main: "users"; sub?: null }
   | {
       main: "warehouse";
-      sub: "add" | "active" | "renewals" | "payments" | "closed";
+      sub:
+        | "add"
+        | "active"
+        | "renewals"
+        | "payments"
+        | "closed"
+        | "payment-alerts";
     };
 
 function sectionFromModule(module: DashboardModule): Section {
@@ -200,6 +207,8 @@ export default function DashboardShell() {
             return <WarehouseRenewals />;
           case "payments":
             return <WarehousePayments />;
+          case "payment-alerts":
+            return <WarehousePaymentAlerts />;
           default:
             return <WarehouseClosedPods />;
         }

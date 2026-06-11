@@ -215,6 +215,19 @@ function SidebarNav({
               >
                 Closed Pods
               </button>
+              <button
+                onClick={() => {
+                  setSection({ main: "warehouse", sub: "payment-alerts" });
+                  onAnyNavigate?.();
+                }}
+                className={`block w-full rounded px-3 py-1 text-left ${
+                  section.sub === "payment-alerts"
+                    ? "bg-gray-200 dark:bg-gray-600"
+                    : "hover:bg-gray-100 dark:hover:bg-gray-700"
+                }`}
+              >
+                Payment Alerts
+              </button>
             </div>
           )}
         </div>

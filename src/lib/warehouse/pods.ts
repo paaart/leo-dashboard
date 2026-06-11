@@ -242,6 +242,45 @@ export type WarehouseClosedPodsMeta = {
   totalPages: number;
 };
 
+export type WarehousePaymentAlertStatus =
+  | "overdue"
+  | "due_today"
+  | "upcoming";
+
+export type WarehousePaymentAlertRow = {
+  pod_id: string;
+  client_id: string | null;
+  name: string;
+  contact: string;
+  company_name: string | null;
+  location_name: string | null;
+  next_payment_date: string;
+  total_due: number;
+  alert_status: WarehousePaymentAlertStatus;
+};
+
+export async function listWarehousePaymentAlerts(): Promise<
+  WarehousePaymentAlertRow[]
+> {
+  const data = await fetchJson<{ rows: WarehousePaymentAlertRow[] }>(
+    "/api/warehouse/payment-alerts",
+    { method: "GET" }
+  );
+
+  return data.rows ?? [];
+}
+
+export async function dismissWarehousePaymentAlert(args: {
+  podId: string;
+  nextPaymentDate: string;
+}): Promise<void> {
+  await fetchJson<void>("/api/warehouse/payment-alerts/dismiss", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(args),
+  });
+}
+
 export async function listClosedWarehousePods(
   filters: WarehouseClosedPodsFilters = {}
 ): Promise<{ rows: WarehouseClosedPodRow[]; meta: WarehouseClosedPodsMeta }> {
