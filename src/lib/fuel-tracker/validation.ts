@@ -1,4 +1,8 @@
-import type { CreateFuelEntryInput, CreateVehicleInput } from "./types";
+import type {
+  CreateFuelEntryInput,
+  CreateVehicleExpenseInput,
+  CreateVehicleInput,
+} from "./types";
 
 type ValidationResult<T> =
   | { ok: true; value: T }
@@ -26,6 +30,20 @@ export type ValidFuelEntryInput = {
   bill_image_path: string | null;
   meter_image_path: string | null;
   remarks: string | null;
+};
+
+export type ValidVehicleExpenseInput = {
+  expense_date: string;
+  vehicle_id: string;
+  expense_type: string;
+  description: string | null;
+  amount: number;
+  vendor: string | null;
+  invoice_reference: string | null;
+  city: string | null;
+  payment_mode: string | null;
+  company: string | null;
+  status: "paid" | "pending";
 };
 
 export function badRequest(message: string, status = 400) {
@@ -134,6 +152,47 @@ export function validateFuelEntryInput(
       bill_image_path: billImagePath,
       meter_image_path: meterImagePath,
       remarks: optionalText(input.remarks),
+    },
+  };
+}
+
+export function validateVehicleExpenseInput(
+  input: CreateVehicleExpenseInput
+): ValidationResult<ValidVehicleExpenseInput> {
+  const expenseDate = input.expense_date ?? input.expenseDate;
+  const vehicleId = (input.vehicle_id ?? input.vehicleId ?? "").trim();
+  const expenseType = (input.expense_type ?? input.expenseType ?? "").trim();
+  const amount = toNumber(input.amount);
+  const status = (input.status ?? "paid").trim().toLowerCase();
+
+  if (!isISODate(expenseDate)) {
+    return { ok: false, error: "expense_date must be YYYY-MM-DD" };
+  }
+  if (!vehicleId) return { ok: false, error: "vehicle_id is required" };
+  if (!expenseType) return { ok: false, error: "expense_type is required" };
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return { ok: false, error: "amount must be > 0" };
+  }
+  if (status !== "paid" && status !== "pending") {
+    return { ok: false, error: "status must be paid or pending" };
+  }
+
+  return {
+    ok: true,
+    value: {
+      expense_date: expenseDate,
+      vehicle_id: vehicleId,
+      expense_type: expenseType,
+      description: optionalText(input.description),
+      amount,
+      vendor: optionalText(input.vendor),
+      invoice_reference: optionalText(
+        input.invoice_reference ?? input.invoiceReference
+      ),
+      city: optionalText(input.city),
+      payment_mode: optionalText(input.payment_mode ?? input.paymentMode),
+      company: optionalText(input.company),
+      status,
     },
   };
 }

@@ -74,7 +74,7 @@ export function VehicleFormModal({
               Add Vehicle
             </h2>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Register a vehicle before adding fuel entries.
+              Register a vehicle before adding fuel entries or expenses.
             </p>
           </div>
           <button

@@ -1,11 +1,13 @@
 import type {
   CreateFuelEntryPayload,
+  CreateVehicleExpensePayload,
   CreateVehiclePayload,
   FuelApiResponse,
   FuelDashboardAnalytics,
   FuelDashboardSummary,
   FuelEntry,
   Vehicle,
+  VehicleExpense,
 } from "./types";
 
 async function requestJson<T>(
@@ -46,6 +48,33 @@ export function fetchFuelEntries() {
 
 export function createFuelEntry(payload: CreateFuelEntryPayload) {
   return requestJson<FuelEntry>("/api/fuel-entries", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function fetchVehicleExpenses(filters?: {
+  vehicleId?: string;
+  fromDate?: string;
+  toDate?: string;
+}) {
+  const params = new URLSearchParams();
+
+  if (filters?.vehicleId && filters.vehicleId !== "all") {
+    params.set("vehicleId", filters.vehicleId);
+  }
+  if (filters?.fromDate) params.set("fromDate", filters.fromDate);
+  if (filters?.toDate) params.set("toDate", filters.toDate);
+
+  const query = params.toString();
+
+  return requestJson<VehicleExpense[]>(
+    `/api/vehicle-expenses${query ? `?${query}` : ""}`
+  );
+}
+
+export function createVehicleExpense(payload: CreateVehicleExpensePayload) {
+  return requestJson<VehicleExpense>("/api/vehicle-expenses", {
     method: "POST",
     body: JSON.stringify(payload),
   });

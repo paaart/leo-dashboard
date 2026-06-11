@@ -9,12 +9,16 @@ import { FuelEntryFormModal } from "./FuelEntryFormModal";
 import { FuelEntryTable } from "./FuelEntryTable";
 import { FuelTrackerTabs } from "./FuelTrackerTabs";
 import { VehicleFormModal } from "./VehicleFormModal";
+import { VehicleExpenseFormModal } from "./VehicleExpenseFormModal";
+import { VehicleExpenseTable } from "./VehicleExpenseTable";
 import { VehicleTable } from "./VehicleTable";
 import {
   createFuelEntry,
+  createVehicleExpense,
   createVehicle,
   fetchFuelDashboardAnalytics,
   fetchFuelEntries,
+  fetchVehicleExpenses,
   fetchVehicles,
 } from "@/lib/fuel-tracker/api";
 import {
@@ -23,11 +27,13 @@ import {
 } from "@/lib/fuel-tracker/uploads";
 import type {
   CreateFuelEntryPayload,
+  CreateVehicleExpensePayload,
   CreateVehiclePayload,
   FuelDashboardAnalytics,
   FuelEntry,
   FuelTab,
   Vehicle,
+  VehicleExpense,
 } from "@/lib/fuel-tracker/types";
 
 function SectionHeader({
@@ -80,6 +86,7 @@ export default function FuelTrackerPage() {
   const [activeTab, setActiveTab] = useState<FuelTab>("dashboard");
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [fuelEntries, setFuelEntries] = useState<FuelEntry[]>([]);
+  const [vehicleExpenses, setVehicleExpenses] = useState<VehicleExpense[]>([]);
   const [analytics, setAnalytics] = useState<FuelDashboardAnalytics | null>(
     null
   );
@@ -89,11 +96,16 @@ export default function FuelTrackerPage() {
   const [analyticsError, setAnalyticsError] = useState<string | null>(null);
   const [vehicleModalOpen, setVehicleModalOpen] = useState(false);
   const [fuelEntryModalOpen, setFuelEntryModalOpen] = useState(false);
+  const [expenseModalOpen, setExpenseModalOpen] = useState(false);
   const [savingVehicle, setSavingVehicle] = useState(false);
   const [savingFuelEntry, setSavingFuelEntry] = useState(false);
+  const [savingExpense, setSavingExpense] = useState(false);
   const [vehicleFilter, setVehicleFilter] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [expenseVehicleFilter, setExpenseVehicleFilter] = useState("all");
+  const [expenseDateFrom, setExpenseDateFrom] = useState("");
+  const [expenseDateTo, setExpenseDateTo] = useState("");
   const [analyticsFilters, setAnalyticsFilters] = useState({
     vehicleId: "all",
     dateFrom: "",
@@ -116,6 +128,19 @@ export default function FuelTrackerPage() {
     });
   }, [dateFrom, dateTo, fuelEntries, vehicleFilter]);
 
+  const filteredVehicleExpenses = useMemo(() => {
+    return vehicleExpenses.filter((expense) => {
+      const matchesVehicle =
+        expenseVehicleFilter === "all" ||
+        expense.vehicle_id === expenseVehicleFilter;
+      const matchesFrom =
+        !expenseDateFrom || expense.expense_date >= expenseDateFrom;
+      const matchesTo = !expenseDateTo || expense.expense_date <= expenseDateTo;
+
+      return matchesVehicle && matchesFrom && matchesTo;
+    });
+  }, [expenseDateFrom, expenseDateTo, expenseVehicleFilter, vehicleExpenses]);
+
   const loadAnalytics = useCallback(async () => {
     setAnalyticsLoading(true);
     setAnalyticsError(null);
@@ -127,7 +152,7 @@ export default function FuelTrackerPage() {
       const message =
         loadError instanceof Error
           ? loadError.message
-          : "Failed to load fuel analytics.";
+          : "Failed to load vehicle analytics.";
       setAnalyticsError(message);
     } finally {
       setAnalyticsLoading(false);
@@ -139,18 +164,20 @@ export default function FuelTrackerPage() {
     setError(null);
 
     try {
-      const [vehiclesData, entriesData] = await Promise.all([
+      const [vehiclesData, entriesData, expensesData] = await Promise.all([
         fetchVehicles(),
         fetchFuelEntries(),
+        fetchVehicleExpenses(),
       ]);
 
       setVehicles(vehiclesData);
       setFuelEntries(entriesData);
+      setVehicleExpenses(expensesData);
     } catch (loadError) {
       const message =
         loadError instanceof Error
           ? loadError.message
-          : "Failed to load fuel tracker data.";
+          : "Failed to load vehicle tracker data.";
       setError(message);
     } finally {
       setLoading(false);
@@ -218,6 +245,26 @@ export default function FuelTrackerPage() {
     }
   };
 
+  const handleCreateExpense = async (payload: CreateVehicleExpensePayload) => {
+    setSavingExpense(true);
+
+    try {
+      await createVehicleExpense(payload);
+      toast.success("Expense added");
+      setExpenseModalOpen(false);
+      await loadData();
+      await loadAnalytics();
+    } catch (createError) {
+      const message =
+        createError instanceof Error
+          ? createError.message
+          : "Failed to add expense.";
+      toast.error(message);
+    } finally {
+      setSavingExpense(false);
+    }
+  };
+
   const handleViewProof = async (path: string) => {
     try {
       const signedUrl = await createFuelImageSignedUrl(path);
@@ -240,11 +287,11 @@ export default function FuelTrackerPage() {
               Operations
             </p>
             <h1 className="mt-2 text-2xl font-semibold tracking-tight text-gray-950 dark:text-gray-50">
-              Fuel Tracker
+              Vehicle Tracker
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-gray-500 dark:text-gray-400">
-              Monitor fuel entries, mileage approximations, and vehicle-wise
-              fuel history.
+              Monitor vehicle fuel usage, expenses, mileage, and operational
+              costs.
             </p>
           </div>
           <button
@@ -271,7 +318,7 @@ export default function FuelTrackerPage() {
           <div className="space-y-4">
             <SectionHeader
               title="Analytics Dashboard"
-              description="Fleet-level fuel spend, mileage, cost, warnings, and operational deviation."
+              description="Fleet-level fuel spend, other expenses, mileage, costs, warnings, and operational deviation."
             />
             <FuelTrackerDashboard
               analytics={analytics}
@@ -288,7 +335,7 @@ export default function FuelTrackerPage() {
           <div className="space-y-4">
             <SectionHeader
               title="Vehicles"
-              description="Create and review fleet vehicles used for fuel tracking."
+              description="Create and review fleet vehicles used for vehicle tracking."
               action={
                 <AddButton onClick={() => setVehicleModalOpen(true)}>
                   Add Vehicle
@@ -373,6 +420,77 @@ export default function FuelTrackerPage() {
             />
           </div>
         ) : null}
+
+        {activeTab === "other-expenses" ? (
+          <div className="space-y-4">
+            <SectionHeader
+              title="Other Expenses"
+              description="Create and review non-fuel vehicle expenses."
+              action={
+                <AddButton
+                  onClick={() => setExpenseModalOpen(true)}
+                  disabled={vehicles.length === 0}
+                >
+                  Add Expense
+                </AddButton>
+              }
+            />
+
+            <div className="grid gap-3 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950 md:grid-cols-3">
+              <label className="space-y-1.5">
+                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                  Vehicle Filter
+                </span>
+                <select
+                  value={expenseVehicleFilter}
+                  onChange={(event) =>
+                    setExpenseVehicleFilter(event.target.value)
+                  }
+                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                >
+                  <option value="all">All vehicles</option>
+                  {vehicles.map((vehicle) => (
+                    <option key={vehicle.id} value={vehicle.id}>
+                      {vehicle.vehicle_no}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="space-y-1.5">
+                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                  From
+                </span>
+                <input
+                  type="date"
+                  value={expenseDateFrom}
+                  onChange={(event) => setExpenseDateFrom(event.target.value)}
+                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                />
+              </label>
+
+              <label className="space-y-1.5">
+                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                  To
+                </span>
+                <input
+                  type="date"
+                  value={expenseDateTo}
+                  onChange={(event) => setExpenseDateTo(event.target.value)}
+                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                />
+              </label>
+            </div>
+
+            <VehicleExpenseTable
+              expenses={filteredVehicleExpenses}
+              vehiclesById={vehiclesById}
+              loading={loading}
+              error={error}
+              onAdd={() => setExpenseModalOpen(true)}
+            />
+          </div>
+        ) : null}
       </div>
 
       <VehicleFormModal
@@ -388,6 +506,14 @@ export default function FuelTrackerPage() {
         loading={savingFuelEntry}
         onClose={() => setFuelEntryModalOpen(false)}
         onSubmit={handleCreateFuelEntry}
+      />
+
+      <VehicleExpenseFormModal
+        open={expenseModalOpen}
+        vehicles={vehicles}
+        loading={savingExpense}
+        onClose={() => setExpenseModalOpen(false)}
+        onSubmit={handleCreateExpense}
       />
     </div>
   );

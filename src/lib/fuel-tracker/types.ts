@@ -68,6 +68,56 @@ export type CreateFuelEntryInput = {
   remarks?: string | null;
 };
 
+export type VehicleExpenseStatus = "paid" | "pending";
+
+export type VehicleExpenseType =
+  | "Repair"
+  | "Part Purchase"
+  | "Tax"
+  | "Insurance"
+  | "Service"
+  | "Permit"
+  | "Tyres"
+  | "Battery"
+  | "Other"
+  | (string & {});
+
+export type VehicleExpense = {
+  id: string;
+  expense_date: string;
+  vehicle_id: string;
+  expense_type: VehicleExpenseType;
+  description: string | null;
+  amount: number;
+  vendor: string | null;
+  invoice_reference: string | null;
+  city: string | null;
+  payment_mode: string | null;
+  company: string | null;
+  status: VehicleExpenseStatus;
+  created_at: string;
+  updated_at: string;
+};
+
+export type CreateVehicleExpenseInput = {
+  expense_date?: string;
+  expenseDate?: string;
+  vehicle_id?: string;
+  vehicleId?: string;
+  expense_type?: string;
+  expenseType?: string;
+  description?: string | null;
+  amount?: number | string;
+  vendor?: string | null;
+  invoice_reference?: string | null;
+  invoiceReference?: string | null;
+  city?: string | null;
+  payment_mode?: string | null;
+  paymentMode?: string | null;
+  company?: string | null;
+  status?: string;
+};
+
 export type FuelDashboardSummary = {
   vehicleId: string;
   vehicleNo: string;
@@ -84,6 +134,8 @@ export type FuelDeviationStatus = "good" | "normal" | "low" | "none";
 
 export type FuelAnalyticsSummary = {
   totalFuelSpend: number;
+  totalOtherExpenses: number;
+  totalVehicleOperatingCost: number;
   totalFuelLiters: number;
   totalKmDriven: number;
   averageMileage: number | null;
@@ -171,7 +223,25 @@ export type CreateFuelEntryPayload = {
   remarks: string | null;
 };
 
-export type FuelTab = "dashboard" | "vehicles" | "fuel-entries";
+export type CreateVehicleExpensePayload = {
+  expenseDate: string;
+  vehicleId: string;
+  expenseType: string;
+  description: string | null;
+  amount: number;
+  vendor: string | null;
+  invoiceReference: string | null;
+  city: string | null;
+  paymentMode: string | null;
+  company: string | null;
+  status: VehicleExpenseStatus;
+};
+
+export type FuelTab =
+  | "dashboard"
+  | "vehicles"
+  | "fuel-entries"
+  | "other-expenses";
 
 export type FuelApiResponse<T> =
   | { ok: true; data: T }

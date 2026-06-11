@@ -3,6 +3,7 @@ import {
   BadgeIndianRupee,
   Gauge,
   IndianRupee,
+  ReceiptIndianRupee,
   Route,
   TrendingUp,
 } from "lucide-react";
@@ -109,10 +110,22 @@ export function FuelTrackerDashboard({
   const summary = analytics?.summary;
   const summaryCards = [
     {
-      label: "Total Fuel Spend",
+      label: "Total Fuel Cost",
       value: formatCurrency(summary?.totalFuelSpend ?? null),
       hint: "All filtered entries",
       icon: IndianRupee,
+    },
+    {
+      label: "Total Other Expenses",
+      value: formatCurrency(summary?.totalOtherExpenses ?? null),
+      hint: "Filtered non-fuel expenses",
+      icon: ReceiptIndianRupee,
+    },
+    {
+      label: "Total Vehicle Operating Cost",
+      value: formatCurrency(summary?.totalVehicleOperatingCost ?? null),
+      hint: "Fuel cost + other expenses",
+      icon: BadgeIndianRupee,
     },
     {
       label: "Total Fuel Liters",
@@ -143,7 +156,7 @@ export function FuelTrackerDashboard({
           ? "-"
           : `${formatCurrency(summary.averageCostPerKm)} / km`,
       hint: "Valid fuel amount / valid KM",
-      icon: BadgeIndianRupee,
+      icon: IndianRupee,
     },
     {
       label: "Warning Entries",

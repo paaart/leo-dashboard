@@ -9,8 +9,13 @@ import type {
   FuelDashboardSummary,
   FuelEntry,
   Vehicle,
+  VehicleExpense,
 } from "./types";
-import type { ValidFuelEntryInput, ValidVehicleInput } from "./validation";
+import type {
+  ValidFuelEntryInput,
+  ValidVehicleExpenseInput,
+  ValidVehicleInput,
+} from "./validation";
 
 function toDateOnly(value: unknown): string {
   if (value instanceof Date) {
@@ -62,6 +67,27 @@ function toFuelEntry(row: Record<string, unknown>): FuelEntry {
     remarks: row.remarks ? String(row.remarks) : null,
     warning_flag: Boolean(row.warning_flag),
     warning_reason: row.warning_reason ? String(row.warning_reason) : null,
+    created_at: String(row.created_at),
+    updated_at: String(row.updated_at),
+  };
+}
+
+function toVehicleExpense(row: Record<string, unknown>): VehicleExpense {
+  return {
+    id: String(row.id),
+    expense_date: toDateOnly(row.expense_date),
+    vehicle_id: String(row.vehicle_id),
+    expense_type: String(row.expense_type),
+    description: row.description ? String(row.description) : null,
+    amount: Number(row.amount),
+    vendor: row.vendor ? String(row.vendor) : null,
+    invoice_reference: row.invoice_reference
+      ? String(row.invoice_reference)
+      : null,
+    city: row.city ? String(row.city) : null,
+    payment_mode: row.payment_mode ? String(row.payment_mode) : null,
+    company: row.company ? String(row.company) : null,
+    status: String(row.status).toLowerCase() as VehicleExpense["status"],
     created_at: String(row.created_at),
     updated_at: String(row.updated_at),
   };
@@ -269,6 +295,89 @@ export async function listFuelEntries(params: {
   return result.rows.map(toFuelEntry);
 }
 
+export async function createVehicleExpense(
+  input: ValidVehicleExpenseInput
+): Promise<VehicleExpense> {
+  const result = await db.query(
+    `
+    insert into public.vehicle_expenses (
+      expense_date,
+      vehicle_id,
+      expense_type,
+      description,
+      amount,
+      vendor,
+      invoice_reference,
+      city,
+      payment_mode,
+      company,
+      status
+    )
+    values ($1::date, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+    returning *
+    `,
+    [
+      input.expense_date,
+      input.vehicle_id,
+      input.expense_type,
+      input.description,
+      input.amount,
+      input.vendor,
+      input.invoice_reference,
+      input.city,
+      input.payment_mode,
+      input.company,
+      input.status,
+    ]
+  );
+
+  return toVehicleExpense(result.rows[0]);
+}
+
+export async function listVehicleExpenses(params: {
+  vehicleId?: string | null;
+  fromDate?: string | null;
+  toDate?: string | null;
+  limit: number;
+  offset: number;
+}): Promise<VehicleExpense[]> {
+  const clauses: string[] = [];
+  const values: unknown[] = [];
+
+  if (params.vehicleId) {
+    values.push(params.vehicleId);
+    clauses.push(`vehicle_id = $${values.length}`);
+  }
+
+  if (params.fromDate) {
+    values.push(params.fromDate);
+    clauses.push(`expense_date >= $${values.length}::date`);
+  }
+
+  if (params.toDate) {
+    values.push(params.toDate);
+    clauses.push(`expense_date <= $${values.length}::date`);
+  }
+
+  values.push(params.limit);
+  const limitParam = values.length;
+  values.push(params.offset);
+  const offsetParam = values.length;
+
+  const result = await db.query(
+    `
+    select *
+    from public.vehicle_expenses
+    ${clauses.length ? `where ${clauses.join(" and ")}` : ""}
+    order by expense_date desc, created_at desc
+    limit $${limitParam} offset $${offsetParam}
+    `,
+    values
+  );
+
+  return result.rows.map(toVehicleExpense);
+}
+
 export async function getFuelDashboardSummary(): Promise<
   FuelDashboardSummary[]
 > {
@@ -379,10 +488,36 @@ function analyticsWhere(filters: FuelAnalyticsFilters) {
   };
 }
 
+function expenseAnalyticsWhere(filters: FuelAnalyticsFilters) {
+  const clauses: string[] = [];
+  const values: unknown[] = [];
+
+  if (filters.vehicleId) {
+    values.push(filters.vehicleId);
+    clauses.push(`ve.vehicle_id = $${values.length}`);
+  }
+
+  if (filters.dateFrom) {
+    values.push(filters.dateFrom);
+    clauses.push(`ve.expense_date >= $${values.length}::date`);
+  }
+
+  if (filters.dateTo) {
+    values.push(filters.dateTo);
+    clauses.push(`ve.expense_date <= $${values.length}::date`);
+  }
+
+  return {
+    sql: clauses.length ? `where ${clauses.join(" and ")}` : "",
+    values,
+  };
+}
+
 export async function getFuelDashboardAnalytics(
   filters: FuelAnalyticsFilters
 ): Promise<FuelDashboardAnalytics> {
   const where = analyticsWhere(filters);
+  const expenseWhere = expenseAnalyticsWhere(filters);
   const vehicleFilterValues: unknown[] = [];
   const vehicleFilterSql = filters.vehicleId
     ? `where v.id = $${where.values.length + 1}`
@@ -518,6 +653,8 @@ export async function getFuelDashboardAnalytics(
     },
     {
       totalFuelSpend: 0,
+      totalOtherExpenses: 0,
+      totalVehicleOperatingCost: 0,
       totalFuelLiters: 0,
       totalKmDriven: 0,
       averageMileage: null as number | null,
@@ -525,6 +662,21 @@ export async function getFuelDashboardAnalytics(
       warningEntries: 0,
     }
   );
+
+  const expenseTotals = await db.query(
+    `
+    select coalesce(sum(ve.amount), 0) as total_other_expenses
+    from public.vehicle_expenses ve
+    ${expenseWhere.sql}
+    `,
+    expenseWhere.values
+  );
+
+  summary.totalOtherExpenses = Number(
+    expenseTotals.rows[0]?.total_other_expenses ?? 0
+  );
+  summary.totalVehicleOperatingCost =
+    summary.totalFuelSpend + summary.totalOtherExpenses;
 
   const validTotals = await db.query(
     `

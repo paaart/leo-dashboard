@@ -113,7 +113,7 @@ function SidebarNav({
         }}
         className={mainLinkClass(isActive("fuel"))}
       >
-        Fuel Tracker
+        Vehicle Tracker
       </Link>
 
       {isAdmin && (

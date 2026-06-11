@@ -41,7 +41,7 @@ export function VehicleTable({
     return (
       <FuelEmptyState
         title="No vehicles yet"
-        description="Add the first vehicle to start tracking fuel entries and mileage history."
+        description="Add the first vehicle to start tracking fuel entries, expenses, and mileage history."
         action={
           <button
             type="button"
@@ -59,7 +59,7 @@ export function VehicleTable({
   return (
     <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
       <div className="overflow-x-auto">
-        <table className="min-w-[720px] w-full text-left text-sm">
+        <table className="min-w-180 w-full text-left text-sm">
           <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
             <tr>
               <th className="px-4 py-3 font-semibold">Vehicle Number</th>
@@ -79,9 +79,7 @@ export function VehicleTable({
                   {vehicle.vehicle_no}
                 </td>
                 <td className="px-4 py-3">{vehicle.vehicle_type}</td>
-                <td className="px-4 py-3">
-                  {vehicle.assigned_driver || "-"}
-                </td>
+                <td className="px-4 py-3">{vehicle.assigned_driver || "-"}</td>
                 <td className="px-4 py-3">
                   {String(vehicle.starting_odometer)}
                 </td>
