@@ -221,6 +221,9 @@ export default function WarehousePaymentAlerts() {
                 <thead className="bg-gray-50 text-gray-600 dark:bg-gray-900 dark:text-gray-300">
                   <tr>
                     <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                      Sl No
+                    </th>
+                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
                       Client
                     </th>
                     <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
@@ -241,7 +244,7 @@ export default function WarehousePaymentAlerts() {
                     <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
                       Alert Status
                     </th>
-                    <th className="border-b border-gray-200 px-4 py-3 text-right font-semibold dark:border-gray-800">
+                    <th className="border-b border-gray-200 px-4 py-3  font-semibold dark:border-gray-800">
                       Actions
                     </th>
                   </tr>
