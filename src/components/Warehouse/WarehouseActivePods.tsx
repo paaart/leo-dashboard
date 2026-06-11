@@ -22,10 +22,10 @@ function formatCurrency(value: number) {
   }).format(value || 0);
 }
 
-function fmtDate(value?: string | null) {
-  if (!value) return "-";
-  return new Date(value).toLocaleDateString("en-IN");
-}
+// function fmtDate(value?: string | null) {
+//   if (!value) return "-";
+//   return new Date(value).toLocaleDateString("en-IN");
+// }
 
 function statusBadgeClass(b: "green" | "yellow" | "red") {
   if (b === "red") {
@@ -192,12 +192,12 @@ export default function WarehouseActivePods() {
                     <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
                       Location
                     </th>
-                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                    {/* <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
                       Next Charge
                     </th>
                     <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
                       Next Payment
-                    </th>
+                    </th> */}
                     <th className="border-b border-gray-200 px-4 py-3 text-right font-semibold dark:border-gray-800">
                       Total Due
                     </th>
@@ -239,13 +239,13 @@ export default function WarehouseActivePods() {
                         {r.location_name ?? "-"}
                       </td>
 
-                      <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                      {/* <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
                         {fmtDate(r.next_charge_date)}
                       </td>
 
                       <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
                         {fmtDate(r.next_payment_date)}
-                      </td>
+                      </td> */}
 
                       <td className="px-4 py-3 text-right font-semibold tabular-nums text-blue-700 dark:text-blue-300">
                         {formatCurrency(Number(r.total_due))}
