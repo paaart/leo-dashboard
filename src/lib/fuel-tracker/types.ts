@@ -85,7 +85,7 @@ export type VehicleExpenseType =
 export type VehicleExpense = {
   id: string;
   expense_date: string;
-  vehicle_id: string;
+  vehicle_id: string | null;
   expense_type: VehicleExpenseType;
   description: string | null;
   amount: number;
@@ -95,6 +95,8 @@ export type VehicleExpense = {
   payment_mode: string | null;
   company: string | null;
   status: VehicleExpenseStatus;
+  paid_at: string | null;
+  payment_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -102,8 +104,10 @@ export type VehicleExpense = {
 export type CreateVehicleExpenseInput = {
   expense_date?: string;
   expenseDate?: string;
-  vehicle_id?: string;
-  vehicleId?: string;
+  expense_scope?: "vehicle" | "general";
+  expenseScope?: "vehicle" | "general";
+  vehicle_id?: string | null;
+  vehicleId?: string | null;
   expense_type?: string;
   expenseType?: string;
   description?: string | null;
@@ -225,7 +229,8 @@ export type CreateFuelEntryPayload = {
 
 export type CreateVehicleExpensePayload = {
   expenseDate: string;
-  vehicleId: string;
+  expenseScope: "vehicle" | "general";
+  vehicleId: string | null;
   expenseType: string;
   description: string | null;
   amount: number;
@@ -237,11 +242,47 @@ export type CreateVehicleExpensePayload = {
   status: VehicleExpenseStatus;
 };
 
+export type VehicleExpensePaymentItem = {
+  id: string;
+  payment_id: string;
+  expense_id: string;
+  expense_date: string;
+  vehicle_id: string | null;
+  vehicle_no: string | null;
+  expense_type: VehicleExpenseType;
+  description: string | null;
+  amount: number;
+  vendor: string | null;
+  created_at: string;
+};
+
+export type VehicleExpensePayment = {
+  id: string;
+  payment_date: string;
+  payment_mode: string | null;
+  reference_number: string | null;
+  remarks: string | null;
+  total_amount: number;
+  expense_count: number;
+  created_at: string;
+  updated_at: string;
+  items: VehicleExpensePaymentItem[];
+};
+
+export type CreateVehicleExpensePaymentPayload = {
+  paymentDate: string;
+  paymentMode: string | null;
+  referenceNumber: string | null;
+  remarks: string | null;
+  expenseIds: string[];
+};
+
 export type FuelTab =
   | "dashboard"
   | "vehicles"
   | "fuel-entries"
-  | "other-expenses";
+  | "other-expenses"
+  | "paid-expenses";
 
 export type FuelApiResponse<T> =
   | { ok: true; data: T }

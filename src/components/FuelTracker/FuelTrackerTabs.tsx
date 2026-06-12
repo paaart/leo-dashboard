@@ -5,6 +5,7 @@ const tabs: { id: FuelTab; label: string }[] = [
   { id: "vehicles", label: "Vehicles" },
   { id: "fuel-entries", label: "Fuel Entries" },
   { id: "other-expenses", label: "Other Expenses" },
+  { id: "paid-expenses", label: "Paid Expenses" },
 ];
 
 export function FuelTrackerTabs({

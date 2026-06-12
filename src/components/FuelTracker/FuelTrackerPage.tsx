@@ -10,14 +10,18 @@ import { FuelEntryTable } from "./FuelEntryTable";
 import { FuelTrackerTabs } from "./FuelTrackerTabs";
 import { VehicleFormModal } from "./VehicleFormModal";
 import { VehicleExpenseFormModal } from "./VehicleExpenseFormModal";
+import { VehicleExpensePaymentModal } from "./VehicleExpensePaymentModal";
+import { VehicleExpensePaymentTable } from "./VehicleExpensePaymentTable";
 import { VehicleExpenseTable } from "./VehicleExpenseTable";
 import { VehicleTable } from "./VehicleTable";
 import {
   createFuelEntry,
+  createVehicleExpensePayment,
   createVehicleExpense,
   createVehicle,
   fetchFuelDashboardAnalytics,
   fetchFuelEntries,
+  fetchVehicleExpensePayments,
   fetchVehicleExpenses,
   fetchVehicles,
 } from "@/lib/fuel-tracker/api";
@@ -27,6 +31,7 @@ import {
 } from "@/lib/fuel-tracker/uploads";
 import type {
   CreateFuelEntryPayload,
+  CreateVehicleExpensePaymentPayload,
   CreateVehicleExpensePayload,
   CreateVehiclePayload,
   FuelDashboardAnalytics,
@@ -34,6 +39,7 @@ import type {
   FuelTab,
   Vehicle,
   VehicleExpense,
+  VehicleExpensePayment,
 } from "@/lib/fuel-tracker/types";
 
 function SectionHeader({
@@ -87,6 +93,9 @@ export default function FuelTrackerPage() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [fuelEntries, setFuelEntries] = useState<FuelEntry[]>([]);
   const [vehicleExpenses, setVehicleExpenses] = useState<VehicleExpense[]>([]);
+  const [expensePayments, setExpensePayments] = useState<
+    VehicleExpensePayment[]
+  >([]);
   const [analytics, setAnalytics] = useState<FuelDashboardAnalytics | null>(
     null
   );
@@ -97,15 +106,20 @@ export default function FuelTrackerPage() {
   const [vehicleModalOpen, setVehicleModalOpen] = useState(false);
   const [fuelEntryModalOpen, setFuelEntryModalOpen] = useState(false);
   const [expenseModalOpen, setExpenseModalOpen] = useState(false);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
   const [savingVehicle, setSavingVehicle] = useState(false);
   const [savingFuelEntry, setSavingFuelEntry] = useState(false);
   const [savingExpense, setSavingExpense] = useState(false);
+  const [savingPayment, setSavingPayment] = useState(false);
   const [vehicleFilter, setVehicleFilter] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [expenseVehicleFilter, setExpenseVehicleFilter] = useState("all");
   const [expenseDateFrom, setExpenseDateFrom] = useState("");
   const [expenseDateTo, setExpenseDateTo] = useState("");
+  const [paymentDateFrom, setPaymentDateFrom] = useState("");
+  const [paymentDateTo, setPaymentDateTo] = useState("");
+  const [paymentModeFilter, setPaymentModeFilter] = useState("");
   const [analyticsFilters, setAnalyticsFilters] = useState({
     vehicleId: "all",
     dateFrom: "",
@@ -141,6 +155,33 @@ export default function FuelTrackerPage() {
     });
   }, [expenseDateFrom, expenseDateTo, expenseVehicleFilter, vehicleExpenses]);
 
+  const pendingVehicleExpenses = useMemo(
+    () => vehicleExpenses.filter((expense) => expense.status === "pending"),
+    [vehicleExpenses]
+  );
+
+  const filteredExpensePayments = useMemo(() => {
+    return expensePayments.filter((payment) => {
+      const matchesFrom =
+        !paymentDateFrom || payment.payment_date >= paymentDateFrom;
+      const matchesTo = !paymentDateTo || payment.payment_date <= paymentDateTo;
+      const matchesMode =
+        !paymentModeFilter || payment.payment_mode === paymentModeFilter;
+
+      return matchesFrom && matchesTo && matchesMode;
+    });
+  }, [expensePayments, paymentDateFrom, paymentDateTo, paymentModeFilter]);
+
+  const paymentModeOptions = useMemo(() => {
+    return Array.from(
+      new Set(
+        expensePayments
+          .map((payment) => payment.payment_mode)
+          .filter((mode): mode is string => Boolean(mode))
+      )
+    ).sort((a, b) => a.localeCompare(b));
+  }, [expensePayments]);
+
   const loadAnalytics = useCallback(async () => {
     setAnalyticsLoading(true);
     setAnalyticsError(null);
@@ -164,15 +205,18 @@ export default function FuelTrackerPage() {
     setError(null);
 
     try {
-      const [vehiclesData, entriesData, expensesData] = await Promise.all([
-        fetchVehicles(),
-        fetchFuelEntries(),
-        fetchVehicleExpenses(),
-      ]);
+      const [vehiclesData, entriesData, expensesData, paymentsData] =
+        await Promise.all([
+          fetchVehicles(),
+          fetchFuelEntries(),
+          fetchVehicleExpenses(),
+          fetchVehicleExpensePayments(),
+        ]);
 
       setVehicles(vehiclesData);
       setFuelEntries(entriesData);
       setVehicleExpenses(expensesData);
+      setExpensePayments(paymentsData);
     } catch (loadError) {
       const message =
         loadError instanceof Error
@@ -262,6 +306,28 @@ export default function FuelTrackerPage() {
       toast.error(message);
     } finally {
       setSavingExpense(false);
+    }
+  };
+
+  const handleCreatePayment = async (
+    payload: CreateVehicleExpensePaymentPayload
+  ) => {
+    setSavingPayment(true);
+
+    try {
+      await createVehicleExpensePayment(payload);
+      toast.success("Payment created");
+      setPaymentModalOpen(false);
+      await loadData();
+      await loadAnalytics();
+    } catch (createError) {
+      const message =
+        createError instanceof Error
+          ? createError.message
+          : "Failed to create payment.";
+      toast.error(message);
+    } finally {
+      setSavingPayment(false);
     }
   };
 
@@ -429,7 +495,6 @@ export default function FuelTrackerPage() {
               action={
                 <AddButton
                   onClick={() => setExpenseModalOpen(true)}
-                  disabled={vehicles.length === 0}
                 >
                   Add Expense
                 </AddButton>
@@ -491,6 +556,74 @@ export default function FuelTrackerPage() {
             />
           </div>
         ) : null}
+
+        {activeTab === "paid-expenses" ? (
+          <div className="space-y-4">
+            <SectionHeader
+              title="Paid Expenses"
+              description="Group pending vehicle expenses into payment entries and review paid expense details."
+              action={
+                <AddButton
+                  onClick={() => setPaymentModalOpen(true)}
+                  disabled={pendingVehicleExpenses.length === 0}
+                >
+                  Create Payment
+                </AddButton>
+              }
+            />
+
+            <div className="grid gap-3 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950 md:grid-cols-3">
+              <label className="space-y-1.5">
+                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                  From
+                </span>
+                <input
+                  type="date"
+                  value={paymentDateFrom}
+                  onChange={(event) => setPaymentDateFrom(event.target.value)}
+                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                />
+              </label>
+
+              <label className="space-y-1.5">
+                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                  To
+                </span>
+                <input
+                  type="date"
+                  value={paymentDateTo}
+                  onChange={(event) => setPaymentDateTo(event.target.value)}
+                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                />
+              </label>
+
+              <label className="space-y-1.5">
+                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                  Payment Mode
+                </span>
+                <select
+                  value={paymentModeFilter}
+                  onChange={(event) => setPaymentModeFilter(event.target.value)}
+                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                >
+                  <option value="">All modes</option>
+                  {paymentModeOptions.map((mode) => (
+                    <option key={mode} value={mode}>
+                      {mode}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <VehicleExpensePaymentTable
+              payments={filteredExpensePayments}
+              loading={loading}
+              error={error}
+              onCreate={() => setPaymentModalOpen(true)}
+            />
+          </div>
+        ) : null}
       </div>
 
       <VehicleFormModal
@@ -514,6 +647,15 @@ export default function FuelTrackerPage() {
         loading={savingExpense}
         onClose={() => setExpenseModalOpen(false)}
         onSubmit={handleCreateExpense}
+      />
+
+      <VehicleExpensePaymentModal
+        open={paymentModalOpen}
+        pendingExpenses={pendingVehicleExpenses}
+        vehiclesById={vehiclesById}
+        loading={savingPayment}
+        onClose={() => setPaymentModalOpen(false)}
+        onSubmit={handleCreatePayment}
       />
     </div>
   );

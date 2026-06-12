@@ -19,6 +19,7 @@ const expenseTypes = [
 ];
 
 const initialForm = {
+  expenseScope: "vehicle",
   expenseDate: new Date().toISOString().slice(0, 10),
   vehicleId: "",
   expenseType: "",
@@ -71,12 +72,13 @@ export function VehicleExpenseFormModal({
     setError(null);
 
     const amount = Number(form.amount);
+    const isVehicleExpense = form.expenseScope === "vehicle";
 
     if (!form.expenseDate) {
       setError("Date is required.");
       return;
     }
-    if (!form.vehicleId) {
+    if (isVehicleExpense && !form.vehicleId) {
       setError("Select a vehicle.");
       return;
     }
@@ -91,7 +93,8 @@ export function VehicleExpenseFormModal({
 
     await onSubmit({
       expenseDate: form.expenseDate,
-      vehicleId: form.vehicleId,
+      expenseScope: isVehicleExpense ? "vehicle" : "general",
+      vehicleId: isVehicleExpense ? form.vehicleId : null,
       expenseType: form.expenseType.trim(),
       description: form.description.trim() || null,
       amount,
@@ -131,6 +134,26 @@ export function VehicleExpenseFormModal({
           className="max-h-[calc(92vh-80px)] space-y-4 overflow-y-auto px-5 py-5"
         >
           <div className="grid gap-4 sm:grid-cols-2">
+            <label className="space-y-1.5 sm:col-span-2">
+              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                Expense Scope
+              </span>
+              <select
+                value={form.expenseScope}
+                onChange={(event) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    expenseScope:
+                      event.target.value === "general" ? "general" : "vehicle",
+                  }))
+                }
+                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+              >
+                <option value="vehicle">Vehicle Expense</option>
+                <option value="general">General Expense</option>
+              </select>
+            </label>
+
             <label className="space-y-1.5">
               <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
                 Date
@@ -148,28 +171,30 @@ export function VehicleExpenseFormModal({
               />
             </label>
 
-            <label className="space-y-1.5">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                Vehicle
-              </span>
-              <select
-                value={form.vehicleId}
-                onChange={(event) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    vehicleId: event.target.value,
-                  }))
-                }
-                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
-              >
-                <option value="">Select vehicle</option>
-                {vehicles.map((vehicle) => (
-                  <option key={vehicle.id} value={vehicle.id}>
-                    {vehicle.vehicle_no} - {vehicle.vehicle_type}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {form.expenseScope === "vehicle" ? (
+              <label className="space-y-1.5">
+                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                  Vehicle
+                </span>
+                <select
+                  value={form.vehicleId}
+                  onChange={(event) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      vehicleId: event.target.value,
+                    }))
+                  }
+                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                >
+                  <option value="">Select vehicle</option>
+                  {vehicles.map((vehicle) => (
+                    <option key={vehicle.id} value={vehicle.id}>
+                      {vehicle.vehicle_no} - {vehicle.vehicle_type}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
 
             <label className="space-y-1.5">
               <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
@@ -340,7 +365,7 @@ export function VehicleExpenseFormModal({
             </button>
             <button
               type="submit"
-              disabled={loading || vehicles.length === 0}
+              disabled={loading}
               className="min-h-10 rounded-md bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? "Saving..." : "Create Expense"}

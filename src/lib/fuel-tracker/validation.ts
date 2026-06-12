@@ -34,7 +34,7 @@ export type ValidFuelEntryInput = {
 
 export type ValidVehicleExpenseInput = {
   expense_date: string;
-  vehicle_id: string;
+  vehicle_id: string | null;
   expense_type: string;
   description: string | null;
   amount: number;
@@ -160,7 +160,14 @@ export function validateVehicleExpenseInput(
   input: CreateVehicleExpenseInput
 ): ValidationResult<ValidVehicleExpenseInput> {
   const expenseDate = input.expense_date ?? input.expenseDate;
-  const vehicleId = (input.vehicle_id ?? input.vehicleId ?? "").trim();
+  const expenseScope =
+    (input.expense_scope ?? input.expenseScope ?? "vehicle") === "general"
+      ? "general"
+      : "vehicle";
+  const vehicleId =
+    typeof (input.vehicle_id ?? input.vehicleId) === "string"
+      ? (input.vehicle_id ?? input.vehicleId ?? "").trim()
+      : "";
   const expenseType = (input.expense_type ?? input.expenseType ?? "").trim();
   const amount = toNumber(input.amount);
   const status = (input.status ?? "paid").trim().toLowerCase();
@@ -168,7 +175,9 @@ export function validateVehicleExpenseInput(
   if (!isISODate(expenseDate)) {
     return { ok: false, error: "expense_date must be YYYY-MM-DD" };
   }
-  if (!vehicleId) return { ok: false, error: "vehicle_id is required" };
+  if (expenseScope === "vehicle" && !vehicleId) {
+    return { ok: false, error: "vehicle_id is required" };
+  }
   if (!expenseType) return { ok: false, error: "expense_type is required" };
   if (!Number.isFinite(amount) || amount <= 0) {
     return { ok: false, error: "amount must be > 0" };
@@ -181,7 +190,7 @@ export function validateVehicleExpenseInput(
     ok: true,
     value: {
       expense_date: expenseDate,
-      vehicle_id: vehicleId,
+      vehicle_id: expenseScope === "general" ? null : vehicleId,
       expense_type: expenseType,
       description: optionalText(input.description),
       amount,

@@ -120,13 +120,7 @@ export default function WarehousePaymentAlerts() {
         podId: row.pod_id,
         nextPaymentDate: row.next_payment_date,
       });
-      setRows((prev) =>
-        prev.filter(
-          (item) =>
-            item.pod_id !== row.pod_id ||
-            item.next_payment_date !== row.next_payment_date
-        )
-      );
+      await load();
       toast.success("Alert dismissed");
     } catch (err: unknown) {
       toast.error(getErrorMessage(err) || "Failed to dismiss alert");

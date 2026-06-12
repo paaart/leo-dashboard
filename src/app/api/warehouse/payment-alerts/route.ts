@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { PoolClient } from "pg";
 import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { WAREHOUSE_ACTIVE_POD_BALANCE_CTES } from "@/lib/warehouse/podBalanceSql";
 
 export type WarehousePaymentAlertStatus = "overdue" | "due_today" | "upcoming";
 
@@ -42,28 +43,7 @@ export async function GET(req: NextRequest) {
 
     const res = await client.query<WarehousePaymentAlertRow>(
       `
-      with active_cycle as (
-        select cy.id as cycle_id, cy.pod_id
-        from public.warehouse_pod_cycles cy
-        where cy.status = 'active'
-      ),
-      tx as (
-        select
-          ac.pod_id,
-          coalesce(
-            sum(
-              case
-                when t.type in ('charge','adjustment')
-                  then t.amount * (1 + (coalesce(t.gst_rate, 0) / 100.0))
-                else t.amount
-              end
-            ),
-          0)::numeric(12,2) as total_due
-        from active_cycle ac
-        left join public.warehouse_pod_transactions t
-          on t.cycle_id = ac.cycle_id
-        group by ac.pod_id
-      )
+      with ${WAREHOUSE_ACTIVE_POD_BALANCE_CTES}
       select
         p.id::text as pod_id,
         p.client_id,
@@ -72,7 +52,7 @@ export async function GET(req: NextRequest) {
         c.name as company_name,
         l.name as location_name,
         p.next_payment_date::date::text as next_payment_date,
-        coalesce(tx.total_due, 0)::numeric(12,2)::float8 as total_due,
+        coalesce(a.total_due_gross, 0)::numeric(12,2)::float8 as total_due,
         case
           when p.next_payment_date::date < current_date then 'overdue'
           when p.next_payment_date::date = current_date then 'due_today'
@@ -81,13 +61,14 @@ export async function GET(req: NextRequest) {
       from public.warehouse_pods p
       left join public.companies c on c.id = p.company_id
       left join public.locations l on l.id = p.location_id
-      left join tx on tx.pod_id = p.id
+      left join agg a on a.pod_id = p.id
       left join public.warehouse_payment_alert_dismissals d
         on d.pod_id = p.id
        and d.next_payment_date = p.next_payment_date::date
       where p.status = 'active'::warehouse_pod_status
         and p.next_payment_date is not null
-        and p.next_payment_date::date <= current_date + interval '7 days'
+        and p.next_payment_date::date <= current_date + interval '30 days'
+        and coalesce(a.total_due_gross, 0) > 0
         and d.id is null
       order by
         p.next_payment_date asc,

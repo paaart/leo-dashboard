@@ -1,5 +1,6 @@
 import type {
   CreateFuelEntryPayload,
+  CreateVehicleExpensePaymentPayload,
   CreateVehicleExpensePayload,
   CreateVehiclePayload,
   FuelApiResponse,
@@ -8,6 +9,7 @@ import type {
   FuelEntry,
   Vehicle,
   VehicleExpense,
+  VehicleExpensePayment,
 } from "./types";
 
 async function requestJson<T>(
@@ -75,6 +77,33 @@ export function fetchVehicleExpenses(filters?: {
 
 export function createVehicleExpense(payload: CreateVehicleExpensePayload) {
   return requestJson<VehicleExpense>("/api/vehicle-expenses", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function fetchVehicleExpensePayments(filters?: {
+  fromDate?: string;
+  toDate?: string;
+  paymentMode?: string;
+}) {
+  const params = new URLSearchParams();
+
+  if (filters?.fromDate) params.set("fromDate", filters.fromDate);
+  if (filters?.toDate) params.set("toDate", filters.toDate);
+  if (filters?.paymentMode) params.set("paymentMode", filters.paymentMode);
+
+  const query = params.toString();
+
+  return requestJson<VehicleExpensePayment[]>(
+    `/api/vehicle-expense-payments${query ? `?${query}` : ""}`
+  );
+}
+
+export function createVehicleExpensePayment(
+  payload: CreateVehicleExpensePaymentPayload
+) {
+  return requestJson<VehicleExpensePayment>("/api/vehicle-expense-payments", {
     method: "POST",
     body: JSON.stringify(payload),
   });

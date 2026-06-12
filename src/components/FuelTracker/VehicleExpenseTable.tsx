@@ -98,7 +98,9 @@ export function VehicleExpenseTable({
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
             {expenses.map((expense) => {
-              const vehicle = vehiclesById.get(expense.vehicle_id);
+              const vehicle = expense.vehicle_id
+                ? vehiclesById.get(expense.vehicle_id)
+                : null;
 
               return (
                 <tr
@@ -107,7 +109,9 @@ export function VehicleExpenseTable({
                 >
                   <td className="px-4 py-3">{expense.expense_date}</td>
                   <td className="px-4 py-3 font-semibold text-gray-950 dark:text-gray-50">
-                    {vehicle?.vehicle_no ?? "Unknown vehicle"}
+                    {expense.vehicle_id
+                      ? vehicle?.vehicle_no ?? "Unknown vehicle"
+                      : "General"}
                   </td>
                   <td className="px-4 py-3">{expense.expense_type}</td>
                   <td className="px-4 py-3">{expense.description ?? "-"}</td>

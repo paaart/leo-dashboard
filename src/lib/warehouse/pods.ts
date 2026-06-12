@@ -270,15 +270,25 @@ export async function listWarehousePaymentAlerts(): Promise<
   return data.rows ?? [];
 }
 
+export type DismissWarehousePaymentAlertResult = {
+  dismissed: boolean;
+  pod_id: string;
+  dismissed_next_payment_date: string;
+  next_payment_date: string;
+};
+
 export async function dismissWarehousePaymentAlert(args: {
   podId: string;
   nextPaymentDate: string;
-}): Promise<void> {
-  await fetchJson<void>("/api/warehouse/payment-alerts/dismiss", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(args),
-  });
+}): Promise<DismissWarehousePaymentAlertResult> {
+  return fetchJson<DismissWarehousePaymentAlertResult>(
+    "/api/warehouse/payment-alerts/dismiss",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(args),
+    }
+  );
 }
 
 export async function listClosedWarehousePods(

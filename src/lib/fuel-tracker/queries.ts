@@ -10,6 +10,8 @@ import type {
   FuelEntry,
   Vehicle,
   VehicleExpense,
+  VehicleExpensePayment,
+  VehicleExpensePaymentItem,
 } from "./types";
 import type {
   ValidFuelEntryInput,
@@ -76,7 +78,7 @@ function toVehicleExpense(row: Record<string, unknown>): VehicleExpense {
   return {
     id: String(row.id),
     expense_date: toDateOnly(row.expense_date),
-    vehicle_id: String(row.vehicle_id),
+    vehicle_id: row.vehicle_id ? String(row.vehicle_id) : null,
     expense_type: String(row.expense_type),
     description: row.description ? String(row.description) : null,
     amount: Number(row.amount),
@@ -88,8 +90,48 @@ function toVehicleExpense(row: Record<string, unknown>): VehicleExpense {
     payment_mode: row.payment_mode ? String(row.payment_mode) : null,
     company: row.company ? String(row.company) : null,
     status: String(row.status).toLowerCase() as VehicleExpense["status"],
+    paid_at: row.paid_at ? String(row.paid_at) : null,
+    payment_id: row.payment_id ? String(row.payment_id) : null,
     created_at: String(row.created_at),
     updated_at: String(row.updated_at),
+  };
+}
+
+function toVehicleExpensePaymentItem(
+  row: Record<string, unknown>
+): VehicleExpensePaymentItem {
+  return {
+    id: String(row.id),
+    payment_id: String(row.payment_id),
+    expense_id: String(row.expense_id),
+    expense_date: toDateOnly(row.expense_date),
+    vehicle_id: row.vehicle_id ? String(row.vehicle_id) : null,
+    vehicle_no: row.vehicle_no ? String(row.vehicle_no) : null,
+    expense_type: String(row.expense_type),
+    description: row.description ? String(row.description) : null,
+    amount: Number(row.amount),
+    vendor: row.vendor ? String(row.vendor) : null,
+    created_at: String(row.created_at),
+  };
+}
+
+function toVehicleExpensePayment(
+  row: Record<string, unknown>,
+  items: VehicleExpensePaymentItem[]
+): VehicleExpensePayment {
+  return {
+    id: String(row.id),
+    payment_date: toDateOnly(row.payment_date),
+    payment_mode: row.payment_mode ? String(row.payment_mode) : null,
+    reference_number: row.reference_number
+      ? String(row.reference_number)
+      : null,
+    remarks: row.remarks ? String(row.remarks) : null,
+    total_amount: Number(row.total_amount),
+    expense_count: Number(row.expense_count ?? 0),
+    created_at: String(row.created_at),
+    updated_at: String(row.updated_at),
+    items,
   };
 }
 
@@ -376,6 +418,204 @@ export async function listVehicleExpenses(params: {
   );
 
   return result.rows.map(toVehicleExpense);
+}
+
+export async function listVehicleExpensePayments(params: {
+  fromDate?: string | null;
+  toDate?: string | null;
+  paymentMode?: string | null;
+  limit: number;
+  offset: number;
+}): Promise<VehicleExpensePayment[]> {
+  const clauses: string[] = [];
+  const values: unknown[] = [];
+
+  if (params.fromDate) {
+    values.push(params.fromDate);
+    clauses.push(`p.payment_date >= $${values.length}::date`);
+  }
+
+  if (params.toDate) {
+    values.push(params.toDate);
+    clauses.push(`p.payment_date <= $${values.length}::date`);
+  }
+
+  if (params.paymentMode) {
+    values.push(params.paymentMode);
+    clauses.push(`p.payment_mode = $${values.length}`);
+  }
+
+  values.push(params.limit);
+  const limitParam = values.length;
+  values.push(params.offset);
+  const offsetParam = values.length;
+
+  const paymentsResult = await db.query(
+    `
+    select
+      p.*,
+      count(i.id)::int as expense_count
+    from public.vehicle_expense_payments p
+    left join public.vehicle_expense_payment_items i on i.payment_id = p.id
+    ${clauses.length ? `where ${clauses.join(" and ")}` : ""}
+    group by p.id
+    order by p.payment_date desc, p.created_at desc
+    limit $${limitParam} offset $${offsetParam}
+    `,
+    values
+  );
+
+  if (paymentsResult.rows.length === 0) return [];
+
+  const paymentIds = paymentsResult.rows.map((row) => row.id);
+  const itemsResult = await db.query(
+    `
+    select
+      i.id,
+      i.payment_id,
+      i.expense_id,
+      i.amount,
+      i.created_at,
+      e.expense_date,
+      e.vehicle_id,
+      e.expense_type,
+      e.description,
+      e.vendor,
+      v.vehicle_no
+    from public.vehicle_expense_payment_items i
+    join public.vehicle_expenses e on e.id = i.expense_id
+    left join public.vehicles v on v.id = e.vehicle_id
+    where i.payment_id = any($1::uuid[])
+    order by e.expense_date desc, e.created_at desc
+    `,
+    [paymentIds]
+  );
+
+  const itemsByPaymentId = new Map<string, VehicleExpensePaymentItem[]>();
+  for (const row of itemsResult.rows) {
+    const item = toVehicleExpensePaymentItem(row);
+    const items = itemsByPaymentId.get(item.payment_id) ?? [];
+    items.push(item);
+    itemsByPaymentId.set(item.payment_id, items);
+  }
+
+  return paymentsResult.rows.map((row) =>
+    toVehicleExpensePayment(row, itemsByPaymentId.get(String(row.id)) ?? [])
+  );
+}
+
+export async function createVehicleExpensePayment(input: {
+  paymentDate: string;
+  paymentMode: string | null;
+  referenceNumber: string | null;
+  remarks: string | null;
+  expenseIds: string[];
+}): Promise<VehicleExpensePayment> {
+  const client = await db.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const expenseResult = await client.query<{
+      id: string;
+      amount: string | number;
+    }>(
+      `
+      select id, amount
+      from public.vehicle_expenses
+      where id = any($1::uuid[])
+        and status = 'pending'
+      order by expense_date asc, created_at asc
+      for update
+      `,
+      [input.expenseIds]
+    );
+
+    if (expenseResult.rows.length !== input.expenseIds.length) {
+      throw Object.assign(
+        new Error("Only pending expenses can be selected for payment"),
+        { status: 400 }
+      );
+    }
+
+    const totalAmount = expenseResult.rows.reduce(
+      (sum, row) => sum + Number(row.amount),
+      0
+    );
+
+    if (!Number.isFinite(totalAmount) || totalAmount <= 0) {
+      throw Object.assign(new Error("Selected expenses total must be > 0"), {
+        status: 400,
+      });
+    }
+
+    const paymentResult = await client.query(
+      `
+      insert into public.vehicle_expense_payments (
+        payment_date,
+        payment_mode,
+        reference_number,
+        remarks,
+        total_amount
+      )
+      values ($1::date, $2, $3, $4, $5::numeric(12,2))
+      returning *
+      `,
+      [
+        input.paymentDate,
+        input.paymentMode,
+        input.referenceNumber,
+        input.remarks,
+        totalAmount,
+      ]
+    );
+
+    const paymentId = String(paymentResult.rows[0].id);
+
+    for (const expense of expenseResult.rows) {
+      await client.query(
+        `
+        insert into public.vehicle_expense_payment_items (
+          payment_id,
+          expense_id,
+          amount
+        )
+        values ($1::uuid, $2::uuid, $3::numeric(12,2))
+        `,
+        [paymentId, expense.id, Number(expense.amount)]
+      );
+    }
+
+    await client.query(
+      `
+      update public.vehicle_expenses
+      set
+        status = 'paid',
+        paid_at = now(),
+        payment_id = $1::uuid,
+        updated_at = now()
+      where id = any($2::uuid[])
+        and status = 'pending'
+      `,
+      [paymentId, input.expenseIds]
+    );
+
+    await client.query("COMMIT");
+
+    const rows = await listVehicleExpensePayments({
+      limit: 1,
+      offset: 0,
+    });
+    return rows.find((row) => row.id === paymentId) ?? toVehicleExpensePayment(
+      { ...paymentResult.rows[0], expense_count: input.expenseIds.length },
+      []
+    );
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 export async function getFuelDashboardSummary(): Promise<
