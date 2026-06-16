@@ -8,9 +8,6 @@ type ValidationResult<T> =
   | { ok: true; value: T }
   | { ok: false; error: string };
 
-export const REQUIRED_FUEL_IMAGES_ERROR =
-  "Bill image and meter image are required.";
-
 export type ValidVehicleInput = {
   vehicle_no: string;
   vehicle_type: string;
@@ -120,12 +117,6 @@ export function validateFuelEntryInput(
   );
 
   if (!vehicleId) return { ok: false, error: "vehicle_id is required" };
-  if (!billImagePath || !meterImagePath) {
-    return {
-      ok: false,
-      error: REQUIRED_FUEL_IMAGES_ERROR,
-    };
-  }
   if (!isISODate(fuelDate)) {
     return { ok: false, error: "fuel_date must be YYYY-MM-DD" };
   }

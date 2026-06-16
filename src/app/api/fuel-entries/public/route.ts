@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import {
-  REQUIRED_FUEL_IMAGES_ERROR,
   createFuelEntry,
   validateFuelEntryInput,
 } from "@/lib/fuel-tracker";
@@ -25,15 +24,10 @@ function jsonError(message: string, status = 400) {
   return NextResponse.json({ ok: false, error: message }, { status });
 }
 
-function requiredImagesError() {
-  return NextResponse.json(
-    { error: REQUIRED_FUEL_IMAGES_ERROR },
-    { status: 400 }
-  );
-}
-
 function optionalTrim(value: unknown) {
-  return typeof value === "string" ? value.trim() : "";
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed || null;
 }
 
 function getStatus(error: unknown): number {
@@ -63,7 +57,6 @@ export async function POST(req: Request) {
   const driverName = optionalTrim(body.driverName);
   const driverMobile = optionalTrim(body.driverMobile);
 
-  if (!billImagePath || !meterImagePath) return requiredImagesError();
   if (driverMobile && !/^\d{10,}$/.test(driverMobile)) {
     return jsonError("driverMobile must contain at least 10 digits");
   }
@@ -74,17 +67,14 @@ export async function POST(req: Request) {
     fuelAmount: body.fuelAmount,
     fuelLiters: body.fuelLiters,
     odometerReading: body.odometerReading,
-    driverName: driverName || null,
-    driverMobile: driverMobile || null,
+    driverName,
+    driverMobile,
     billImagePath,
     meterImagePath,
-    remarks: optionalTrim(body.remarks) || null,
+    remarks: optionalTrim(body.remarks),
   });
 
   if (!validation.ok) {
-    if (validation.error === REQUIRED_FUEL_IMAGES_ERROR) {
-      return requiredImagesError();
-    }
     return jsonError(validation.error);
   }
 

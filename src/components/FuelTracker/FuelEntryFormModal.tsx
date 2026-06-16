@@ -80,10 +80,6 @@ export function FuelEntryFormModal({
   const [billFile, setBillFile] = useState<File | null>(null);
   const [meterFile, setMeterFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [fileErrors, setFileErrors] = useState({
-    bill: "",
-    meter: "",
-  });
 
   const activeVehicles = useMemo(
     () => vehicles.filter((vehicle) => vehicle.status === "active"),
@@ -99,7 +95,6 @@ export function FuelEntryFormModal({
       setBillFile(null);
       setMeterFile(null);
       setError(null);
-      setFileErrors({ bill: "", meter: "" });
     }
   }, [activeVehicles, open, vehicles]);
 
@@ -108,7 +103,6 @@ export function FuelEntryFormModal({
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
-    setFileErrors({ bill: "", meter: "" });
 
     const fuelAmount = Number(form.fuelAmount);
     const fuelLiters = Number(form.fuelLiters);
@@ -140,13 +134,6 @@ export function FuelEntryFormModal({
       setError("Driver mobile must contain at least 10 digits.");
       return;
     }
-    if (!billFile || !meterFile) {
-      setFileErrors({
-        bill: billFile ? "" : "Bill image is required.",
-        meter: meterFile ? "" : "Meter image is required.",
-      });
-      return;
-    }
 
     await onSubmit(
       {
@@ -172,7 +159,7 @@ export function FuelEntryFormModal({
               Add Fuel Entry
             </h2>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Upload proof images first, then save the calculated fuel entry.
+              Upload bill and meter photos if available.
             </p>
           </div>
           <button
@@ -330,27 +317,15 @@ export function FuelEntryFormModal({
           <div className="grid gap-4 sm:grid-cols-2">
             <FilePicker
               id="fuel-bill-image"
-              label="Bill Image *"
+              label="Bill Image"
               file={billFile}
-              error={fileErrors.bill}
-              onChange={(file) => {
-                setBillFile(file);
-                if (file) {
-                  setFileErrors((prev) => ({ ...prev, bill: "" }));
-                }
-              }}
+              onChange={setBillFile}
             />
             <FilePicker
               id="fuel-meter-image"
-              label="Meter Image *"
+              label="Meter Image"
               file={meterFile}
-              error={fileErrors.meter}
-              onChange={(file) => {
-                setMeterFile(file);
-                if (file) {
-                  setFileErrors((prev) => ({ ...prev, meter: "" }));
-                }
-              }}
+              onChange={setMeterFile}
             />
           </div>
 

@@ -43,8 +43,8 @@ async function submitPublicFuelEntry(payload: {
   fuelAmount: number;
   fuelLiters: number;
   odometerReading: number;
-  billImagePath: string;
-  meterImagePath: string;
+  billImagePath: string | null;
+  meterImagePath: string | null;
   driverName: string | null;
   driverMobile: string | null;
   remarks: string | null;
@@ -141,10 +141,8 @@ export default function DriverFuelEntryPage() {
         Number.isFinite(odometerReading) && odometerReading > 0
           ? ""
           : "Odometer reading must be greater than zero.",
-      billFile: billFile ? "" : "Bill image is required.",
-      meterFile: meterFile ? "" : "Meter image is required.",
     };
-  }, [billFile, form, meterFile]);
+  }, [form]);
 
   const formIsValid = Object.values(fieldErrors).every((message) => !message);
 
@@ -193,14 +191,12 @@ export default function DriverFuelEntryPage() {
       return;
     }
 
-    if (!billFile || !meterFile) return;
-
     setSubmitting(true);
 
     try {
       const [billImagePath, meterImagePath] = await Promise.all([
-        uploadFuelImage(billFile, "bills"),
-        uploadFuelImage(meterFile, "meters"),
+        billFile ? uploadFuelImage(billFile, "bills") : null,
+        meterFile ? uploadFuelImage(meterFile, "meters") : null,
       ]);
 
       await submitPublicFuelEntry({
@@ -246,7 +242,7 @@ export default function DriverFuelEntryPage() {
             Fuel Entry Submission
           </h1>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            Submit fuel details and upload proof images.
+            Submit fuel details and upload bill or meter photos if available.
           </p>
         </div>
 
@@ -408,43 +404,20 @@ export default function DriverFuelEntryPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             <FilePicker
               id="driver-bill-image"
-              label="Bill Image *"
+              label="Bill Image"
               file={billFile}
               onChange={setBillFile}
             />
-            {fieldErrors.billFile ? (
-              <span className="text-xs text-red-600 dark:text-red-400 sm:hidden">
-                {fieldErrors.billFile}
-              </span>
-            ) : null}
             <FilePicker
               id="driver-meter-image"
-              label="Meter Image *"
+              label="Meter Image"
               file={meterFile}
               onChange={setMeterFile}
             />
-            {fieldErrors.meterFile ? (
-              <span className="text-xs text-red-600 dark:text-red-400 sm:hidden">
-                {fieldErrors.meterFile}
-              </span>
-            ) : null}
           </div>
-          <div className="hidden grid-cols-2 gap-4 sm:grid">
-            <div>
-              {fieldErrors.billFile ? (
-                <span className="text-xs text-red-600 dark:text-red-400">
-                  {fieldErrors.billFile}
-                </span>
-              ) : null}
-            </div>
-            <div>
-              {fieldErrors.meterFile ? (
-                <span className="text-xs text-red-600 dark:text-red-400">
-                  {fieldErrors.meterFile}
-                </span>
-              ) : null}
-            </div>
-          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Upload bill and meter photos if available.
+          </p>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block space-y-2">
