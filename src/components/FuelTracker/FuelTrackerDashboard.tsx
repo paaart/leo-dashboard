@@ -66,7 +66,9 @@ function InsightCard({
 }) {
   const value = currency
     ? formatCurrency(insight.value)
-    : `${formatNumber(insight.value)}${insight.value === null ? "" : suffix ?? ""}`;
+    : `${formatNumber(insight.value)}${
+        insight.value === null ? "" : suffix ?? ""
+      }`;
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-950">
@@ -142,7 +144,8 @@ export function FuelTrackerDashboard({
     {
       label: "Average Mileage",
       value:
-        summary?.averageMileage === null || summary?.averageMileage === undefined
+        summary?.averageMileage === null ||
+        summary?.averageMileage === undefined
           ? "-"
           : `${formatNumber(summary.averageMileage)} km/L`,
       hint: "Total valid KM / valid liters",
@@ -301,7 +304,7 @@ export function FuelTrackerDashboard({
               </p>
             </div>
             <div className="overflow-x-auto">
-              <table className="min-w-[1120px] w-full text-left text-sm">
+              <table className="min-w-280 w-full text-left text-sm">
                 <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
                   <tr>
                     <th className="px-4 py-3 font-semibold">Vehicle No</th>
@@ -310,9 +313,7 @@ export function FuelTrackerDashboard({
                     <th className="px-4 py-3 font-semibold">
                       Total Fuel Amount
                     </th>
-                    <th className="px-4 py-3 font-semibold">
-                      Average Mileage
-                    </th>
+                    <th className="px-4 py-3 font-semibold">Average Mileage</th>
                     <th className="px-4 py-3 font-semibold">Cost / KM</th>
                     <th className="px-4 py-3 font-semibold">Warning Count</th>
                     <th className="px-4 py-3 font-semibold">Deviation</th>
@@ -380,7 +381,7 @@ export function FuelTrackerDashboard({
               </h3>
             </div>
             <div className="overflow-x-auto">
-              <table className="min-w-[840px] w-full text-left text-sm">
+              <table className="min-w-210 w-full text-left text-sm">
                 <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
                   <tr>
                     <th className="px-4 py-3 font-semibold">Month</th>
@@ -389,9 +390,7 @@ export function FuelTrackerDashboard({
                     </th>
                     <th className="px-4 py-3 font-semibold">Total Liters</th>
                     <th className="px-4 py-3 font-semibold">Total KM</th>
-                    <th className="px-4 py-3 font-semibold">
-                      Average Mileage
-                    </th>
+                    <th className="px-4 py-3 font-semibold">Average Mileage</th>
                     <th className="px-4 py-3 font-semibold">Cost / KM</th>
                   </tr>
                 </thead>

@@ -80,7 +80,7 @@ export function VehicleExpenseTable({
   return (
     <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
       <div className="overflow-x-auto">
-        <table className="min-w-[1320px] w-full text-left text-sm">
+        <table className="min-w-330 w-full text-left text-sm">
           <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
             <tr>
               <th className="px-4 py-3 font-semibold">Date</th>
@@ -115,7 +115,9 @@ export function VehicleExpenseTable({
                   </td>
                   <td className="px-4 py-3">{expense.expense_type}</td>
                   <td className="px-4 py-3">{expense.description ?? "-"}</td>
-                  <td className="px-4 py-3">{formatCurrency(expense.amount)}</td>
+                  <td className="px-4 py-3">
+                    {formatCurrency(expense.amount)}
+                  </td>
                   <td className="px-4 py-3">{expense.vendor ?? "-"}</td>
                   <td className="px-4 py-3">
                     {expense.invoice_reference ?? "-"}

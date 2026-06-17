@@ -188,7 +188,7 @@ export function VehicleExpensePaymentModal({
 
           <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800">
             <div className="max-h-80 overflow-auto">
-              <table className="min-w-[980px] w-full text-left text-sm">
+              <table className="min-w-245 w-full text-left text-sm">
                 <thead className="sticky top-0 border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
                   <tr>
                     <th className="w-12 px-4 py-3 font-semibold">Select</th>

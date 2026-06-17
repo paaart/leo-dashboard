@@ -41,7 +41,7 @@ function PaymentDetailsModal({
         </div>
 
         <div className="overflow-auto p-5">
-          <table className="min-w-[920px] w-full text-left text-sm">
+          <table className="min-w-230 w-full text-left text-sm">
             <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
               <tr>
                 <th className="px-4 py-3 font-semibold">Date</th>
@@ -54,10 +54,7 @@ function PaymentDetailsModal({
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
               {payment.items.map((item) => (
-                <tr
-                  key={item.id}
-                  className="text-gray-700 dark:text-gray-200"
-                >
+                <tr key={item.id} className="text-gray-700 dark:text-gray-200">
                   <td className="px-4 py-3">{item.expense_date}</td>
                   <td className="px-4 py-3 font-semibold text-gray-950 dark:text-gray-50">
                     {item.vehicle_id
@@ -140,7 +137,7 @@ export function VehicleExpensePaymentTable({
     <>
       <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
         <div className="overflow-x-auto">
-          <table className="min-w-[1080px] w-full text-left text-sm">
+          <table className="min-w-270 w-full text-left text-sm">
             <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
               <tr>
                 <th className="px-4 py-3 font-semibold">Payment Date</th>

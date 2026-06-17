@@ -251,6 +251,7 @@ export async function createFuelEntry(
       previousOdometer,
       fuelAmount: input.fuel_amount,
       fuelLiters: input.fuel_liters,
+      allowBaselineEqual: !latestEntry,
     });
 
     const result = await client.query(
