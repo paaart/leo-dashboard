@@ -493,9 +493,7 @@ export default function FuelTrackerPage() {
               title="Other Expenses"
               description="Create and review non-fuel vehicle expenses."
               action={
-                <AddButton
-                  onClick={() => setExpenseModalOpen(true)}
-                >
+                <AddButton onClick={() => setExpenseModalOpen(true)}>
                   Add Expense
                 </AddButton>
               }
@@ -560,7 +558,7 @@ export default function FuelTrackerPage() {
         {activeTab === "paid-expenses" ? (
           <div className="space-y-4">
             <SectionHeader
-              title="Paid Expenses"
+              title="Payments"
               description="Group pending vehicle expenses into payment entries and review paid expense details."
               action={
                 <AddButton
