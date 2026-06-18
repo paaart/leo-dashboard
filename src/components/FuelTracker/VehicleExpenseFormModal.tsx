@@ -30,7 +30,7 @@ const initialForm = {
   city: "",
   paymentMode: "",
   company: "",
-  status: "paid",
+  status: "pending",
 };
 
 export function VehicleExpenseFormModal({
