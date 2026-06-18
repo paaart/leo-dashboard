@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { FuelEmptyState } from "./FuelEmptyState";
 import type { Vehicle, VehicleExpense } from "@/lib/fuel-tracker/types";
 
@@ -28,12 +28,16 @@ export function VehicleExpenseTable({
   loading,
   error,
   onAdd,
+  onEdit,
+  onDelete,
 }: {
   expenses: VehicleExpense[];
   vehiclesById: Map<string, Vehicle>;
   loading: boolean;
   error: string | null;
   onAdd: () => void;
+  onEdit: (expense: VehicleExpense) => void;
+  onDelete: (expense: VehicleExpense) => void;
 }) {
   if (loading) {
     return (
@@ -94,6 +98,7 @@ export function VehicleExpenseTable({
               <th className="px-4 py-3 font-semibold">Mode Of Payment</th>
               <th className="px-4 py-3 font-semibold">Company</th>
               <th className="px-4 py-3 font-semibold">Status</th>
+              <th className="px-4 py-3 font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
@@ -133,6 +138,32 @@ export function VehicleExpenseTable({
                     >
                       {formatStatus(expense.status)}
                     </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    {expense.status === "pending" ? (
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => onEdit(expense)}
+                          className="inline-flex min-h-9 items-center gap-2 rounded-md border border-gray-300 px-3 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                        >
+                          <Pencil className="h-4 w-4" />
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => onDelete(expense)}
+                          className="inline-flex min-h-9 items-center gap-2 rounded-md border border-red-200 px-3 text-sm font-medium text-red-700 hover:bg-red-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/40"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Delete
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        -
+                      </span>
+                    )}
                   </td>
                 </tr>
               );

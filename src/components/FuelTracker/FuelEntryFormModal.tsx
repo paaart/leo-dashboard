@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import type {
   CreateFuelEntryPayload,
+  FuelEntry,
   Vehicle,
 } from "@/lib/fuel-tracker/types";
 
@@ -64,12 +65,14 @@ export function FuelEntryFormModal({
   open,
   vehicles,
   loading,
+  entry,
   onClose,
   onSubmit,
 }: {
   open: boolean;
   vehicles: Vehicle[];
   loading: boolean;
+  entry?: FuelEntry | null;
   onClose: () => void;
   onSubmit: (
     payload: Omit<CreateFuelEntryPayload, "billImagePath" | "meterImagePath">,
@@ -80,6 +83,7 @@ export function FuelEntryFormModal({
   const [billFile, setBillFile] = useState<File | null>(null);
   const [meterFile, setMeterFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const isEdit = Boolean(entry);
 
   const activeVehicles = useMemo(
     () => vehicles.filter((vehicle) => vehicle.status === "active"),
@@ -88,15 +92,28 @@ export function FuelEntryFormModal({
 
   useEffect(() => {
     if (open) {
-      setForm({
-        ...initialForm,
-        vehicleId: activeVehicles[0]?.id ?? vehicles[0]?.id ?? "",
-      });
+      setForm(
+        entry
+          ? {
+              vehicleId: entry.vehicle_id,
+              fuelDate: entry.fuel_date,
+              fuelAmount: String(entry.fuel_amount),
+              fuelLiters: String(entry.fuel_liters),
+              odometerReading: String(entry.odometer_reading),
+              driverName: entry.driver_name ?? "",
+              driverMobile: entry.driver_mobile ?? "",
+              remarks: entry.remarks ?? "",
+            }
+          : {
+              ...initialForm,
+              vehicleId: activeVehicles[0]?.id ?? vehicles[0]?.id ?? "",
+            }
+      );
       setBillFile(null);
       setMeterFile(null);
       setError(null);
     }
-  }, [activeVehicles, open, vehicles]);
+  }, [activeVehicles, entry, open, vehicles]);
 
   if (!open) return null;
 
@@ -156,10 +173,12 @@ export function FuelEntryFormModal({
         <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 dark:border-gray-800">
           <div>
             <h2 className="text-lg font-semibold text-gray-950 dark:text-gray-50">
-              Add Fuel Entry
+              {isEdit ? "Edit Fuel Entry" : "Add Fuel Entry"}
             </h2>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Upload bill and meter photos if available.
+              {isEdit
+                ? "Correct fuel details and recalculate the affected mileage chain."
+                : "Upload bill and meter photos if available."}
             </p>
           </div>
           <button
@@ -328,6 +347,11 @@ export function FuelEntryFormModal({
               onChange={setMeterFile}
             />
           </div>
+          {isEdit ? (
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Existing proof images are kept unless a new file is selected.
+            </p>
+          ) : null}
 
           <label className="block space-y-1.5">
             <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
@@ -366,7 +390,7 @@ export function FuelEntryFormModal({
               disabled={loading || vehicles.length === 0}
               className="min-h-10 rounded-md bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {loading ? "Saving..." : "Create Fuel Entry"}
+              {loading ? "Saving..." : isEdit ? "Save Changes" : "Add Fuel Entry"}
             </button>
           </div>
         </form>

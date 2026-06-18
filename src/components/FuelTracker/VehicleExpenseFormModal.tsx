@@ -4,6 +4,7 @@ import type { FormEvent } from "react";
 import type {
   CreateVehicleExpensePayload,
   Vehicle,
+  VehicleExpense,
 } from "@/lib/fuel-tracker/types";
 
 const expenseTypes = [
@@ -37,17 +38,20 @@ export function VehicleExpenseFormModal({
   open,
   vehicles,
   loading,
+  expense,
   onClose,
   onSubmit,
 }: {
   open: boolean;
   vehicles: Vehicle[];
   loading: boolean;
+  expense?: VehicleExpense | null;
   onClose: () => void;
   onSubmit: (payload: CreateVehicleExpensePayload) => Promise<void>;
 }) {
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState<string | null>(null);
+  const isEdit = Boolean(expense);
 
   const activeVehicles = useMemo(
     () => vehicles.filter((vehicle) => vehicle.status === "active"),
@@ -56,14 +60,31 @@ export function VehicleExpenseFormModal({
 
   useEffect(() => {
     if (open) {
-      setForm({
-        ...initialForm,
-        vehicleId: activeVehicles[0]?.id ?? vehicles[0]?.id ?? "",
-        expenseType: expenseTypes[0],
-      });
+      setForm(
+        expense
+          ? {
+              expenseScope: expense.vehicle_id ? "vehicle" : "general",
+              expenseDate: expense.expense_date,
+              vehicleId: expense.vehicle_id ?? "",
+              expenseType: expense.expense_type,
+              description: expense.description ?? "",
+              amount: String(expense.amount),
+              vendor: expense.vendor ?? "",
+              invoiceReference: expense.invoice_reference ?? "",
+              city: expense.city ?? "",
+              paymentMode: expense.payment_mode ?? "",
+              company: expense.company ?? "",
+              status: expense.status,
+            }
+          : {
+              ...initialForm,
+              vehicleId: activeVehicles[0]?.id ?? vehicles[0]?.id ?? "",
+              expenseType: expenseTypes[0],
+            }
+      );
       setError(null);
     }
-  }, [activeVehicles, open, vehicles]);
+  }, [activeVehicles, expense, open, vehicles]);
 
   if (!open) return null;
 
@@ -113,10 +134,12 @@ export function VehicleExpenseFormModal({
         <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 dark:border-gray-800">
           <div>
             <h2 className="text-lg font-semibold text-gray-950 dark:text-gray-50">
-              Add Expense
+              {isEdit ? "Edit Expense" : "Add Expense"}
             </h2>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Record non-fuel vehicle expenses for operating cost tracking.
+              {isEdit
+                ? "Correct pending non-fuel expense details."
+                : "Record non-fuel vehicle expenses for operating cost tracking."}
             </p>
           </div>
           <button
@@ -367,7 +390,7 @@ export function VehicleExpenseFormModal({
               disabled={loading}
               className="min-h-10 rounded-md bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {loading ? "Saving..." : "Create Expense"}
+              {loading ? "Saving..." : isEdit ? "Save Changes" : "Create Expense"}
             </button>
           </div>
         </form>

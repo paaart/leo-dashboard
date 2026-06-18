@@ -291,6 +291,72 @@ async function getLatestFuelEntryForUpdate(
   return result.rows[0] ?? null;
 }
 
+async function recalculateFuelEntriesForVehicle(
+  client: PoolClient,
+  vehicleId: string
+) {
+  const vehicle = await getVehicleForUpdate(client, vehicleId);
+  if (!vehicle) {
+    throw Object.assign(new Error("Vehicle not found"), { status: 404 });
+  }
+
+  const entries = await client.query<{
+    id: string;
+    fuel_amount: string | number;
+    fuel_liters: string | number;
+    odometer_reading: string | number;
+  }>(
+    `
+    select id, fuel_amount, fuel_liters, odometer_reading
+    from public.fuel_entries
+    where vehicle_id = $1
+    order by fuel_date asc, created_at asc
+    for update
+    `,
+    [vehicleId]
+  );
+
+  let previousOdometer = Number(vehicle.starting_odometer);
+
+  for (let index = 0; index < entries.rows.length; index += 1) {
+    const entry = entries.rows[index];
+    const calculations = calculateFuelEntryValues({
+      currentOdometer: Number(entry.odometer_reading),
+      previousOdometer,
+      fuelAmount: Number(entry.fuel_amount),
+      fuelLiters: Number(entry.fuel_liters),
+      allowBaselineEqual: index === 0,
+    });
+
+    await client.query(
+      `
+      update public.fuel_entries
+      set
+        previous_odometer_reading = $2,
+        km_driven = $3,
+        approx_mileage = $4,
+        fuel_rate = $5,
+        cost_per_km = $6,
+        warning_flag = $7,
+        warning_reason = $8
+      where id = $1
+      `,
+      [
+        entry.id,
+        calculations.previous_odometer_reading,
+        calculations.km_driven,
+        calculations.approx_mileage,
+        calculations.fuel_rate,
+        calculations.cost_per_km,
+        calculations.warning_flag,
+        calculations.warning_reason,
+      ]
+    );
+
+    previousOdometer = Number(entry.odometer_reading);
+  }
+}
+
 export async function createFuelEntry(
   input: ValidFuelEntryInput
 ): Promise<FuelEntry> {
@@ -407,6 +473,127 @@ export async function listFuelEntries(params: {
   return result.rows.map(toFuelEntry);
 }
 
+export async function updateFuelEntry(
+  fuelEntryId: string,
+  input: ValidFuelEntryInput
+): Promise<FuelEntry> {
+  const client = await db.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const existing = await client.query<{
+      vehicle_id: string;
+    }>(
+      `
+      select vehicle_id
+      from public.fuel_entries
+      where id = $1
+      for update
+      `,
+      [fuelEntryId]
+    );
+
+    const oldVehicleId = existing.rows[0]?.vehicle_id;
+    if (!oldVehicleId) {
+      throw Object.assign(new Error("Fuel entry not found"), { status: 404 });
+    }
+
+    const newVehicle = await getVehicleForUpdate(client, input.vehicle_id);
+    if (!newVehicle) {
+      throw Object.assign(new Error("Vehicle not found"), { status: 404 });
+    }
+
+    await client.query(
+      `
+      update public.fuel_entries
+      set
+        vehicle_id = $2,
+        company = $3,
+        driver_name = $4,
+        driver_mobile = $5,
+        fuel_date = $6::date,
+        fuel_amount = $7,
+        fuel_liters = $8,
+        odometer_reading = $9,
+        bill_image_path = $10,
+        meter_image_path = $11,
+        remarks = $12
+      where id = $1
+      `,
+      [
+        fuelEntryId,
+        input.vehicle_id,
+        newVehicle.company,
+        input.driver_name,
+        input.driver_mobile,
+        input.fuel_date,
+        input.fuel_amount,
+        input.fuel_liters,
+        input.odometer_reading,
+        input.bill_image_path,
+        input.meter_image_path,
+        input.remarks,
+      ]
+    );
+
+    await recalculateFuelEntriesForVehicle(client, oldVehicleId);
+    if (oldVehicleId !== input.vehicle_id) {
+      await recalculateFuelEntriesForVehicle(client, input.vehicle_id);
+    }
+
+    const result = await client.query(
+      `
+      select *
+      from public.fuel_entries
+      where id = $1
+      `,
+      [fuelEntryId]
+    );
+
+    await client.query("COMMIT");
+    return toFuelEntry(result.rows[0]);
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export async function deleteFuelEntry(fuelEntryId: string): Promise<void> {
+  const client = await db.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const deleted = await client.query<{
+      vehicle_id: string;
+    }>(
+      `
+      delete from public.fuel_entries
+      where id = $1
+      returning vehicle_id
+      `,
+      [fuelEntryId]
+    );
+
+    const vehicleId = deleted.rows[0]?.vehicle_id;
+    if (!vehicleId) {
+      throw Object.assign(new Error("Fuel entry not found"), { status: 404 });
+    }
+
+    await recalculateFuelEntriesForVehicle(client, vehicleId);
+
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
 export async function createVehicleExpense(
   input: ValidVehicleExpenseInput
 ): Promise<VehicleExpense> {
@@ -488,6 +675,133 @@ export async function listVehicleExpenses(params: {
   );
 
   return result.rows.map(toVehicleExpense);
+}
+
+export async function updateVehicleExpense(
+  expenseId: string,
+  input: ValidVehicleExpenseInput
+): Promise<VehicleExpense> {
+  const client = await db.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const existing = await client.query<{
+      status: string;
+    }>(
+      `
+      select status
+      from public.vehicle_expenses
+      where id = $1
+      for update
+      `,
+      [expenseId]
+    );
+
+    const row = existing.rows[0];
+    if (!row) {
+      throw Object.assign(new Error("Vehicle expense not found"), {
+        status: 404,
+      });
+    }
+
+    if (String(row.status).toLowerCase() === "paid") {
+      throw Object.assign(
+        new Error("Paid expenses cannot be edited from here."),
+        { status: 400 }
+      );
+    }
+
+    const result = await client.query(
+      `
+      update public.vehicle_expenses
+      set
+        expense_date = $2::date,
+        vehicle_id = $3,
+        expense_type = $4,
+        description = $5,
+        amount = $6,
+        vendor = $7,
+        invoice_reference = $8,
+        city = $9,
+        payment_mode = $10,
+        company = $11,
+        status = 'pending'
+      where id = $1
+      returning *
+      `,
+      [
+        expenseId,
+        input.expense_date,
+        input.vehicle_id,
+        input.expense_type,
+        input.description,
+        input.amount,
+        input.vendor,
+        input.invoice_reference,
+        input.city,
+        input.payment_mode,
+        input.company,
+      ]
+    );
+
+    await client.query("COMMIT");
+    return toVehicleExpense(result.rows[0]);
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+export async function deleteVehicleExpense(expenseId: string): Promise<void> {
+  const client = await db.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const expense = await client.query<{
+      status: string;
+    }>(
+      `
+      select status
+      from public.vehicle_expenses
+      where id = $1
+      for update
+      `,
+      [expenseId]
+    );
+
+    const row = expense.rows[0];
+    if (!row) {
+      throw Object.assign(new Error("Vehicle expense not found"), {
+        status: 404,
+      });
+    }
+
+    if (String(row.status).toLowerCase() === "paid") {
+      throw Object.assign(
+        new Error("Paid expenses cannot be deleted from here."),
+        { status: 400 }
+      );
+    }
+
+    await client.query(
+      `
+      delete from public.vehicle_expenses
+      where id = $1
+      `,
+      [expenseId]
+    );
+
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
 
 export async function listVehicleExpensePayments(params: {

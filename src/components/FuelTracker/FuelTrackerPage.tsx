@@ -16,8 +16,12 @@ import { VehicleExpenseTable } from "./VehicleExpenseTable";
 import { VehicleTable } from "./VehicleTable";
 import {
   createFuelEntry,
+  deleteFuelEntry,
+  updateFuelEntry,
   createVehicleExpensePayment,
   createVehicleExpense,
+  deleteVehicleExpense,
+  updateVehicleExpense,
   createVehicle,
   updateVehicle,
   fetchFuelDashboardAnalytics,
@@ -106,6 +110,12 @@ export default function FuelTrackerPage() {
   const [analyticsError, setAnalyticsError] = useState<string | null>(null);
   const [vehicleModalOpen, setVehicleModalOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
+  const [editingFuelEntry, setEditingFuelEntry] = useState<FuelEntry | null>(
+    null
+  );
+  const [editingExpense, setEditingExpense] = useState<VehicleExpense | null>(
+    null
+  );
   const [fuelEntryModalOpen, setFuelEntryModalOpen] = useState(false);
   const [expenseModalOpen, setExpenseModalOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
@@ -278,25 +288,55 @@ export default function FuelTrackerPage() {
     setSavingFuelEntry(true);
 
     try {
+      if (editingFuelEntry) {
+        const shouldConfirm =
+          payload.vehicleId !== editingFuelEntry.vehicle_id ||
+          payload.fuelDate !== editingFuelEntry.fuel_date ||
+          payload.odometerReading !== editingFuelEntry.odometer_reading ||
+          payload.fuelAmount !== editingFuelEntry.fuel_amount ||
+          payload.fuelLiters !== editingFuelEntry.fuel_liters;
+
+        if (
+          shouldConfirm &&
+          !window.confirm(
+            "Editing this fuel entry may recalculate mileage for later entries of this vehicle."
+          )
+        ) {
+          return;
+        }
+      }
+
       const [billImagePath, meterImagePath] = await Promise.all([
         files.bill ? uploadFuelImage(files.bill, "bills") : null,
         files.meter ? uploadFuelImage(files.meter, "meters") : null,
       ]);
 
-      await createFuelEntry({
-        ...payload,
-        billImagePath,
-        meterImagePath,
-      });
+      if (editingFuelEntry) {
+        await updateFuelEntry(editingFuelEntry.id, {
+          ...payload,
+          billImagePath: billImagePath ?? editingFuelEntry.bill_image_path,
+          meterImagePath: meterImagePath ?? editingFuelEntry.meter_image_path,
+        });
+        toast.success("Fuel entry updated");
+      } else {
+        await createFuelEntry({
+          ...payload,
+          billImagePath,
+          meterImagePath,
+        });
+        toast.success("Fuel entry added");
+      }
 
-      toast.success("Fuel entry added");
       setFuelEntryModalOpen(false);
+      setEditingFuelEntry(null);
       await loadData();
       await loadAnalytics();
-    } catch (createError) {
+    } catch (saveError) {
       const message =
-        createError instanceof Error
-          ? createError.message
+        saveError instanceof Error
+          ? saveError.message
+          : editingFuelEntry
+          ? "Failed to update fuel entry."
           : "Failed to add fuel entry.";
       toast.error(message);
     } finally {
@@ -304,23 +344,69 @@ export default function FuelTrackerPage() {
     }
   };
 
+  const handleDeleteFuelEntry = async (entry: FuelEntry) => {
+    const confirmed = window.confirm(
+      "Delete this fuel entry? This may recalculate later mileage for this vehicle."
+    );
+    if (!confirmed) return;
+
+    try {
+      await deleteFuelEntry(entry.id);
+      toast.success("Fuel entry deleted");
+      await loadData();
+      await loadAnalytics();
+    } catch (deleteError) {
+      const message =
+        deleteError instanceof Error
+          ? deleteError.message
+          : "Failed to delete fuel entry.";
+      toast.error(message);
+    }
+  };
+
   const handleCreateExpense = async (payload: CreateVehicleExpensePayload) => {
     setSavingExpense(true);
 
     try {
-      await createVehicleExpense(payload);
-      toast.success("Expense added");
+      if (editingExpense) {
+        await updateVehicleExpense(editingExpense.id, payload);
+        toast.success("Expense updated");
+      } else {
+        await createVehicleExpense(payload);
+        toast.success("Expense added");
+      }
       setExpenseModalOpen(false);
+      setEditingExpense(null);
       await loadData();
       await loadAnalytics();
-    } catch (createError) {
+    } catch (saveError) {
       const message =
-        createError instanceof Error
-          ? createError.message
+        saveError instanceof Error
+          ? saveError.message
+          : editingExpense
+          ? "Failed to update expense."
           : "Failed to add expense.";
       toast.error(message);
     } finally {
       setSavingExpense(false);
+    }
+  };
+
+  const handleDeleteExpense = async (expense: VehicleExpense) => {
+    const confirmed = window.confirm("Delete this expense entry?");
+    if (!confirmed) return;
+
+    try {
+      await deleteVehicleExpense(expense.id);
+      toast.success("Expense deleted");
+      await loadData();
+      await loadAnalytics();
+    } catch (deleteError) {
+      const message =
+        deleteError instanceof Error
+          ? deleteError.message
+          : "Failed to delete expense.";
+      toast.error(message);
     }
   };
 
@@ -451,7 +537,10 @@ export default function FuelTrackerPage() {
               description="Create fuel records, upload proof images, and review mileage warnings."
               action={
                 <AddButton
-                  onClick={() => setFuelEntryModalOpen(true)}
+                  onClick={() => {
+                    setEditingFuelEntry(null);
+                    setFuelEntryModalOpen(true);
+                  }}
                   disabled={vehicles.length === 0}
                 >
                   Add Fuel Entry
@@ -508,7 +597,15 @@ export default function FuelTrackerPage() {
               vehiclesById={vehiclesById}
               loading={loading}
               error={error}
-              onAdd={() => setFuelEntryModalOpen(true)}
+              onAdd={() => {
+                setEditingFuelEntry(null);
+                setFuelEntryModalOpen(true);
+              }}
+              onEdit={(entry) => {
+                setEditingFuelEntry(entry);
+                setFuelEntryModalOpen(true);
+              }}
+              onDelete={handleDeleteFuelEntry}
               onViewProof={handleViewProof}
             />
           </div>
@@ -520,7 +617,12 @@ export default function FuelTrackerPage() {
               title="Other Expenses"
               description="Create and review non-fuel vehicle expenses."
               action={
-                <AddButton onClick={() => setExpenseModalOpen(true)}>
+                <AddButton
+                  onClick={() => {
+                    setEditingExpense(null);
+                    setExpenseModalOpen(true);
+                  }}
+                >
                   Add Expense
                 </AddButton>
               }
@@ -577,7 +679,19 @@ export default function FuelTrackerPage() {
               vehiclesById={vehiclesById}
               loading={loading}
               error={error}
-              onAdd={() => setExpenseModalOpen(true)}
+              onAdd={() => {
+                setEditingExpense(null);
+                setExpenseModalOpen(true);
+              }}
+              onEdit={(expense) => {
+                if (expense.status === "paid") {
+                  toast.error("Paid expenses cannot be edited from here.");
+                  return;
+                }
+                setEditingExpense(expense);
+                setExpenseModalOpen(true);
+              }}
+              onDelete={handleDeleteExpense}
             />
           </div>
         ) : null}
@@ -667,7 +781,11 @@ export default function FuelTrackerPage() {
         open={fuelEntryModalOpen}
         vehicles={vehicles}
         loading={savingFuelEntry}
-        onClose={() => setFuelEntryModalOpen(false)}
+        entry={editingFuelEntry}
+        onClose={() => {
+          setFuelEntryModalOpen(false);
+          setEditingFuelEntry(null);
+        }}
         onSubmit={handleCreateFuelEntry}
       />
 
@@ -675,7 +793,11 @@ export default function FuelTrackerPage() {
         open={expenseModalOpen}
         vehicles={vehicles}
         loading={savingExpense}
-        onClose={() => setExpenseModalOpen(false)}
+        expense={editingExpense}
+        onClose={() => {
+          setExpenseModalOpen(false);
+          setEditingExpense(null);
+        }}
         onSubmit={handleCreateExpense}
       />
 

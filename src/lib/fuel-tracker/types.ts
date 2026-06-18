@@ -70,6 +70,8 @@ export type CreateFuelEntryInput = {
   remarks?: string | null;
 };
 
+export type UpdateFuelEntryInput = CreateFuelEntryInput;
+
 export type VehicleExpenseStatus = "paid" | "pending";
 
 export type VehicleExpenseType =
@@ -123,6 +125,8 @@ export type CreateVehicleExpenseInput = {
   company?: string | null;
   status?: string;
 };
+
+export type UpdateVehicleExpenseInput = CreateVehicleExpenseInput;
 
 export type FuelDashboardSummary = {
   vehicleId: string;
@@ -231,6 +235,8 @@ export type CreateFuelEntryPayload = {
   remarks: string | null;
 };
 
+export type UpdateFuelEntryPayload = CreateFuelEntryPayload;
+
 export type CreateVehicleExpensePayload = {
   expenseDate: string;
   expenseScope: "vehicle" | "general";
@@ -245,6 +251,8 @@ export type CreateVehicleExpensePayload = {
   company: string | null;
   status: VehicleExpenseStatus;
 };
+
+export type UpdateVehicleExpensePayload = CreateVehicleExpensePayload;
 
 export type VehicleExpensePaymentItem = {
   id: string;

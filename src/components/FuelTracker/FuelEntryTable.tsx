@@ -1,4 +1,4 @@
-import { ExternalLink, Plus } from "lucide-react";
+import { ExternalLink, Pencil, Plus, Trash2 } from "lucide-react";
 import { FuelEmptyState } from "./FuelEmptyState";
 import { FuelStatusBadge } from "./FuelStatusBadge";
 import type { FuelEntry, Vehicle } from "@/lib/fuel-tracker/types";
@@ -30,6 +30,8 @@ export function FuelEntryTable({
   loading,
   error,
   onAdd,
+  onEdit,
+  onDelete,
   onViewProof,
 }: {
   entries: FuelEntry[];
@@ -37,6 +39,8 @@ export function FuelEntryTable({
   loading: boolean;
   error: string | null;
   onAdd: () => void;
+  onEdit: (entry: FuelEntry) => void;
+  onDelete: (entry: FuelEntry) => void;
   onViewProof: (path: string) => void;
 }) {
   if (loading) {
@@ -100,6 +104,7 @@ export function FuelEntryTable({
               <th className="px-4 py-3 font-semibold">Approx. Entry Mileage</th>
               <th className="px-4 py-3 font-semibold">Warning</th>
               <th className="px-4 py-3 font-semibold">Proof</th>
+              <th className="px-4 py-3 font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
@@ -177,6 +182,26 @@ export function FuelEntryTable({
                           No proof
                         </span>
                       ) : null}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => onEdit(entry)}
+                        className="inline-flex min-h-9 items-center gap-2 rounded-md border border-gray-300 px-3 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                      >
+                        <Pencil className="h-4 w-4" />
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onDelete(entry)}
+                        className="inline-flex min-h-9 items-center gap-2 rounded-md border border-red-200 px-3 text-sm font-medium text-red-700 hover:bg-red-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/40"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Delete
+                      </button>
                     </div>
                   </td>
                 </tr>

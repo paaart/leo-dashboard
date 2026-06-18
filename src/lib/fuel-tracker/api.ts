@@ -3,7 +3,9 @@ import type {
   CreateVehicleExpensePaymentPayload,
   CreateVehicleExpensePayload,
   CreateVehiclePayload,
+  UpdateFuelEntryPayload,
   UpdateVehiclePayload,
+  UpdateVehicleExpensePayload,
   FuelApiResponse,
   FuelDashboardAnalytics,
   FuelDashboardSummary,
@@ -63,6 +65,19 @@ export function createFuelEntry(payload: CreateFuelEntryPayload) {
   });
 }
 
+export function updateFuelEntry(id: string, payload: UpdateFuelEntryPayload) {
+  return requestJson<FuelEntry>(`/api/fuel-entries/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteFuelEntry(id: string) {
+  return requestJson<{ id: string }>(`/api/fuel-entries/${id}`, {
+    method: "DELETE",
+  });
+}
+
 export function fetchVehicleExpenses(filters?: {
   vehicleId?: string;
   fromDate?: string;
@@ -87,6 +102,22 @@ export function createVehicleExpense(payload: CreateVehicleExpensePayload) {
   return requestJson<VehicleExpense>("/api/vehicle-expenses", {
     method: "POST",
     body: JSON.stringify(payload),
+  });
+}
+
+export function updateVehicleExpense(
+  id: string,
+  payload: UpdateVehicleExpensePayload
+) {
+  return requestJson<VehicleExpense>(`/api/vehicle-expenses/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function deleteVehicleExpense(id: string) {
+  return requestJson<{ id: string }>(`/api/vehicle-expenses/${id}`, {
+    method: "DELETE",
   });
 }
 

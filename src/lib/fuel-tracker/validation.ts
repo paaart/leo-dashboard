@@ -2,7 +2,9 @@ import type {
   CreateFuelEntryInput,
   CreateVehicleExpenseInput,
   CreateVehicleInput,
+  UpdateFuelEntryInput,
   UpdateVehicleInput,
+  UpdateVehicleExpenseInput,
 } from "./types";
 
 type ValidationResult<T> =
@@ -200,6 +202,12 @@ export function validateFuelEntryInput(
   };
 }
 
+export function validateFuelEntryUpdateInput(
+  input: UpdateFuelEntryInput
+): ValidationResult<ValidFuelEntryInput> {
+  return validateFuelEntryInput(input);
+}
+
 export function validateVehicleExpenseInput(
   input: CreateVehicleExpenseInput
 ): ValidationResult<ValidVehicleExpenseInput> {
@@ -248,4 +256,10 @@ export function validateVehicleExpenseInput(
       status,
     },
   };
+}
+
+export function validateVehicleExpenseUpdateInput(
+  input: UpdateVehicleExpenseInput
+): ValidationResult<ValidVehicleExpenseInput> {
+  return validateVehicleExpenseInput(input);
 }
