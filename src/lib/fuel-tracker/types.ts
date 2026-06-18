@@ -4,7 +4,7 @@ export type Vehicle = {
   id: string;
   vehicle_no: string;
   vehicle_type: string;
-  assigned_driver: string | null;
+  company: string | null;
   starting_odometer: number;
   status: VehicleStatus;
   created_at: string;
@@ -14,6 +14,7 @@ export type Vehicle = {
 export type FuelEntry = {
   id: string;
   vehicle_id: string;
+  company: string | null;
   driver_name: string | null;
   driver_mobile: string | null;
   fuel_date: string;
@@ -39,12 +40,13 @@ export type CreateVehicleInput = {
   vehicleNo?: string;
   vehicle_type?: string;
   vehicleType?: string;
-  assigned_driver?: string | null;
-  assignedDriver?: string | null;
+  company?: string | null;
   starting_odometer?: number | string | null;
   startingOdometer?: number | string | null;
   status?: VehicleStatus;
 };
+
+export type UpdateVehicleInput = CreateVehicleInput;
 
 export type CreateFuelEntryInput = {
   vehicle_id?: string;
@@ -134,7 +136,7 @@ export type FuelDashboardSummary = {
   lastOdometerReading: number | null;
 };
 
-export type FuelDeviationStatus = "good" | "normal" | "low" | "none";
+export type FuelDeviationStatus = "good" | "low" | "none";
 
 export type FuelAnalyticsSummary = {
   totalFuelSpend: number;
@@ -209,10 +211,12 @@ export type FuelEntryCalculations = {
 export type CreateVehiclePayload = {
   vehicleNo: string;
   vehicleType: string;
-  assignedDriver: string | null;
+  company: string | null;
   startingOdometer: number;
   status: VehicleStatus;
 };
+
+export type UpdateVehiclePayload = Partial<CreateVehiclePayload>;
 
 export type CreateFuelEntryPayload = {
   vehicleId: string;

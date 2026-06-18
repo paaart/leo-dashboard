@@ -17,6 +17,7 @@ import type {
   ValidFuelEntryInput,
   ValidVehicleExpenseInput,
   ValidVehicleInput,
+  ValidVehicleUpdateInput,
 } from "./validation";
 
 function toDateOnly(value: unknown): string {
@@ -35,7 +36,7 @@ function toVehicle(row: Record<string, unknown>): Vehicle {
     id: String(row.id),
     vehicle_no: String(row.vehicle_no),
     vehicle_type: String(row.vehicle_type),
-    assigned_driver: row.assigned_driver ? String(row.assigned_driver) : null,
+    company: row.company ? String(row.company) : null,
     starting_odometer: Number(row.starting_odometer),
     status: row.status as Vehicle["status"],
     created_at: String(row.created_at),
@@ -47,6 +48,7 @@ function toFuelEntry(row: Record<string, unknown>): FuelEntry {
   return {
     id: String(row.id),
     vehicle_id: String(row.vehicle_id),
+    company: row.company ? String(row.company) : null,
     driver_name: row.driver_name ? String(row.driver_name) : null,
     driver_mobile: row.driver_mobile ? String(row.driver_mobile) : null,
     fuel_date: toDateOnly(row.fuel_date),
@@ -135,13 +137,15 @@ function toVehicleExpensePayment(
   };
 }
 
-export async function createVehicle(input: ValidVehicleInput): Promise<Vehicle> {
+export async function createVehicle(
+  input: ValidVehicleInput
+): Promise<Vehicle> {
   const result = await db.query(
     `
     insert into public.vehicles (
       vehicle_no,
       vehicle_type,
-      assigned_driver,
+      company,
       starting_odometer,
       status
     )
@@ -151,7 +155,7 @@ export async function createVehicle(input: ValidVehicleInput): Promise<Vehicle> 
     [
       input.vehicle_no,
       input.vehicle_type,
-      input.assigned_driver,
+      input.company,
       input.starting_odometer,
       input.status,
     ]
@@ -186,13 +190,76 @@ export async function listVehicles(params: {
   return result.rows.map(toVehicle);
 }
 
+export async function updateVehicle(
+  vehicleId: string,
+  input: ValidVehicleUpdateInput
+): Promise<Vehicle> {
+  const existing = await db.query(
+    `
+    select id
+    from public.vehicles
+    where id = $1
+    `,
+    [vehicleId]
+  );
+
+  if (existing.rowCount === 0) {
+    throw Object.assign(new Error("Vehicle not found"), { status: 404 });
+  }
+
+  if (input.vehicle_no) {
+    const duplicate = await db.query(
+      `
+      select id
+      from public.vehicles
+      where vehicle_no = $1
+        and id <> $2
+      limit 1
+      `,
+      [input.vehicle_no, vehicleId]
+    );
+
+    if ((duplicate.rowCount ?? 0) > 0) {
+      throw Object.assign(new Error("vehicle_no must be unique"), {
+        status: 409,
+      });
+    }
+  }
+
+  const result = await db.query(
+    `
+    update public.vehicles
+    set
+      vehicle_no = coalesce($2, vehicle_no),
+      vehicle_type = coalesce($3, vehicle_type),
+      company = case when $4::boolean then $5 else company end,
+      starting_odometer = coalesce($6, starting_odometer),
+      status = coalesce($7, status)
+    where id = $1
+    returning *
+    `,
+    [
+      vehicleId,
+      input.vehicle_no ?? null,
+      input.vehicle_type ?? null,
+      "company" in input,
+      input.company ?? null,
+      input.starting_odometer ?? null,
+      input.status ?? null,
+    ]
+  );
+
+  return toVehicle(result.rows[0]);
+}
+
 async function getVehicleForUpdate(client: PoolClient, vehicleId: string) {
   const result = await client.query<{
     id: string;
+    company: string | null;
     starting_odometer: string | number;
   }>(
     `
-    select id, starting_odometer
+    select id, company, starting_odometer
     from public.vehicles
     where id = $1
     for update
@@ -258,6 +325,7 @@ export async function createFuelEntry(
       `
       insert into public.fuel_entries (
         vehicle_id,
+        company,
         driver_name,
         driver_mobile,
         fuel_date,
@@ -276,13 +344,14 @@ export async function createFuelEntry(
         warning_reason
       )
       values (
-        $1, $2, $3, $4::date, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
-        $15, $16, $17
+        $1, $2, $3, $4, $5::date, $6, $7, $8, $9, $10, $11, $12, $13, $14,
+        $15, $16, $17, $18
       )
       returning *
       `,
       [
         input.vehicle_id,
+        vehicle.company,
         input.driver_name,
         input.driver_mobile,
         input.fuel_date,
@@ -607,9 +676,12 @@ export async function createVehicleExpensePayment(input: {
       limit: 1,
       offset: 0,
     });
-    return rows.find((row) => row.id === paymentId) ?? toVehicleExpensePayment(
-      { ...paymentResult.rows[0], expense_count: input.expenseIds.length },
-      []
+    return (
+      rows.find((row) => row.id === paymentId) ??
+      toVehicleExpensePayment(
+        { ...paymentResult.rows[0], expense_count: input.expenseIds.length },
+        []
+      )
     );
   } catch (error) {
     await client.query("ROLLBACK");
@@ -676,9 +748,7 @@ export async function getFuelDashboardSummary(): Promise<
     averageMileage:
       row.average_mileage === null ? null : Number(row.average_mileage),
     averageCostPerKm:
-      row.average_cost_per_km === null
-        ? null
-        : Number(row.average_cost_per_km),
+      row.average_cost_per_km === null ? null : Number(row.average_cost_per_km),
     lastFuelDate: row.last_fuel_date ? toDateOnly(row.last_fuel_date) : null,
     lastOdometerReading:
       row.last_odometer_reading === null
@@ -854,9 +924,10 @@ export async function getFuelDashboardAnalytics(
       le.odometer_reading as last_odometer,
       case
         when vt.valid_liters <= 0 or f.fleet_average_mileage is null then 'none'
-        when (vt.valid_km / vt.valid_liters) >= f.fleet_average_mileage * 1.1 then 'good'
+        -- Vehicle mileage compared to fleet average mileage.
+        -- More than 10% below fleet average needs review.
         when (vt.valid_km / vt.valid_liters) <= f.fleet_average_mileage * 0.9 then 'low'
-        else 'normal'
+        else 'good'
       end as deviation_status
     from vehicle_totals vt
     cross join fleet f

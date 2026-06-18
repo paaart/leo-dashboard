@@ -12,7 +12,8 @@ const vehicles = [
   {
     vehicleNo: "KA01AA1001",
     vehicleType: "Container Truck",
-    assignedDriver: "Ramesh Gowda",
+    company: "Leo Packers and Movers",
+    driverName: "Ramesh Gowda",
     startingOdometer: 100000,
     profile: "Healthy 5.5-6.5 km/l",
     liters: [58, 62, 55, 64, 60, 66, 57, 63, 61, 59, 65, 56, 62, 60, 58, 64],
@@ -24,7 +25,8 @@ const vehicles = [
   {
     vehicleNo: "KA01AA1002",
     vehicleType: "Light Commercial Vehicle",
-    assignedDriver: "Suresh Kumar",
+    company: "Leo Packers and Movers",
+    driverName: "Suresh Kumar",
     startingOdometer: 120000,
     profile: "Very efficient 7-8 km/l",
     liters: [42, 45, 48, 44, 46, 50, 43, 47, 49, 45, 44, 48, 46, 50, 43, 47],
@@ -36,7 +38,8 @@ const vehicles = [
   {
     vehicleNo: "KA01AA1003",
     vehicleType: "Heavy Duty Truck",
-    assignedDriver: "Manjunath R",
+    company: "Leo Cargo",
+    driverName: "Manjunath R",
     startingOdometer: 80000,
     profile: "Heavy usage 4-5 km/l",
     liters: [
@@ -50,7 +53,8 @@ const vehicles = [
   {
     vehicleNo: "KA01AA1004",
     vehicleType: "Reefer Truck",
-    assignedDriver: "Naveen Shetty",
+    company: "Leo Cargo",
+    driverName: "Naveen Shetty",
     startingOdometer: 150000,
     profile: "Mileage gradually worsening",
     liters: [62, 64, 60, 66, 63, 65, 61, 64, 62, 66, 63, 65, 61, 64, 62, 66],
@@ -62,7 +66,8 @@ const vehicles = [
   {
     vehicleNo: "KA01AA1005",
     vehicleType: "Pickup Van",
-    assignedDriver: "Prakash M",
+    company: "Leo Express",
+    driverName: "Prakash M",
     startingOdometer: 95000,
     profile: "Mostly normal with suspicious entries",
     liters: [
@@ -132,7 +137,7 @@ async function seedVehicle(vehicle, vehicleIndex) {
   const createdVehicle = await post("/api/vehicles", {
     vehicleNo: vehicle.vehicleNo,
     vehicleType: vehicle.vehicleType,
-    assignedDriver: vehicle.assignedDriver,
+    company: vehicle.company,
     startingOdometer: vehicle.startingOdometer,
     status: "active",
   });
@@ -158,7 +163,7 @@ async function seedVehicle(vehicle, vehicleIndex) {
 
     await post("/api/fuel-entries", {
       vehicleId: createdVehicle.id,
-      driverName: vehicle.assignedDriver,
+      driverName: vehicle.driverName,
       driverMobile: `98765010${String(vehicleIndex + 1).padStart(2, "0")}`,
       fuelDate: entryDate,
       fuelAmount,

@@ -32,25 +32,26 @@ function formatCurrency(value: number | null) {
   }).format(value);
 }
 
-function deviationBadge(status: FuelDeviationStatus) {
+function formatOdometer(value: number | null) {
+  if (value === null || !Number.isFinite(value)) return "-";
+  return String(value);
+}
+
+function performanceBadge(status: FuelDeviationStatus) {
   if (status === "good") {
     return "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300";
   }
   if (status === "low") {
     return "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300";
   }
-  if (status === "normal") {
-    return "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300";
-  }
 
   return "border-gray-200 bg-gray-50 text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300";
 }
 
-function deviationLabel(status: FuelDeviationStatus) {
+function performanceLabel(status: FuelDeviationStatus) {
   if (status === "good") return "Good";
-  if (status === "low") return "Low";
-  if (status === "normal") return "Normal";
-  return "No data";
+  if (status === "low") return "Needs Review";
+  return "No Data";
 }
 
 function InsightCard({
@@ -299,8 +300,7 @@ export function FuelTrackerDashboard({
                 Vehicle-wise Performance
               </h3>
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Operational deviation compares each vehicle mileage against the
-                filtered fleet average.
+                Vehicle mileage compared to fleet average mileage.
               </p>
             </div>
             <div className="overflow-x-auto">
@@ -316,7 +316,7 @@ export function FuelTrackerDashboard({
                     <th className="px-4 py-3 font-semibold">Average Mileage</th>
                     <th className="px-4 py-3 font-semibold">Cost / KM</th>
                     <th className="px-4 py-3 font-semibold">Warning Count</th>
-                    <th className="px-4 py-3 font-semibold">Deviation</th>
+                    <th className="px-4 py-3 font-semibold">Performance</th>
                     <th className="px-4 py-3 font-semibold">Last Fuel Date</th>
                     <th className="px-4 py-3 font-semibold">Last Odometer</th>
                   </tr>
@@ -354,18 +354,18 @@ export function FuelTrackerDashboard({
                       </td>
                       <td className="px-4 py-3">
                         <span
-                          className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${deviationBadge(
+                          className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${performanceBadge(
                             vehicle.deviationStatus
                           )}`}
                         >
-                          {deviationLabel(vehicle.deviationStatus)}
+                          {performanceLabel(vehicle.deviationStatus)}
                         </span>
                       </td>
                       <td className="px-4 py-3">
                         {vehicle.lastFuelDate ?? "-"}
                       </td>
                       <td className="px-4 py-3">
-                        {formatNumber(vehicle.lastOdometer, 0)}
+                        {formatOdometer(vehicle.lastOdometer)}
                       </td>
                     </tr>
                   ))}

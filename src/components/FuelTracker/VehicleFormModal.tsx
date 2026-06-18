@@ -3,13 +3,14 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import type {
   CreateVehiclePayload,
+  Vehicle,
   VehicleStatus,
 } from "@/lib/fuel-tracker/types";
 
 const initialForm = {
   vehicleNo: "",
   vehicleType: "",
-  assignedDriver: "",
+  company: "",
   startingOdometer: "",
   status: "active" as VehicleStatus,
 };
@@ -17,23 +18,38 @@ const initialForm = {
 export function VehicleFormModal({
   open,
   loading,
+  vehicle,
+  hasFuelEntries = false,
   onClose,
   onSubmit,
 }: {
   open: boolean;
   loading: boolean;
+  vehicle?: Vehicle | null;
+  hasFuelEntries?: boolean;
   onClose: () => void;
   onSubmit: (payload: CreateVehiclePayload) => Promise<void>;
 }) {
   const [form, setForm] = useState(initialForm);
   const [error, setError] = useState<string | null>(null);
+  const isEdit = Boolean(vehicle);
 
   useEffect(() => {
     if (open) {
-      setForm(initialForm);
+      setForm(
+        vehicle
+          ? {
+              vehicleNo: vehicle.vehicle_no,
+              vehicleType: vehicle.vehicle_type,
+              company: vehicle.company ?? "",
+              startingOdometer: String(vehicle.starting_odometer),
+              status: vehicle.status,
+            }
+          : initialForm
+      );
       setError(null);
     }
-  }, [open]);
+  }, [open, vehicle]);
 
   if (!open) return null;
 
@@ -59,7 +75,7 @@ export function VehicleFormModal({
     await onSubmit({
       vehicleNo: form.vehicleNo.trim().toUpperCase(),
       vehicleType: form.vehicleType.trim(),
-      assignedDriver: form.assignedDriver.trim() || null,
+      company: form.company.trim() || null,
       startingOdometer,
       status: form.status,
     });
@@ -71,10 +87,12 @@ export function VehicleFormModal({
         <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 dark:border-gray-800">
           <div>
             <h2 className="text-lg font-semibold text-gray-950 dark:text-gray-50">
-              Add Vehicle
+              {isEdit ? "Edit Vehicle" : "Add Vehicle"}
             </h2>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Register a vehicle before adding fuel entries or expenses.
+              {isEdit
+                ? "Update vehicle details used across tracker views."
+                : "Register a vehicle before adding fuel entries or expenses."}
             </p>
           </div>
           <button
@@ -133,11 +151,11 @@ export function VehicleFormModal({
                 Leo Company
               </span>
               <input
-                value={form.assignedDriver}
+                value={form.company}
                 onChange={(event) =>
                   setForm((prev) => ({
                     ...prev,
-                    assignedDriver: event.target.value,
+                    company: event.target.value,
                   }))
                 }
                 className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
@@ -166,6 +184,12 @@ export function VehicleFormModal({
                 className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
                 placeholder="100000"
               />
+              {isEdit && hasFuelEntries ? (
+                <span className="text-xs text-amber-700 dark:text-amber-300">
+                  Changing starting odometer may affect baseline mileage
+                  interpretation for this vehicle.
+                </span>
+              ) : null}
             </label>
           </div>
 
@@ -208,7 +232,7 @@ export function VehicleFormModal({
               disabled={loading}
               className="min-h-10 rounded-md bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {loading ? "Saving..." : "Create Vehicle"}
+              {loading ? "Saving..." : isEdit ? "Save Changes" : "Add Vehicle"}
             </button>
           </div>
         </form>

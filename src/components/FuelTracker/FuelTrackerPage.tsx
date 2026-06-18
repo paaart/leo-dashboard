@@ -19,6 +19,7 @@ import {
   createVehicleExpensePayment,
   createVehicleExpense,
   createVehicle,
+  updateVehicle,
   fetchFuelDashboardAnalytics,
   fetchFuelEntries,
   fetchVehicleExpensePayments,
@@ -104,6 +105,7 @@ export default function FuelTrackerPage() {
   const [error, setError] = useState<string | null>(null);
   const [analyticsError, setAnalyticsError] = useState<string | null>(null);
   const [vehicleModalOpen, setVehicleModalOpen] = useState(false);
+  const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [fuelEntryModalOpen, setFuelEntryModalOpen] = useState(false);
   const [expenseModalOpen, setExpenseModalOpen] = useState(false);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
@@ -130,6 +132,11 @@ export default function FuelTrackerPage() {
     () => new Map(vehicles.map((vehicle) => [vehicle.id, vehicle])),
     [vehicles]
   );
+
+  const editingVehicleHasFuelEntries = useMemo(() => {
+    if (!editingVehicle) return false;
+    return fuelEntries.some((entry) => entry.vehicle_id === editingVehicle.id);
+  }, [editingVehicle, fuelEntries]);
 
   const filteredFuelEntries = useMemo(() => {
     return fuelEntries.filter((entry) => {
@@ -240,15 +247,23 @@ export default function FuelTrackerPage() {
     setSavingVehicle(true);
 
     try {
-      await createVehicle(payload);
-      toast.success("Vehicle added");
+      if (editingVehicle) {
+        await updateVehicle(editingVehicle.id, payload);
+        toast.success("Vehicle updated");
+      } else {
+        await createVehicle(payload);
+        toast.success("Vehicle added");
+      }
       setVehicleModalOpen(false);
+      setEditingVehicle(null);
       await loadData();
       await loadAnalytics();
-    } catch (createError) {
+    } catch (saveError) {
       const message =
-        createError instanceof Error
-          ? createError.message
+        saveError instanceof Error
+          ? saveError.message
+          : editingVehicle
+          ? "Failed to update vehicle."
           : "Failed to add vehicle.";
       toast.error(message);
     } finally {
@@ -403,7 +418,12 @@ export default function FuelTrackerPage() {
               title="Vehicles"
               description="Create and review fleet vehicles used for vehicle tracking."
               action={
-                <AddButton onClick={() => setVehicleModalOpen(true)}>
+                <AddButton
+                  onClick={() => {
+                    setEditingVehicle(null);
+                    setVehicleModalOpen(true);
+                  }}
+                >
                   Add Vehicle
                 </AddButton>
               }
@@ -412,7 +432,14 @@ export default function FuelTrackerPage() {
               vehicles={vehicles}
               loading={loading}
               error={error}
-              onAdd={() => setVehicleModalOpen(true)}
+              onAdd={() => {
+                setEditingVehicle(null);
+                setVehicleModalOpen(true);
+              }}
+              onEdit={(vehicle) => {
+                setEditingVehicle(vehicle);
+                setVehicleModalOpen(true);
+              }}
             />
           </div>
         ) : null}
@@ -627,7 +654,12 @@ export default function FuelTrackerPage() {
       <VehicleFormModal
         open={vehicleModalOpen}
         loading={savingVehicle}
-        onClose={() => setVehicleModalOpen(false)}
+        vehicle={editingVehicle}
+        hasFuelEntries={editingVehicleHasFuelEntries}
+        onClose={() => {
+          setVehicleModalOpen(false);
+          setEditingVehicle(null);
+        }}
         onSubmit={handleCreateVehicle}
       />
 

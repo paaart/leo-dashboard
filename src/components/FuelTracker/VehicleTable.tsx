@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
 import { FuelEmptyState } from "./FuelEmptyState";
 import { FuelStatusBadge } from "./FuelStatusBadge";
 import type { Vehicle } from "@/lib/fuel-tracker/types";
@@ -8,11 +8,13 @@ export function VehicleTable({
   loading,
   error,
   onAdd,
+  onEdit,
 }: {
   vehicles: Vehicle[];
   loading: boolean;
   error: string | null;
   onAdd: () => void;
+  onEdit: (vehicle: Vehicle) => void;
 }) {
   if (loading) {
     return (
@@ -67,6 +69,7 @@ export function VehicleTable({
               <th className="px-4 py-3 font-semibold">Leo Company</th>
               <th className="px-4 py-3 font-semibold">Starting Odometer</th>
               <th className="px-4 py-3 font-semibold">Status</th>
+              <th className="px-4 py-3 font-semibold">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
@@ -79,12 +82,22 @@ export function VehicleTable({
                   {vehicle.vehicle_no}
                 </td>
                 <td className="px-4 py-3">{vehicle.vehicle_type}</td>
-                <td className="px-4 py-3">{vehicle.assigned_driver || "-"}</td>
+                <td className="px-4 py-3">{vehicle.company || "-"}</td>
                 <td className="px-4 py-3">
                   {String(vehicle.starting_odometer)}
                 </td>
                 <td className="px-4 py-3">
                   <FuelStatusBadge status={vehicle.status} />
+                </td>
+                <td className="px-4 py-3">
+                  <button
+                    type="button"
+                    onClick={() => onEdit(vehicle)}
+                    className="inline-flex min-h-9 items-center gap-2 rounded-md border border-gray-300 px-3 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                  >
+                    <Pencil className="h-4 w-4" />
+                    Edit
+                  </button>
                 </td>
               </tr>
             ))}

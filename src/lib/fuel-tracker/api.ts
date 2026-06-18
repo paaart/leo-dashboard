@@ -3,6 +3,7 @@ import type {
   CreateVehicleExpensePaymentPayload,
   CreateVehicleExpensePayload,
   CreateVehiclePayload,
+  UpdateVehiclePayload,
   FuelApiResponse,
   FuelDashboardAnalytics,
   FuelDashboardSummary,
@@ -40,6 +41,13 @@ export function fetchVehicles() {
 export function createVehicle(payload: CreateVehiclePayload) {
   return requestJson<Vehicle>("/api/vehicles", {
     method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateVehicle(id: string, payload: UpdateVehiclePayload) {
+  return requestJson<Vehicle>(`/api/vehicles/${id}`, {
+    method: "PATCH",
     body: JSON.stringify(payload),
   });
 }

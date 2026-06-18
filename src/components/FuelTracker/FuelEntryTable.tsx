@@ -19,6 +19,11 @@ function formatNumber(value: number | null, digits = 2) {
   }).format(value);
 }
 
+function formatOdometer(value: number | null) {
+  if (value === null || !Number.isFinite(value)) return "-";
+  return String(value);
+}
+
 export function FuelEntryTable({
   entries,
   vehiclesById,
@@ -79,11 +84,11 @@ export function FuelEntryTable({
   return (
     <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
       <div className="overflow-x-auto">
-        <table className="min-w-345 w-full text-left text-sm">
+        <table className="min-w-380 w-full text-left text-sm">
           <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
             <tr>
-              <th className="px-4 py-3 font-semibold">Date</th>
               <th className="px-4 py-3 font-semibold">Vehicle</th>
+              <th className="px-4 py-3 font-semibold">Company</th>
               <th className="px-4 py-3 font-semibold">Driver Name</th>
               <th className="px-4 py-3 font-semibold">Driver Mobile</th>
               <th className="px-4 py-3 font-semibold">Fuel Amount</th>
@@ -106,10 +111,10 @@ export function FuelEntryTable({
                   key={entry.id}
                   className="text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900/70"
                 >
-                  <td className="px-4 py-3">{entry.fuel_date}</td>
                   <td className="px-4 py-3 font-semibold text-gray-950 dark:text-gray-50">
                     {vehicle?.vehicle_no ?? "Unknown vehicle"}
                   </td>
+                  <td className="px-4 py-3">{entry.company || "-"}</td>
                   <td className="px-4 py-3">{entry.driver_name || "-"}</td>
                   <td className="px-4 py-3">{entry.driver_mobile || "-"}</td>
                   <td className="px-4 py-3">
@@ -119,7 +124,7 @@ export function FuelEntryTable({
                     {formatNumber(entry.fuel_liters, 3)} L
                   </td>
                   <td className="px-4 py-3">
-                    {formatNumber(entry.odometer_reading)}
+                    {formatOdometer(entry.odometer_reading)}
                   </td>
                   <td className="px-4 py-3">
                     {entry.km_driven === null

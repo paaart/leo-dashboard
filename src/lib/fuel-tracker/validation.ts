@@ -2,6 +2,7 @@ import type {
   CreateFuelEntryInput,
   CreateVehicleExpenseInput,
   CreateVehicleInput,
+  UpdateVehicleInput,
 } from "./types";
 
 type ValidationResult<T> =
@@ -11,10 +12,12 @@ type ValidationResult<T> =
 export type ValidVehicleInput = {
   vehicle_no: string;
   vehicle_type: string;
-  assigned_driver: string | null;
+  company: string | null;
   starting_odometer: number;
   status: "active" | "inactive";
 };
+
+export type ValidVehicleUpdateInput = Partial<ValidVehicleInput>;
 
 export type ValidFuelEntryInput = {
   vehicle_id: string;
@@ -90,11 +93,61 @@ export function validateVehicleInput(
     value: {
       vehicle_no: vehicleNo,
       vehicle_type: vehicleType,
-      assigned_driver: optionalText(input.assigned_driver ?? input.assignedDriver),
+      company: optionalText(input.company),
       starting_odometer: startingOdometer,
       status,
     },
   };
+}
+
+export function validateVehicleUpdateInput(
+  input: UpdateVehicleInput
+): ValidationResult<ValidVehicleUpdateInput> {
+  const value: ValidVehicleUpdateInput = {};
+
+  if ("vehicle_no" in input || "vehicleNo" in input) {
+    const vehicleNo = (input.vehicle_no ?? input.vehicleNo ?? "")
+      .trim()
+      .toUpperCase();
+    if (!vehicleNo) return { ok: false, error: "vehicle_no is required" };
+    value.vehicle_no = vehicleNo;
+  }
+
+  if ("vehicle_type" in input || "vehicleType" in input) {
+    const vehicleType = (input.vehicle_type ?? input.vehicleType ?? "").trim();
+    if (!vehicleType) return { ok: false, error: "vehicle_type is required" };
+    value.vehicle_type = vehicleType;
+  }
+
+  if ("company" in input) {
+    value.company = optionalText(input.company);
+  }
+
+  if ("starting_odometer" in input || "startingOdometer" in input) {
+    const startingOdometer = toNumber(
+      input.starting_odometer ?? input.startingOdometer
+    );
+    if (!Number.isFinite(startingOdometer) || startingOdometer < 0) {
+      return {
+        ok: false,
+        error: "starting_odometer must be a non-negative number",
+      };
+    }
+    value.starting_odometer = startingOdometer;
+  }
+
+  if ("status" in input) {
+    if (input.status !== "active" && input.status !== "inactive") {
+      return { ok: false, error: "status must be active or inactive" };
+    }
+    value.status = input.status;
+  }
+
+  if (Object.keys(value).length === 0) {
+    return { ok: false, error: "At least one vehicle field is required" };
+  }
+
+  return { ok: true, value };
 }
 
 export function validateFuelEntryInput(
