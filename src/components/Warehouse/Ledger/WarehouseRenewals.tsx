@@ -87,7 +87,7 @@ export default function WarehouseRenewals() {
             />
           ) : (
             <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
-              <table className="min-w-[980px] w-full text-sm">
+              <table className="min-w-245 w-full text-sm">
                 <thead className="bg-gray-50 text-gray-600 dark:bg-gray-900 dark:text-gray-300">
                   <tr>
                     <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
