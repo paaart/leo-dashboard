@@ -18,7 +18,6 @@ import {
   PageHeader,
   SectionCard,
 } from "@/components/shared/DashboardUI";
-import WarehouseSummaryCards from "./WarehouseSummaryCards";
 import WarehouseTxModal from "./Ledger/WarehouseTxModal";
 
 type FilterValue = "all" | WarehousePaymentAlertStatus;
@@ -68,7 +67,7 @@ export default function WarehousePaymentAlerts() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterValue>("all");
   const [payingRow, setPayingRow] = useState<WarehousePaymentAlertRow | null>(
-    null
+    null,
   );
   const [dismissingKey, setDismissingKey] = useState<string | null>(null);
 
@@ -97,7 +96,7 @@ export default function WarehousePaymentAlerts() {
 
   const totalDue = useMemo(
     () => filtered.reduce((sum, row) => sum + Number(row.total_due || 0), 0),
-    [filtered]
+    [filtered],
   );
 
   const counts = useMemo(() => {
@@ -107,7 +106,7 @@ export default function WarehousePaymentAlerts() {
         acc[row.alert_status] += 1;
         return acc;
       },
-      { all: 0, overdue: 0, due_today: 0, upcoming: 0 }
+      { all: 0, overdue: 0, due_today: 0, upcoming: 0 },
     );
   }, [rows]);
 
@@ -152,8 +151,6 @@ export default function WarehousePaymentAlerts() {
           title="Warehouse Management"
           subtitle="Manage warehouse clients, PODs, billing, payments, and storage ledgers."
         />
-
-        <WarehouseSummaryCards />
 
         <SectionCard
           title="Payment Alerts"
@@ -283,7 +280,7 @@ export default function WarehousePaymentAlerts() {
                         <td className="px-4 py-3">
                           <span
                             className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${statusBadgeClass(
-                              row.alert_status
+                              row.alert_status,
                             )}`}
                           >
                             {statusLabel(row.alert_status)}

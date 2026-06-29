@@ -16,7 +16,6 @@ import {
   PageHeader,
   SectionCard,
 } from "@/components/shared/DashboardUI";
-import WarehouseSummaryCards from "./WarehouseSummaryCards";
 
 const PAGE_SIZE = 50;
 
@@ -152,8 +151,6 @@ export default function WarehousePayments() {
           title="Warehouse Management"
           subtitle="Manage warehouse clients, PODs, billing, payments, and storage ledgers."
         />
-
-        <WarehouseSummaryCards />
 
         <SectionCard
           title="Export Payment CSV"

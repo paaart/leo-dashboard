@@ -12,7 +12,6 @@ import {
   PageHeader,
   SectionCard,
 } from "@/components/shared/DashboardUI";
-import WarehouseSummaryCards from "../WarehouseSummaryCards";
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("en-IN", {
@@ -68,8 +67,6 @@ export default function WarehouseRenewals() {
           subtitle="Manage warehouse clients, PODs, billing, payments, and storage ledgers."
         />
 
-        <WarehouseSummaryCards />
-
         <SectionCard
           title="Billing / Auto Charges"
           description="Review renewals due this month and extend cycles without changing charge logic."
@@ -92,67 +89,68 @@ export default function WarehouseRenewals() {
             <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
               <table className="min-w-[980px] w-full text-sm">
                 <thead className="bg-gray-50 text-gray-600 dark:bg-gray-900 dark:text-gray-300">
-              <tr>
-                <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
-                  Client
-                </th>
-                <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
-                  Contact
-                </th>
-                <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
-                  Location
-                </th>
-                <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
-                  End Date
-                </th>
-                <th className="border-b border-gray-200 px-4 py-3 text-right font-semibold dark:border-gray-800">
-                  Monthly Rate
-                </th>
-                <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
-                  Insurance
-                </th>
-              </tr>
-            </thead>
+                  <tr>
+                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                      Client
+                    </th>
+                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                      Contact
+                    </th>
+                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                      Location
+                    </th>
+                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                      End Date
+                    </th>
+                    <th className="border-b border-gray-200 px-4 py-3 text-right font-semibold dark:border-gray-800">
+                      Monthly Rate
+                    </th>
+                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                      Insurance
+                    </th>
+                  </tr>
+                </thead>
 
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-              {rows.map((r) => (
-                <tr
-                  key={r.pod_id}
-                  className="cursor-pointer bg-white hover:bg-gray-50 dark:bg-gray-950 dark:hover:bg-gray-900"
-                  onClick={() => setSelected(r)}
-                >
-                  <td className="px-4 py-3">
-                    <div className="font-medium text-gray-950 dark:text-gray-50">
-                      {r.name}
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      {r.client_id}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
-                    {r.contact}
-                  </td>
-                  <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
-                    {r.location_name ?? "-"}
-                  </td>
-                  <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
-                    {new Date(r.end_date).toLocaleDateString("en-IN")}
-                  </td>
-                  <td className="px-4 py-3 text-right font-semibold tabular-nums text-blue-700 dark:text-blue-300">
-                    {formatCurrency(Number(r.rate))}
-                  </td>
-                  <td className="px-4 py-3">
-                    {r.insurance_provider === "leo" ? (
-                      <span className="inline-flex rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300">
-                        Leo ({formatCurrency(Number(r.insurance_value ?? 0))})
-                      </span>
-                    ) : (
-                      "-"
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                  {rows.map((r) => (
+                    <tr
+                      key={r.pod_id}
+                      className="cursor-pointer bg-white hover:bg-gray-50 dark:bg-gray-950 dark:hover:bg-gray-900"
+                      onClick={() => setSelected(r)}
+                    >
+                      <td className="px-4 py-3">
+                        <div className="font-medium text-gray-950 dark:text-gray-50">
+                          {r.name}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          {r.client_id}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                        {r.contact}
+                      </td>
+                      <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                        {r.location_name ?? "-"}
+                      </td>
+                      <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                        {new Date(r.end_date).toLocaleDateString("en-IN")}
+                      </td>
+                      <td className="px-4 py-3 text-right font-semibold tabular-nums text-blue-700 dark:text-blue-300">
+                        {formatCurrency(Number(r.rate))}
+                      </td>
+                      <td className="px-4 py-3">
+                        {r.insurance_provider === "leo" ? (
+                          <span className="inline-flex rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300">
+                            Leo (
+                            {formatCurrency(Number(r.insurance_value ?? 0))})
+                          </span>
+                        ) : (
+                          "-"
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
               </table>
             </div>
           )}
