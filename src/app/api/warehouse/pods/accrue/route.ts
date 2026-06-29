@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
         error:
           "Global accrual is disabled in this route. Pass podId for single-pod accrual.",
       },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
         and p.status = 'active'
         and p.id = $1::uuid
       `,
-      [podId]
+      [podId],
     );
 
     for (const row of cyclesRes.rows) {
@@ -134,7 +134,7 @@ export async function POST(req: NextRequest) {
           rate, // $4
           row.billing_interval, // $5
           gstRate, // $6
-        ]
+        ],
       );
 
       const nextChargeRes = await client.query<{ next_charge_date: string }>(
@@ -177,7 +177,7 @@ export async function POST(req: NextRequest) {
         order by candidate asc
         limit 1
         `,
-        [billingStart, row.billing_interval]
+        [billingStart, row.billing_interval],
       );
 
       const nextChargeDate = nextChargeRes.rows[0]?.next_charge_date ?? null;
@@ -186,10 +186,11 @@ export async function POST(req: NextRequest) {
         `
         update public.warehouse_pods
         set next_charge_date = $2::date,
+            next_payment_date = $2::date,
             updated_at = now()
         where id = $1::uuid
         `,
-        [row.pod_id, nextChargeDate]
+        [row.pod_id, nextChargeDate],
       );
     }
 
@@ -200,7 +201,7 @@ export async function POST(req: NextRequest) {
     const e = err instanceof Error ? err : new Error(String(err));
     return NextResponse.json(
       { ok: false, error: e.message || "Failed to accrue charges" },
-      { status: 500 }
+      { status: 500 },
     );
   } finally {
     client.release();
