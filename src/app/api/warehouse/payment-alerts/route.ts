@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
        and d.next_payment_date = p.next_payment_date::date
       where p.status = 'active'::warehouse_pod_status
         and p.next_payment_date is not null
-        and p.next_payment_date::date <= current_date + interval '30 days'
+        and p.next_payment_date::date <= current_date + interval '5 days'
         and coalesce(a.total_due_gross, 0) > 0
         and d.id is null
       order by
