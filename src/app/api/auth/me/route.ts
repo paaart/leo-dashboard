@@ -2,24 +2,31 @@ import { NextResponse, type NextRequest } from "next/server";
 import { getCurrentAppUser } from "@/lib/auth";
 
 export async function GET(request: NextRequest) {
-  const user = await getCurrentAppUser(request);
+  try {
+    const user = await getCurrentAppUser(request);
 
-  if (!user) {
+    if (!user) {
+      return NextResponse.json(
+        { ok: false, error: "Session expired" },
+        { status: 401 }
+      );
+    }
+
+    return NextResponse.json({
+      ok: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        fullName: user.fullName,
+        role: user.role,
+        status: user.status,
+      },
+    });
+  } catch {
     return NextResponse.json(
-      { ok: false, error: "Unauthorized" },
-      { status: 401 }
+      { ok: false, error: "Internal server error" },
+      { status: 500 }
     );
   }
-
-  return NextResponse.json({
-    ok: true,
-    user: {
-      id: user.id,
-      email: user.email,
-      username: user.username,
-      fullName: user.fullName,
-      role: user.role,
-      status: user.status,
-    },
-  });
 }

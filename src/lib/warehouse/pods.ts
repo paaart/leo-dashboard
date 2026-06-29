@@ -5,7 +5,7 @@ import type {
   BillingInterval,
   InsuranceProvider,
 } from "./types";
-import { fetchJson } from "./api";
+import { fetchJson, handleApiAuthFailure } from "./api";
 
 export async function accrueWarehouseCharges(podId?: string): Promise<void> {
   const url = podId
@@ -95,19 +95,13 @@ export async function fetchActiveCycleIdOrThrow(
 }
 
 export async function deleteWarehousePod(podId: string): Promise<void> {
-  const res = await fetch(
+  await fetchJson<void>(
     `/api/warehouse/pods/delete?podId=${encodeURIComponent(podId)}`,
     {
       method: "DELETE",
       cache: "no-store",
     }
   );
-
-  const json = await res.json();
-
-  if (!res.ok || !json.ok) {
-    throw new Error(json.error || `Request failed (${res.status})`);
-  }
 }
 
 export type WarehousePaymentRow = {
@@ -163,25 +157,13 @@ export async function listWarehousePayments(
     params.set("modeOfPayment", filters.modeOfPayment.trim());
   }
 
-  const res = await fetch(`/api/warehouse/pods/payments?${params.toString()}`, {
-    method: "GET",
-    cache: "no-store",
-  });
-
-  const json = (await res.json()) as {
-    ok: boolean;
-    data?: {
-      rows: WarehousePaymentRow[];
-      meta: WarehousePaymentsMeta;
-    };
-    error?: string;
-  };
-
-  if (!res.ok || !json.ok || !json.data) {
-    throw new Error(json.error || `Request failed (${res.status})`);
-  }
-
-  return json.data;
+  return fetchJson<{ rows: WarehousePaymentRow[]; meta: WarehousePaymentsMeta }>(
+    `/api/warehouse/pods/payments?${params.toString()}`,
+    {
+      method: "GET",
+      cache: "no-store",
+    }
+  );
 }
 
 export async function exportWarehousePaymentsCsv(args: {
@@ -199,14 +181,33 @@ export async function exportWarehousePaymentsCsv(args: {
   });
 
   if (!res.ok) {
-    const contentType = res.headers.get("content-type") ?? "";
+    const text = await res.text();
+    let error: string | null = null;
 
-    if (contentType.includes("application/json")) {
-      const json = (await res.json()) as { error?: string };
-      throw new Error(json.error || `Request failed (${res.status})`);
+    if (text) {
+      try {
+        const json = JSON.parse(text) as { error?: string };
+        error = json.error ?? null;
+      } catch {
+        error = null;
+      }
     }
 
-    throw new Error(`Request failed (${res.status})`);
+    if (res.status === 401) {
+      handleApiAuthFailure(res.status);
+      throw new Error("Your session has expired. Please log in again.");
+    }
+
+    if (res.status === 403) {
+      handleApiAuthFailure(res.status);
+      throw new Error("You do not have permission to access this resource.");
+    }
+
+    if (res.status >= 500) {
+      throw new Error("Something went wrong. Please try again.");
+    }
+
+    throw new Error(error || `Request failed (${res.status})`);
   }
 
   return res.blob();
@@ -303,23 +304,11 @@ export async function listClosedWarehousePods(
     params.set("search", filters.search.trim());
   }
 
-  const res = await fetch(`/api/warehouse/pods/closed?${params.toString()}`, {
+  return fetchJson<{
+    rows: WarehouseClosedPodRow[];
+    meta: WarehouseClosedPodsMeta;
+  }>(`/api/warehouse/pods/closed?${params.toString()}`, {
     method: "GET",
     cache: "no-store",
   });
-
-  const json = (await res.json()) as {
-    ok: boolean;
-    data?: {
-      rows: WarehouseClosedPodRow[];
-      meta: WarehouseClosedPodsMeta;
-    };
-    error?: string;
-  };
-
-  if (!res.ok || !json.ok || !json.data) {
-    throw new Error(json.error || `Request failed (${res.status})`);
-  }
-
-  return json.data;
 }

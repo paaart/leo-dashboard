@@ -69,10 +69,19 @@ function authError(message: string, status: number) {
 }
 
 export async function requireAuth(request: NextRequest): Promise<AuthResult> {
-  const user = await getCurrentAppUser(request);
+  let user: AppUser | null = null;
+
+  try {
+    user = await getCurrentAppUser(request);
+  } catch {
+    return {
+      ok: false,
+      response: authError("Internal server error", 500),
+    };
+  }
 
   if (!user) {
-    return { ok: false, response: authError("Unauthorized", 401) };
+    return { ok: false, response: authError("Session expired", 401) };
   }
 
   return { ok: true, user };

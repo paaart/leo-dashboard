@@ -1,6 +1,34 @@
 import { BasicDetails } from "@/components/InternationalCalculator/types";
 import { supabase } from "./supabaseClient";
 
+async function parseJsonResponse(res: Response): Promise<unknown> {
+  const text = await res.text();
+  if (!text) return null;
+
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    return null;
+  }
+}
+
+function getErrorMessageFromResponse(res: Response, parsed: unknown) {
+  if (res.status === 401) return "Your session has expired. Please log in again.";
+  if (res.status === 403) return "You do not have permission to access this resource.";
+  if (res.status >= 500) return "Something went wrong. Please try again.";
+
+  if (
+    typeof parsed === "object" &&
+    parsed !== null &&
+    "error" in parsed &&
+    typeof parsed.error === "string"
+  ) {
+    return parsed.error;
+  }
+
+  return `Request failed (${res.status})`;
+}
+
 export async function getHHGQuoteMap() {
   const { data, error } = await supabase.from("transport_quotes").select("*");
 
@@ -88,24 +116,34 @@ export async function saveInternationalQuote(values: BasicDetails) {
     body: JSON.stringify(values),
   });
 
-  const result = await res.json();
+  const parsed = await parseJsonResponse(res);
 
   if (!res.ok) {
-    console.error("❌ Error saving quote:", result.error);
-    return { success: false, error: result.error };
+    const error = getErrorMessageFromResponse(res, parsed);
+    console.error("Error saving quote:", error);
+    return { success: false, error };
   }
 
-  return { success: true, data: result.data };
+  const data =
+    typeof parsed === "object" && parsed !== null && "data" in parsed
+      ? parsed.data
+      : null;
+
+  return { success: true, data };
 }
 
 export async function fetchInternationalQuote(): Promise<BasicDetails[]> {
   const res = await fetch("/api/international/history");
+  const parsed = await parseJsonResponse(res);
 
   if (!res.ok) {
-    const errData = await res.json();
-    throw new Error(errData.error || "Failed to fetch international quotes");
+    throw new Error(getErrorMessageFromResponse(res, parsed));
   }
 
-  const { data } = await res.json();
+  const data =
+    typeof parsed === "object" && parsed !== null && "data" in parsed
+      ? parsed.data
+      : [];
+
   return data as BasicDetails[];
 }

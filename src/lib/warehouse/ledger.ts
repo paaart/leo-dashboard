@@ -145,7 +145,13 @@ export async function updateWarehouseClient(args: {
   contact: string;
   updated_at?: string | null;
 }> {
-  const res = await fetch("/api/warehouse/pods/update-client", {
+  return fetchJson<{
+    id: string;
+    name: string;
+    email?: string | null;
+    contact: string;
+    updated_at?: string | null;
+  }>("/api/warehouse/pods/update-client", {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -156,28 +162,14 @@ export async function updateWarehouseClient(args: {
     }),
     cache: "no-store",
   });
-
-  const json = await res.json();
-
-  if (!res.ok || !json.ok || !json.data) {
-    throw new Error(json.error || `Request failed (${res.status})`);
-  }
-
-  return json.data;
 }
 
 export async function deleteWarehouseTransaction(id: string): Promise<void> {
-  const res = await fetch(
+  await fetchJson<void>(
     `/api/warehouse/pods/transactions/delete?id=${encodeURIComponent(id)}`,
     {
       method: "DELETE",
       cache: "no-store",
     }
   );
-
-  const json = await res.json();
-
-  if (!res.ok || !json.ok) {
-    throw new Error(json.error || `Request failed (${res.status})`);
-  }
 }

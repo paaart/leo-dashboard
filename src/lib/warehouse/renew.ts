@@ -1,3 +1,5 @@
+import { fetchJson } from "./api";
+
 type RenewWarehousePodPayload = {
   podId: string;
   newRate: number;
@@ -25,18 +27,13 @@ type RenewWarehousePodResponse = {
 export async function renewWarehousePod(
   payload: RenewWarehousePodPayload
 ): Promise<NonNullable<RenewWarehousePodResponse["data"]>> {
-  const res = await fetch("/api/warehouse/pods/cycles/renew", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-    cache: "no-store",
-  });
-
-  const json = (await res.json()) as RenewWarehousePodResponse;
-
-  if (!res.ok || !json.ok || !json.data) {
-    throw new Error(json.error || `Request failed (${res.status})`);
-  }
-
-  return json.data;
+  return fetchJson<NonNullable<RenewWarehousePodResponse["data"]>>(
+    "/api/warehouse/pods/cycles/renew",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      cache: "no-store",
+    }
+  );
 }

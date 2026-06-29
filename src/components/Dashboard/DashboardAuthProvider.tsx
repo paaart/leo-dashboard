@@ -52,6 +52,20 @@ function readCachedUser() {
   }
 }
 
+async function readAuthMeResponse(res: Response): Promise<AuthMeResponse> {
+  const text = await res.text();
+  if (!text) return { ok: false, error: "Session expired" };
+
+  try {
+    return JSON.parse(text) as AuthMeResponse;
+  } catch {
+    return {
+      ok: false,
+      error: res.status >= 500 ? "Internal server error" : "Session expired",
+    };
+  }
+}
+
 export function DashboardAuthProvider({
   children,
 }: {
@@ -80,7 +94,7 @@ export function DashboardAuthProvider({
           credentials: "include",
           cache: "no-store",
         });
-        const json = (await res.json()) as AuthMeResponse;
+        const json = await readAuthMeResponse(res);
 
         if (cancelled) return;
 
@@ -119,7 +133,7 @@ export function DashboardAuthProvider({
         credentials: "include",
         cache: "no-store",
       });
-      const json = (await res.json()) as AuthMeResponse;
+      const json = await readAuthMeResponse(res);
 
       if (!res.ok || !json.ok) {
         window.localStorage.removeItem(CACHE_KEY);
