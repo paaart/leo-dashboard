@@ -1,6 +1,7 @@
 import { Eye, Plus } from "lucide-react";
 import { useState } from "react";
 import { FuelEmptyState } from "./FuelEmptyState";
+import { SERIAL_COLUMN_CLASS, serialNumber } from "./SerialNumber";
 import type { VehicleExpensePayment } from "@/lib/fuel-tracker/types";
 
 function formatCurrency(value: number) {
@@ -44,6 +45,7 @@ function PaymentDetailsModal({
           <table className="min-w-230 w-full text-left text-sm">
             <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
               <tr>
+                <th className={SERIAL_COLUMN_CLASS}>S.No</th>
                 <th className="px-4 py-3 font-semibold">Date</th>
                 <th className="px-4 py-3 font-semibold">Vehicle</th>
                 <th className="px-4 py-3 font-semibold">Expense Type</th>
@@ -53,8 +55,11 @@ function PaymentDetailsModal({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-              {payment.items.map((item) => (
+              {payment.items.map((item, index) => (
                 <tr key={item.id} className="text-gray-700 dark:text-gray-200">
+                  <td className={SERIAL_COLUMN_CLASS}>
+                    {serialNumber(index)}
+                  </td>
                   <td className="px-4 py-3">{item.expense_date}</td>
                   <td className="px-4 py-3 font-semibold text-gray-950 dark:text-gray-50">
                     {item.vehicle_id
@@ -140,6 +145,7 @@ export function VehicleExpensePaymentTable({
           <table className="min-w-270 w-full text-left text-sm">
             <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
               <tr>
+                <th className={SERIAL_COLUMN_CLASS}>S.No</th>
                 <th className="px-4 py-3 font-semibold">Payment Date</th>
                 <th className="px-4 py-3 font-semibold">Reference Number</th>
                 <th className="px-4 py-3 font-semibold">Payment Mode</th>
@@ -154,11 +160,14 @@ export function VehicleExpensePaymentTable({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-              {payments.map((payment) => (
+              {payments.map((payment, index) => (
                 <tr
                   key={payment.id}
                   className="text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900/70"
                 >
+                  <td className={SERIAL_COLUMN_CLASS}>
+                    {serialNumber(index)}
+                  </td>
                   <td className="px-4 py-3">{payment.payment_date}</td>
                   <td className="px-4 py-3 font-semibold text-gray-950 dark:text-gray-50">
                     {payment.reference_number ?? "-"}

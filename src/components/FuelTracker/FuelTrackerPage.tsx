@@ -9,26 +9,37 @@ import { FuelEntryFormModal } from "./FuelEntryFormModal";
 import { FuelEntryTable } from "./FuelEntryTable";
 import { FuelTrackerTabs } from "./FuelTrackerTabs";
 import { VehicleFormModal } from "./VehicleFormModal";
-import { VehicleExpenseFormModal } from "./VehicleExpenseFormModal";
-import { VehicleExpensePaymentModal } from "./VehicleExpensePaymentModal";
-import { VehicleExpensePaymentTable } from "./VehicleExpensePaymentTable";
-import { VehicleExpenseTable } from "./VehicleExpenseTable";
 import { VehicleTable } from "./VehicleTable";
 import {
+  TablePagination,
+  VEHICLE_TRACKER_PAGE_SIZE,
+  paginateItems,
+} from "./TablePagination";
+import { VendorInvoiceFormModal } from "./VendorInvoiceFormModal";
+import { VendorInvoiceTable } from "./VendorInvoiceTable";
+import { VendorInvoiceViewModal } from "./VendorInvoiceViewModal";
+import { VendorPaymentBatchFormModal } from "./VendorPaymentBatchFormModal";
+import { VendorPaymentBatchTable } from "./VendorPaymentBatchTable";
+import { VendorPaymentBatchViewModal } from "./VendorPaymentBatchViewModal";
+import {
+  createVehicleExpenseInvoice,
+  createVehicleExpenseInvoicePayment,
+  createVehicleExpensePaymentBatch,
   createFuelEntry,
   deleteFuelEntry,
+  deleteVehicleExpenseInvoice,
+  deleteVehicleExpenseInvoicePayment,
+  deleteVehicleExpensePaymentBatch,
   updateFuelEntry,
-  createVehicleExpensePayment,
-  createVehicleExpense,
-  deleteVehicleExpense,
-  updateVehicleExpense,
   createVehicle,
   updateVehicle,
   fetchFuelDashboardAnalytics,
   fetchFuelEntries,
-  fetchVehicleExpensePayments,
-  fetchVehicleExpenses,
+  fetchVehicleExpenseInvoiceAnalytics,
+  fetchVehicleExpenseInvoices,
+  fetchVehicleExpensePaymentBatches,
   fetchVehicles,
+  updateVehicleExpenseInvoice,
 } from "@/lib/fuel-tracker/api";
 import {
   createFuelImageSignedUrl,
@@ -36,15 +47,17 @@ import {
 } from "@/lib/fuel-tracker/uploads";
 import type {
   CreateFuelEntryPayload,
-  CreateVehicleExpensePaymentPayload,
-  CreateVehicleExpensePayload,
+  CreateVehicleExpenseInvoicePaymentPayload,
+  CreateVehicleExpenseInvoicePayload,
+  CreateVehicleExpensePaymentBatchPayload,
   CreateVehiclePayload,
   FuelDashboardAnalytics,
   FuelEntry,
   FuelTab,
   Vehicle,
-  VehicleExpense,
-  VehicleExpensePayment,
+  VehicleExpenseInvoiceAnalytics,
+  VehicleExpenseInvoice,
+  VehicleExpensePaymentBatch,
 } from "@/lib/fuel-tracker/types";
 
 function SectionHeader({
@@ -93,14 +106,50 @@ function AddButton({
   );
 }
 
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+function SummaryCards({
+  cards,
+}: {
+  cards: { label: string; value: string }[];
+}) {
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      {cards.map((card) => (
+        <div
+          key={card.label}
+          className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-950"
+        >
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {card.label}
+          </p>
+          <p className="mt-2 text-xl font-semibold text-gray-950 dark:text-gray-50">
+            {card.value}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function FuelTrackerPage() {
   const [activeTab, setActiveTab] = useState<FuelTab>("dashboard");
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [fuelEntries, setFuelEntries] = useState<FuelEntry[]>([]);
-  const [vehicleExpenses, setVehicleExpenses] = useState<VehicleExpense[]>([]);
-  const [expensePayments, setExpensePayments] = useState<
-    VehicleExpensePayment[]
+  const [vendorInvoices, setVendorInvoices] = useState<
+    VehicleExpenseInvoice[]
   >([]);
+  const [vendorPaymentBatches, setVendorPaymentBatches] = useState<
+    VehicleExpensePaymentBatch[]
+  >([]);
+  const [vendorAnalytics, setVendorAnalytics] =
+    useState<VehicleExpenseInvoiceAnalytics | null>(null);
   const [analytics, setAnalytics] = useState<FuelDashboardAnalytics | null>(
     null
   );
@@ -113,25 +162,33 @@ export default function FuelTrackerPage() {
   const [editingFuelEntry, setEditingFuelEntry] = useState<FuelEntry | null>(
     null
   );
-  const [editingExpense, setEditingExpense] = useState<VehicleExpense | null>(
-    null
-  );
+  const [viewingVendorInvoice, setViewingVendorInvoice] =
+    useState<VehicleExpenseInvoice | null>(null);
+  const [editingVendorInvoice, setEditingVendorInvoice] =
+    useState<VehicleExpenseInvoice | null>(null);
+  const [viewingVendorPaymentBatch, setViewingVendorPaymentBatch] =
+    useState<VehicleExpensePaymentBatch | null>(null);
   const [fuelEntryModalOpen, setFuelEntryModalOpen] = useState(false);
-  const [expenseModalOpen, setExpenseModalOpen] = useState(false);
-  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [vendorInvoiceModalOpen, setVendorInvoiceModalOpen] = useState(false);
+  const [vendorPaymentBatchModalOpen, setVendorPaymentBatchModalOpen] =
+    useState(false);
   const [savingVehicle, setSavingVehicle] = useState(false);
   const [savingFuelEntry, setSavingFuelEntry] = useState(false);
-  const [savingExpense, setSavingExpense] = useState(false);
-  const [savingPayment, setSavingPayment] = useState(false);
+  const [savingVendorInvoice, setSavingVendorInvoice] = useState(false);
+  const [savingVendorInvoicePayment, setSavingVendorInvoicePayment] =
+    useState(false);
+  const [savingVendorPaymentBatch, setSavingVendorPaymentBatch] =
+    useState(false);
+  const [invoiceStatusFilter, setInvoiceStatusFilter] = useState<
+    "all" | VehicleExpenseInvoice["status"]
+  >("all");
   const [vehicleFilter, setVehicleFilter] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const [expenseVehicleFilter, setExpenseVehicleFilter] = useState("all");
-  const [expenseDateFrom, setExpenseDateFrom] = useState("");
-  const [expenseDateTo, setExpenseDateTo] = useState("");
-  const [paymentDateFrom, setPaymentDateFrom] = useState("");
-  const [paymentDateTo, setPaymentDateTo] = useState("");
-  const [paymentModeFilter, setPaymentModeFilter] = useState("");
+  const [vehiclesPage, setVehiclesPage] = useState(1);
+  const [fuelEntriesPage, setFuelEntriesPage] = useState(1);
+  const [vendorInvoicesPage, setVendorInvoicesPage] = useState(1);
+  const [vendorPaymentBatchesPage, setVendorPaymentBatchesPage] = useState(1);
   const [analyticsFilters, setAnalyticsFilters] = useState({
     vehicleId: "all",
     dateFrom: "",
@@ -159,45 +216,114 @@ export default function FuelTrackerPage() {
     });
   }, [dateFrom, dateTo, fuelEntries, vehicleFilter]);
 
-  const filteredVehicleExpenses = useMemo(() => {
-    return vehicleExpenses.filter((expense) => {
-      const matchesVehicle =
-        expenseVehicleFilter === "all" ||
-        expense.vehicle_id === expenseVehicleFilter;
-      const matchesFrom =
-        !expenseDateFrom || expense.expense_date >= expenseDateFrom;
-      const matchesTo = !expenseDateTo || expense.expense_date <= expenseDateTo;
+  const filteredVendorInvoices = useMemo(() => {
+    if (invoiceStatusFilter === "all") return vendorInvoices;
+    return vendorInvoices.filter(
+      (invoice) => invoice.status === invoiceStatusFilter
+    );
+  }, [invoiceStatusFilter, vendorInvoices]);
 
-      return matchesVehicle && matchesFrom && matchesTo;
-    });
-  }, [expenseDateFrom, expenseDateTo, expenseVehicleFilter, vehicleExpenses]);
-
-  const pendingVehicleExpenses = useMemo(
-    () => vehicleExpenses.filter((expense) => expense.status === "pending"),
-    [vehicleExpenses]
+  const paginatedVehicles = useMemo(
+    () => paginateItems(vehicles, vehiclesPage),
+    [vehicles, vehiclesPage]
   );
 
-  const filteredExpensePayments = useMemo(() => {
-    return expensePayments.filter((payment) => {
-      const matchesFrom =
-        !paymentDateFrom || payment.payment_date >= paymentDateFrom;
-      const matchesTo = !paymentDateTo || payment.payment_date <= paymentDateTo;
-      const matchesMode =
-        !paymentModeFilter || payment.payment_mode === paymentModeFilter;
+  const paginatedFuelEntries = useMemo(
+    () => paginateItems(filteredFuelEntries, fuelEntriesPage),
+    [filteredFuelEntries, fuelEntriesPage]
+  );
 
-      return matchesFrom && matchesTo && matchesMode;
-    });
-  }, [expensePayments, paymentDateFrom, paymentDateTo, paymentModeFilter]);
+  const paginatedVendorInvoices = useMemo(
+    () => paginateItems(filteredVendorInvoices, vendorInvoicesPage),
+    [filteredVendorInvoices, vendorInvoicesPage]
+  );
 
-  const paymentModeOptions = useMemo(() => {
-    return Array.from(
-      new Set(
-        expensePayments
-          .map((payment) => payment.payment_mode)
-          .filter((mode): mode is string => Boolean(mode))
-      )
-    ).sort((a, b) => a.localeCompare(b));
-  }, [expensePayments]);
+  const paginatedVendorPaymentBatches = useMemo(
+    () => paginateItems(vendorPaymentBatches, vendorPaymentBatchesPage),
+    [vendorPaymentBatches, vendorPaymentBatchesPage]
+  );
+
+  const vendorInvoiceSummaryCards = useMemo(() => {
+    if (!vendorAnalytics) return [];
+
+    return [
+      {
+        label: "Total Vendor Invoices",
+        value: String(vendorAnalytics.invoiceCount),
+      },
+      {
+        label: "Total Invoice Amount",
+        value: formatCurrency(vendorAnalytics.invoiceTotal),
+      },
+      {
+        label: "Paid Invoice Count",
+        value: String(vendorAnalytics.paidInvoiceCount),
+      },
+      {
+        label: "Paid Amount",
+        value: formatCurrency(vendorAnalytics.paidAmount),
+      },
+      {
+        label: "Unpaid Invoice Count",
+        value: String(vendorAnalytics.unpaidInvoiceCount),
+      },
+      {
+        label: "Unpaid Amount",
+        value: formatCurrency(vendorAnalytics.unpaidAmount),
+      },
+      {
+        label: "Partially Paid Count",
+        value: String(vendorAnalytics.partiallyPaidInvoiceCount),
+      },
+      {
+        label: "Partially Paid Outstanding",
+        value: formatCurrency(vendorAnalytics.partiallyPaidOutstanding),
+      },
+      {
+        label: "Total Outstanding",
+        value: formatCurrency(vendorAnalytics.outstandingAmount),
+      },
+      {
+        label: "Total Vendor Payments",
+        value: String(vendorAnalytics.paymentBatchCount),
+      },
+      {
+        label: "Total Payments Made",
+        value: formatCurrency(vendorAnalytics.paymentTotal),
+      },
+    ];
+  }, [vendorAnalytics]);
+
+  const vendorPaymentSummaryCards = useMemo(() => {
+    if (!vendorAnalytics) return [];
+
+    return [
+      {
+        label: "Total Payment Batches",
+        value: String(vendorAnalytics.paymentBatchCount),
+      },
+      {
+        label: "Total Paid",
+        value: formatCurrency(vendorAnalytics.paymentTotal),
+      },
+      {
+        label: "Latest Payment Date",
+        value: vendorAnalytics.latestPaymentDate ?? "-",
+      },
+      {
+        label: "Average Payment Amount",
+        value: formatCurrency(vendorAnalytics.averagePaymentAmount),
+      },
+      {
+        label: "This Month Paid",
+        value: formatCurrency(vendorAnalytics.thisMonthPaid),
+      },
+      {
+        label: "Payments This Month",
+        value: String(vendorAnalytics.paymentsThisMonth),
+      },
+    ];
+  }, [vendorAnalytics]);
 
   const loadAnalytics = useCallback(async () => {
     setAnalyticsLoading(true);
@@ -222,18 +348,26 @@ export default function FuelTrackerPage() {
     setError(null);
 
     try {
-      const [vehiclesData, entriesData, expensesData, paymentsData] =
+      const [
+        vehiclesData,
+        entriesData,
+        vendorInvoicesData,
+        vendorPaymentBatchesData,
+        vendorAnalyticsData,
+      ] =
         await Promise.all([
           fetchVehicles(),
           fetchFuelEntries(),
-          fetchVehicleExpenses(),
-          fetchVehicleExpensePayments(),
+          fetchVehicleExpenseInvoices(),
+          fetchVehicleExpensePaymentBatches(),
+          fetchVehicleExpenseInvoiceAnalytics(),
         ]);
 
       setVehicles(vehiclesData);
       setFuelEntries(entriesData);
-      setVehicleExpenses(expensesData);
-      setExpensePayments(paymentsData);
+      setVendorInvoices(vendorInvoicesData);
+      setVendorPaymentBatches(vendorPaymentBatchesData);
+      setVendorAnalytics(vendorAnalyticsData);
     } catch (loadError) {
       const message =
         loadError instanceof Error
@@ -252,6 +386,22 @@ export default function FuelTrackerPage() {
   useEffect(() => {
     void loadAnalytics();
   }, [loadAnalytics]);
+
+  useEffect(() => {
+    setVehiclesPage(1);
+  }, [vehicles.length]);
+
+  useEffect(() => {
+    setFuelEntriesPage(1);
+  }, [dateFrom, dateTo, vehicleFilter]);
+
+  useEffect(() => {
+    setVendorInvoicesPage(1);
+  }, [invoiceStatusFilter]);
+
+  useEffect(() => {
+    setVendorPaymentBatchesPage(1);
+  }, [vendorPaymentBatches.length]);
 
   const handleCreateVehicle = async (payload: CreateVehiclePayload) => {
     setSavingVehicle(true);
@@ -364,71 +514,164 @@ export default function FuelTrackerPage() {
     }
   };
 
-  const handleCreateExpense = async (payload: CreateVehicleExpensePayload) => {
-    setSavingExpense(true);
+  const handleSaveVendorInvoice = async (
+    payload: CreateVehicleExpenseInvoicePayload
+  ) => {
+    setSavingVendorInvoice(true);
 
     try {
-      if (editingExpense) {
-        await updateVehicleExpense(editingExpense.id, payload);
-        toast.success("Expense updated");
+      if (editingVendorInvoice) {
+        await updateVehicleExpenseInvoice(editingVendorInvoice.id, payload);
+        toast.success("Vendor invoice updated");
       } else {
-        await createVehicleExpense(payload);
-        toast.success("Expense added");
+        await createVehicleExpenseInvoice(payload);
+        toast.success("Vendor invoice created");
       }
-      setExpenseModalOpen(false);
-      setEditingExpense(null);
+      setVendorInvoiceModalOpen(false);
+      setEditingVendorInvoice(null);
       await loadData();
-      await loadAnalytics();
     } catch (saveError) {
       const message =
         saveError instanceof Error
           ? saveError.message
-          : editingExpense
-          ? "Failed to update expense."
-          : "Failed to add expense.";
+          : editingVendorInvoice
+          ? "Failed to update vendor invoice."
+          : "Failed to create vendor invoice.";
       toast.error(message);
     } finally {
-      setSavingExpense(false);
+      setSavingVendorInvoice(false);
     }
   };
 
-  const handleDeleteExpense = async (expense: VehicleExpense) => {
-    const confirmed = window.confirm("Delete this expense entry?");
+  const handleDeleteVendorInvoice = async (
+    invoice: VehicleExpenseInvoice
+  ) => {
+    if (invoice.payments.length > 0) {
+      toast.error("Invoices with payments cannot be deleted.");
+      return;
+    }
+
+    const confirmed = window.confirm("Delete this invoice? This cannot be undone.");
     if (!confirmed) return;
 
     try {
-      await deleteVehicleExpense(expense.id);
-      toast.success("Expense deleted");
+      await deleteVehicleExpenseInvoice(invoice.id);
+      toast.success("Vendor invoice deleted");
       await loadData();
-      await loadAnalytics();
     } catch (deleteError) {
       const message =
         deleteError instanceof Error
           ? deleteError.message
-          : "Failed to delete expense.";
+          : "Failed to delete vendor invoice.";
       toast.error(message);
     }
   };
 
-  const handleCreatePayment = async (
-    payload: CreateVehicleExpensePaymentPayload
+  const updateVendorInvoiceState = (updatedInvoice: VehicleExpenseInvoice) => {
+    setVendorInvoices((prev) =>
+      prev.map((invoice) =>
+        invoice.id === updatedInvoice.id ? updatedInvoice : invoice
+      )
+    );
+    setViewingVendorInvoice(updatedInvoice);
+  };
+
+  const handleRecordVendorInvoicePayment = async (
+    invoice: VehicleExpenseInvoice,
+    payload: CreateVehicleExpenseInvoicePaymentPayload
   ) => {
-    setSavingPayment(true);
+    setSavingVendorInvoicePayment(true);
 
     try {
-      await createVehicleExpensePayment(payload);
-      toast.success("Payment created");
-      setPaymentModalOpen(false);
+      const updatedInvoice = await createVehicleExpenseInvoicePayment(
+        invoice.id,
+        payload
+      );
+      updateVendorInvoiceState(updatedInvoice);
       await loadData();
-      await loadAnalytics();
-    } catch (createError) {
+      toast.success("Payment recorded");
+    } catch (saveError) {
       const message =
-        createError instanceof Error
-          ? createError.message
-          : "Failed to create payment.";
+        saveError instanceof Error
+          ? saveError.message
+          : "Failed to record payment.";
+      toast.error(message);
+      throw saveError;
+    } finally {
+      setSavingVendorInvoicePayment(false);
+    }
+  };
+
+  const handleDeleteVendorInvoicePayment = async (
+    invoice: VehicleExpenseInvoice,
+    payment: VehicleExpenseInvoice["payments"][number]
+  ) => {
+    const confirmed = window.confirm("Delete this payment? This cannot be undone.");
+    if (!confirmed) return;
+
+    setSavingVendorInvoicePayment(true);
+
+    try {
+      const updatedInvoice = await deleteVehicleExpenseInvoicePayment(
+        invoice.id,
+        payment.id
+      );
+      updateVendorInvoiceState(updatedInvoice);
+      await loadData();
+      toast.success("Payment deleted");
+    } catch (deleteError) {
+      const message =
+        deleteError instanceof Error
+          ? deleteError.message
+          : "Failed to delete payment.";
       toast.error(message);
     } finally {
-      setSavingPayment(false);
+      setSavingVendorInvoicePayment(false);
+    }
+  };
+
+  const handleCreateVendorPaymentBatch = async (
+    payload: CreateVehicleExpensePaymentBatchPayload
+  ) => {
+    setSavingVendorPaymentBatch(true);
+
+    try {
+      await createVehicleExpensePaymentBatch(payload);
+      toast.success("Payment batch created");
+      setVendorPaymentBatchModalOpen(false);
+      await loadData();
+    } catch (saveError) {
+      const message =
+        saveError instanceof Error
+          ? saveError.message
+          : "Failed to create payment batch.";
+      toast.error(message);
+    } finally {
+      setSavingVendorPaymentBatch(false);
+    }
+  };
+
+  const handleDeleteVendorPaymentBatch = async (
+    batch: VehicleExpensePaymentBatch
+  ) => {
+    const confirmed = window.confirm(
+      "Delete this payment batch? All invoice allocations will be removed."
+    );
+    if (!confirmed) return;
+
+    try {
+      await deleteVehicleExpensePaymentBatch(batch.id);
+      toast.success("Payment batch deleted");
+      if (viewingVendorPaymentBatch?.id === batch.id) {
+        setViewingVendorPaymentBatch(null);
+      }
+      await loadData();
+    } catch (deleteError) {
+      const message =
+        deleteError instanceof Error
+          ? deleteError.message
+          : "Failed to delete payment batch.";
+      toast.error(message);
     }
   };
 
@@ -515,9 +758,11 @@ export default function FuelTrackerPage() {
               }
             />
             <VehicleTable
-              vehicles={vehicles}
+              vehicles={paginatedVehicles.items}
               loading={loading}
               error={error}
+              currentPage={paginatedVehicles.page}
+              pageSize={VEHICLE_TRACKER_PAGE_SIZE}
               onAdd={() => {
                 setEditingVehicle(null);
                 setVehicleModalOpen(true);
@@ -526,6 +771,12 @@ export default function FuelTrackerPage() {
                 setEditingVehicle(vehicle);
                 setVehicleModalOpen(true);
               }}
+            />
+            <TablePagination
+              page={paginatedVehicles.page}
+              totalItems={vehicles.length}
+              onPageChange={setVehiclesPage}
+              label="vehicles"
             />
           </div>
         ) : null}
@@ -593,10 +844,12 @@ export default function FuelTrackerPage() {
             </div>
 
             <FuelEntryTable
-              entries={filteredFuelEntries}
+              entries={paginatedFuelEntries.items}
               vehiclesById={vehiclesById}
               loading={loading}
               error={error}
+              currentPage={paginatedFuelEntries.page}
+              pageSize={VEHICLE_TRACKER_PAGE_SIZE}
               onAdd={() => {
                 setEditingFuelEntry(null);
                 setFuelEntryModalOpen(true);
@@ -608,158 +861,134 @@ export default function FuelTrackerPage() {
               onDelete={handleDeleteFuelEntry}
               onViewProof={handleViewProof}
             />
+            <TablePagination
+              page={paginatedFuelEntries.page}
+              totalItems={filteredFuelEntries.length}
+              onPageChange={setFuelEntriesPage}
+              label="fuel entries"
+            />
           </div>
         ) : null}
 
-        {activeTab === "other-expenses" ? (
+        {activeTab === "vendor-invoices" ? (
           <div className="space-y-4">
             <SectionHeader
-              title="Other Expenses"
-              description="Create and review non-fuel vehicle expenses."
+              title="Vendor Invoices"
+              description="Create and review vendor invoices for non-fuel vehicle and general expenses."
               action={
                 <AddButton
                   onClick={() => {
-                    setEditingExpense(null);
-                    setExpenseModalOpen(true);
+                    setEditingVendorInvoice(null);
+                    setVendorInvoiceModalOpen(true);
                   }}
                 >
-                  Add Expense
+                  Add Invoice
                 </AddButton>
               }
             />
 
-            <div className="grid gap-3 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950 md:grid-cols-3">
-              <label className="space-y-1.5">
-                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                  Vehicle Filter
-                </span>
-                <select
-                  value={expenseVehicleFilter}
-                  onChange={(event) =>
-                    setExpenseVehicleFilter(event.target.value)
-                  }
-                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
-                >
-                  <option value="all">All vehicles</option>
-                  {vehicles.map((vehicle) => (
-                    <option key={vehicle.id} value={vehicle.id}>
-                      {vehicle.vehicle_no}
-                    </option>
-                  ))}
-                </select>
-              </label>
+            {vendorInvoiceSummaryCards.length > 0 ? (
+              <SummaryCards cards={vendorInvoiceSummaryCards} />
+            ) : null}
 
-              <label className="space-y-1.5">
-                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                  From
-                </span>
-                <input
-                  type="date"
-                  value={expenseDateFrom}
-                  onChange={(event) => setExpenseDateFrom(event.target.value)}
-                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
-                />
-              </label>
+            <div className="flex flex-wrap gap-2 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950">
+              {[
+                { id: "all", label: "All" },
+                { id: "unpaid", label: "Unpaid" },
+                { id: "partially_paid", label: "Partially Paid" },
+                { id: "paid", label: "Paid" },
+              ].map((filter) => {
+                const active = invoiceStatusFilter === filter.id;
 
-              <label className="space-y-1.5">
-                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                  To
-                </span>
-                <input
-                  type="date"
-                  value={expenseDateTo}
-                  onChange={(event) => setExpenseDateTo(event.target.value)}
-                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
-                />
-              </label>
+                return (
+                  <button
+                    key={filter.id}
+                    type="button"
+                    onClick={() =>
+                      setInvoiceStatusFilter(
+                        filter.id as typeof invoiceStatusFilter
+                      )
+                    }
+                    className={`min-h-9 rounded-md px-3 text-sm font-medium transition-colors ${
+                      active
+                        ? "bg-blue-600 text-white shadow-sm"
+                        : "border border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                    }`}
+                  >
+                    {filter.label}
+                  </button>
+                );
+              })}
             </div>
 
-            <VehicleExpenseTable
-              expenses={filteredVehicleExpenses}
-              vehiclesById={vehiclesById}
+            <VendorInvoiceTable
+              invoices={paginatedVendorInvoices.items}
               loading={loading}
               error={error}
+              currentPage={paginatedVendorInvoices.page}
+              pageSize={VEHICLE_TRACKER_PAGE_SIZE}
               onAdd={() => {
-                setEditingExpense(null);
-                setExpenseModalOpen(true);
+                setEditingVendorInvoice(null);
+                setVendorInvoiceModalOpen(true);
               }}
-              onEdit={(expense) => {
-                if (expense.status === "paid") {
-                  toast.error("Paid expenses cannot be edited from here.");
+              onView={setViewingVendorInvoice}
+              onEdit={(invoice) => {
+                if (invoice.payments.length > 0) {
+                  toast.error("Invoices with payments cannot be edited.");
                   return;
                 }
-                setEditingExpense(expense);
-                setExpenseModalOpen(true);
+                setEditingVendorInvoice(invoice);
+                setVendorInvoiceModalOpen(true);
               }}
-              onDelete={handleDeleteExpense}
+              onDelete={handleDeleteVendorInvoice}
+            />
+            <TablePagination
+              page={paginatedVendorInvoices.page}
+              totalItems={filteredVendorInvoices.length}
+              onPageChange={setVendorInvoicesPage}
+              label="vendor invoices"
             />
           </div>
         ) : null}
 
-        {activeTab === "paid-expenses" ? (
+        {activeTab === "vendor-payments" ? (
           <div className="space-y-4">
             <SectionHeader
-              title="Payments"
-              description="Group pending vehicle expenses into payment entries and review paid expense details."
+              title="Vendor Payments"
+              description="Create and review vendor payment batches allocated across invoices."
               action={
                 <AddButton
-                  onClick={() => setPaymentModalOpen(true)}
-                  disabled={pendingVehicleExpenses.length === 0}
+                  onClick={() => setVendorPaymentBatchModalOpen(true)}
+                  disabled={
+                    vendorInvoices.filter(
+                      (invoice) => invoice.balance_amount > 0
+                    ).length === 0
+                  }
                 >
-                  Create Payment
+                  Create Payment Batch
                 </AddButton>
               }
             />
 
-            <div className="grid gap-3 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950 md:grid-cols-3">
-              <label className="space-y-1.5">
-                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                  From
-                </span>
-                <input
-                  type="date"
-                  value={paymentDateFrom}
-                  onChange={(event) => setPaymentDateFrom(event.target.value)}
-                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
-                />
-              </label>
+            {vendorPaymentSummaryCards.length > 0 ? (
+              <SummaryCards cards={vendorPaymentSummaryCards} />
+            ) : null}
 
-              <label className="space-y-1.5">
-                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                  To
-                </span>
-                <input
-                  type="date"
-                  value={paymentDateTo}
-                  onChange={(event) => setPaymentDateTo(event.target.value)}
-                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
-                />
-              </label>
-
-              <label className="space-y-1.5">
-                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                  Payment Mode
-                </span>
-                <select
-                  value={paymentModeFilter}
-                  onChange={(event) => setPaymentModeFilter(event.target.value)}
-                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
-                >
-                  <option value="">All modes</option>
-                  {paymentModeOptions.map((mode) => (
-                    <option key={mode} value={mode}>
-                      {mode}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-
-            <VehicleExpensePaymentTable
-              payments={filteredExpensePayments}
+            <VendorPaymentBatchTable
+              batches={paginatedVendorPaymentBatches.items}
               loading={loading}
               error={error}
-              onCreate={() => setPaymentModalOpen(true)}
+              currentPage={paginatedVendorPaymentBatches.page}
+              pageSize={VEHICLE_TRACKER_PAGE_SIZE}
+              onAdd={() => setVendorPaymentBatchModalOpen(true)}
+              onView={setViewingVendorPaymentBatch}
+              onDelete={handleDeleteVendorPaymentBatch}
+            />
+            <TablePagination
+              page={paginatedVendorPaymentBatches.page}
+              totalItems={vendorPaymentBatches.length}
+              onPageChange={setVendorPaymentBatchesPage}
+              label="vendor payments"
             />
           </div>
         ) : null}
@@ -789,26 +1018,39 @@ export default function FuelTrackerPage() {
         onSubmit={handleCreateFuelEntry}
       />
 
-      <VehicleExpenseFormModal
-        open={expenseModalOpen}
+      <VendorInvoiceFormModal
+        open={vendorInvoiceModalOpen}
         vehicles={vehicles}
-        loading={savingExpense}
-        expense={editingExpense}
+        loading={savingVendorInvoice}
+        invoice={editingVendorInvoice}
         onClose={() => {
-          setExpenseModalOpen(false);
-          setEditingExpense(null);
+          setVendorInvoiceModalOpen(false);
+          setEditingVendorInvoice(null);
         }}
-        onSubmit={handleCreateExpense}
+        onSubmit={handleSaveVendorInvoice}
       />
 
-      <VehicleExpensePaymentModal
-        open={paymentModalOpen}
-        pendingExpenses={pendingVehicleExpenses}
-        vehiclesById={vehiclesById}
-        loading={savingPayment}
-        onClose={() => setPaymentModalOpen(false)}
-        onSubmit={handleCreatePayment}
+      <VendorInvoiceViewModal
+        invoice={viewingVendorInvoice}
+        loading={savingVendorInvoicePayment}
+        onClose={() => setViewingVendorInvoice(null)}
+        onRecordPayment={handleRecordVendorInvoicePayment}
+        onDeletePayment={handleDeleteVendorInvoicePayment}
       />
+
+      <VendorPaymentBatchFormModal
+        open={vendorPaymentBatchModalOpen}
+        invoices={vendorInvoices}
+        loading={savingVendorPaymentBatch}
+        onClose={() => setVendorPaymentBatchModalOpen(false)}
+        onSubmit={handleCreateVendorPaymentBatch}
+      />
+
+      <VendorPaymentBatchViewModal
+        batch={viewingVendorPaymentBatch}
+        onClose={() => setViewingVendorPaymentBatch(null)}
+      />
+
     </div>
   );
 }

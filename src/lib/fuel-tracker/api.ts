@@ -1,9 +1,13 @@
 import type {
   CreateFuelEntryPayload,
+  CreateVehicleExpenseInvoicePaymentPayload,
+  CreateVehicleExpenseInvoicePayload,
+  CreateVehicleExpensePaymentBatchPayload,
   CreateVehicleExpensePaymentPayload,
   CreateVehicleExpensePayload,
   CreateVehiclePayload,
   UpdateFuelEntryPayload,
+  UpdateVehicleExpenseInvoicePayload,
   UpdateVehiclePayload,
   UpdateVehicleExpensePayload,
   FuelApiResponse,
@@ -12,6 +16,9 @@ import type {
   FuelEntry,
   Vehicle,
   VehicleExpense,
+  VehicleExpenseInvoiceAnalytics,
+  VehicleExpenseInvoice,
+  VehicleExpensePaymentBatch,
   VehicleExpensePayment,
 } from "./types";
 
@@ -146,6 +153,136 @@ export function createVehicleExpensePayment(
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+export function fetchVehicleExpenseInvoices(filters?: {
+  status?: string;
+  vendorName?: string;
+  fromDate?: string;
+  toDate?: string;
+}) {
+  const params = new URLSearchParams();
+
+  if (filters?.status) params.set("status", filters.status);
+  if (filters?.vendorName) params.set("vendorName", filters.vendorName);
+  if (filters?.fromDate) params.set("fromDate", filters.fromDate);
+  if (filters?.toDate) params.set("toDate", filters.toDate);
+
+  const query = params.toString();
+
+  return requestJson<VehicleExpenseInvoice[]>(
+    `/api/vehicle-expense-invoices${query ? `?${query}` : ""}`
+  );
+}
+
+export function fetchVehicleExpenseInvoice(id: string) {
+  return requestJson<VehicleExpenseInvoice>(
+    `/api/vehicle-expense-invoices/${id}`
+  );
+}
+
+export function fetchVehicleExpenseInvoiceAnalytics() {
+  return requestJson<VehicleExpenseInvoiceAnalytics>(
+    "/api/vehicle-expense-invoices/analytics"
+  );
+}
+
+export function createVehicleExpenseInvoice(
+  payload: CreateVehicleExpenseInvoicePayload
+) {
+  return requestJson<VehicleExpenseInvoice>("/api/vehicle-expense-invoices", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function updateVehicleExpenseInvoice(
+  id: string,
+  payload: UpdateVehicleExpenseInvoicePayload
+) {
+  return requestJson<VehicleExpenseInvoice>(
+    `/api/vehicle-expense-invoices/${id}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(payload),
+    }
+  );
+}
+
+export function deleteVehicleExpenseInvoice(id: string) {
+  return requestJson<{ id: string }>(`/api/vehicle-expense-invoices/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export function createVehicleExpenseInvoicePayment(
+  invoiceId: string,
+  payload: CreateVehicleExpenseInvoicePaymentPayload
+) {
+  return requestJson<VehicleExpenseInvoice>(
+    `/api/vehicle-expense-invoices/${invoiceId}/payments`,
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }
+  );
+}
+
+export function deleteVehicleExpenseInvoicePayment(
+  invoiceId: string,
+  paymentId: string
+) {
+  return requestJson<VehicleExpenseInvoice>(
+    `/api/vehicle-expense-invoices/${invoiceId}/payments/${paymentId}`,
+    {
+      method: "DELETE",
+    }
+  );
+}
+
+export function fetchVehicleExpensePaymentBatches(filters?: {
+  vendorName?: string;
+  fromDate?: string;
+  toDate?: string;
+}) {
+  const params = new URLSearchParams();
+
+  if (filters?.vendorName) params.set("vendorName", filters.vendorName);
+  if (filters?.fromDate) params.set("fromDate", filters.fromDate);
+  if (filters?.toDate) params.set("toDate", filters.toDate);
+
+  const query = params.toString();
+
+  return requestJson<VehicleExpensePaymentBatch[]>(
+    `/api/vehicle-expense-payment-batches${query ? `?${query}` : ""}`
+  );
+}
+
+export function fetchVehicleExpensePaymentBatch(id: string) {
+  return requestJson<VehicleExpensePaymentBatch>(
+    `/api/vehicle-expense-payment-batches/${id}`
+  );
+}
+
+export function createVehicleExpensePaymentBatch(
+  payload: CreateVehicleExpensePaymentBatchPayload
+) {
+  return requestJson<VehicleExpensePaymentBatch>(
+    "/api/vehicle-expense-payment-batches",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }
+  );
+}
+
+export function deleteVehicleExpensePaymentBatch(id: string) {
+  return requestJson<{ id: string }>(
+    `/api/vehicle-expense-payment-batches/${id}`,
+    {
+      method: "DELETE",
+    }
+  );
 }
 
 export function fetchFuelDashboard() {

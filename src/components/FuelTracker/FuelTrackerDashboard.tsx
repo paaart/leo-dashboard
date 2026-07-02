@@ -7,6 +7,9 @@ import {
   Route,
   TrendingUp,
 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { SERIAL_COLUMN_CLASS, serialNumber } from "./SerialNumber";
+import { TablePagination, paginateItems } from "./TablePagination";
 import type {
   FuelAnalyticsInsight,
   FuelDashboardAnalytics,
@@ -111,6 +114,16 @@ export function FuelTrackerDashboard({
   }) => void;
 }) {
   const summary = analytics?.summary;
+  const [performancePage, setPerformancePage] = useState(1);
+  const performanceRows = useMemo(
+    () => paginateItems(analytics?.vehicles ?? [], performancePage),
+    [analytics?.vehicles, performancePage]
+  );
+
+  useEffect(() => {
+    setPerformancePage(1);
+  }, [filters.dateFrom, filters.dateTo, filters.vehicleId]);
+
   const summaryCards = [
     {
       label: "Total Fuel Cost",
@@ -307,6 +320,7 @@ export function FuelTrackerDashboard({
               <table className="min-w-280 w-full text-left text-sm">
                 <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
                   <tr>
+                    <th className={SERIAL_COLUMN_CLASS}>S.No</th>
                     <th className="px-4 py-3 font-semibold">Vehicle No</th>
                     <th className="px-4 py-3 font-semibold">Total KM</th>
                     <th className="px-4 py-3 font-semibold">Total Liters</th>
@@ -322,11 +336,14 @@ export function FuelTrackerDashboard({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                  {analytics.vehicles.map((vehicle) => (
+                  {performanceRows.items.map((vehicle, index) => (
                     <tr
                       key={vehicle.vehicleId}
                       className="text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900/70"
                     >
+                      <td className={SERIAL_COLUMN_CLASS}>
+                        {serialNumber(index, performanceRows.page)}
+                      </td>
                       <td className="px-4 py-3 font-semibold text-gray-950 dark:text-gray-50">
                         {vehicle.vehicleNo}
                       </td>
@@ -372,6 +389,12 @@ export function FuelTrackerDashboard({
                 </tbody>
               </table>
             </div>
+            <TablePagination
+              page={performanceRows.page}
+              totalItems={analytics.vehicles.length}
+              onPageChange={setPerformancePage}
+              label="vehicles"
+            />
           </div>
 
           <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
@@ -384,6 +407,7 @@ export function FuelTrackerDashboard({
               <table className="min-w-210 w-full text-left text-sm">
                 <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
                   <tr>
+                    <th className={SERIAL_COLUMN_CLASS}>S.No</th>
                     <th className="px-4 py-3 font-semibold">Month</th>
                     <th className="px-4 py-3 font-semibold">
                       Total Fuel Amount
@@ -395,11 +419,14 @@ export function FuelTrackerDashboard({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                  {analytics.monthlyBreakdown.map((row) => (
+                  {analytics.monthlyBreakdown.map((row, index) => (
                     <tr
                       key={row.month}
                       className="text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900/70"
                     >
+                      <td className={SERIAL_COLUMN_CLASS}>
+                        {serialNumber(index)}
+                      </td>
                       <td className="px-4 py-3 font-semibold text-gray-950 dark:text-gray-50">
                         {row.month}
                       </td>

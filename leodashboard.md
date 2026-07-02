@@ -456,6 +456,63 @@ Not:
 Strict auditing.
 ```
 
+### Other Expense Invoice Foundation
+
+Phase 2A adds a separate vendor invoice foundation for vehicle/general other
+expenses without migrating or removing the existing Other Expenses and Payments
+UI.
+
+Supports:
+
+- vendor invoice headers
+- one or more invoice items
+- optional vehicle allocation per item
+- general expense items when vehicle is not selected
+- partial and full invoice payments
+- backend-calculated invoice totals and payment-derived status
+
+Business rules:
+
+- invoice total equals the sum of invoice item amounts
+- payment amount must be greater than zero
+- total paid amount cannot exceed invoice total
+- status is derived from payments as unpaid, partially paid, or paid
+
+This phase does not alter fuel entries, mileage, odometer logic, fuel analytics,
+or existing vehicle expense migration behavior.
+
+Phase 2B adds the Vendor Invoices tab inside Vehicle Tracker for listing,
+creating, viewing, editing, and deleting unpaid vendor invoices. The existing
+Other Expenses and Payments tabs remain unchanged during this phase.
+
+Phase 2C completes the active Vendor Invoices module with payment recording,
+newest-first payment history, payment deletion, outstanding balance summaries,
+and invoice status filters for all, unpaid, partially paid, and paid invoices.
+The legacy Other Expenses and Payments tabs are hidden from navigation, but the
+old code and data remain available for a later migration phase.
+
+Phase 2C.1 changes the vendor payment architecture from one payment per invoice
+to payment batches with invoice allocations. A single vendor payment can now be
+allocated across multiple invoices, and each invoice can receive allocations
+from multiple payment batches. Invoice paid totals, outstanding balances, and
+statuses are derived from allocation totals.
+
+Phase 2E adds vendor invoice and vendor payment summary dashboards inside the
+Vehicle Tracker vendor tabs. Vendor invoice summaries include invoice counts,
+invoice totals, paid/unpaid/partially paid breakdowns, outstanding totals, and
+payment totals. Vendor payment summaries include payment batch count, total paid,
+latest payment date, average payment amount, and current-month payment totals.
+The active Vehicle Tracker navigation now shows Performance, Vehicles, Fuel
+Entries, Vendor Invoices, and Vendor Payments. Legacy Other Expenses and Paid
+Expenses frontend tab references have been removed from active navigation and
+page rendering. Legacy database tables, migrations, and backend APIs are
+retained for safety until a future final cleanup phase.
+
+Pending later phases:
+
+- final database cleanup of legacy vehicle expense tables after business
+  verification
+
 ---
 
 ## 6.5 Fuel Module Future Scope

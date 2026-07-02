@@ -1,11 +1,11 @@
 import type { FuelTab } from "@/lib/fuel-tracker/types";
 
 const tabs: { id: FuelTab; label: string }[] = [
-  { id: "dashboard", label: "Dashboard" },
+  { id: "dashboard", label: "Performance" },
   { id: "vehicles", label: "Vehicles" },
   { id: "fuel-entries", label: "Fuel Entries" },
-  { id: "other-expenses", label: "Other Expenses" },
-  { id: "paid-expenses", label: "Payments" },
+  { id: "vendor-invoices", label: "Vendor Invoices" },
+  { id: "vendor-payments", label: "Vendor Payments" },
 ];
 
 export function FuelTrackerTabs({

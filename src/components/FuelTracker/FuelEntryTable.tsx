@@ -1,6 +1,7 @@
 import { ExternalLink, Pencil, Plus, Trash2 } from "lucide-react";
 import { FuelEmptyState } from "./FuelEmptyState";
 import { FuelStatusBadge } from "./FuelStatusBadge";
+import { SERIAL_COLUMN_CLASS, serialNumber } from "./SerialNumber";
 import type { FuelEntry, Vehicle } from "@/lib/fuel-tracker/types";
 
 function formatCurrency(value: number) {
@@ -29,6 +30,8 @@ export function FuelEntryTable({
   vehiclesById,
   loading,
   error,
+  currentPage = 1,
+  pageSize = 50,
   onAdd,
   onEdit,
   onDelete,
@@ -38,6 +41,8 @@ export function FuelEntryTable({
   vehiclesById: Map<string, Vehicle>;
   loading: boolean;
   error: string | null;
+  currentPage?: number;
+  pageSize?: number;
   onAdd: () => void;
   onEdit: (entry: FuelEntry) => void;
   onDelete: (entry: FuelEntry) => void;
@@ -91,6 +96,7 @@ export function FuelEntryTable({
         <table className="min-w-380 w-full text-left text-sm">
           <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
             <tr>
+              <th className={SERIAL_COLUMN_CLASS}>S.No</th>
               <th className="px-4 py-3 font-semibold">Vehicle</th>
               <th className="px-4 py-3 font-semibold">Company</th>
               <th className="px-4 py-3 font-semibold">Driver Name</th>
@@ -108,7 +114,7 @@ export function FuelEntryTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-            {entries.map((entry) => {
+            {entries.map((entry, index) => {
               const vehicle = vehiclesById.get(entry.vehicle_id);
 
               return (
@@ -116,6 +122,9 @@ export function FuelEntryTable({
                   key={entry.id}
                   className="text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900/70"
                 >
+                  <td className={SERIAL_COLUMN_CLASS}>
+                    {serialNumber(index, currentPage, pageSize)}
+                  </td>
                   <td className="px-4 py-3 font-semibold text-gray-950 dark:text-gray-50">
                     {vehicle?.vehicle_no ?? "Unknown vehicle"}
                   </td>

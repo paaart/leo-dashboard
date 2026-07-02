@@ -1,18 +1,23 @@
 import { Pencil, Plus } from "lucide-react";
 import { FuelEmptyState } from "./FuelEmptyState";
 import { FuelStatusBadge } from "./FuelStatusBadge";
+import { SERIAL_COLUMN_CLASS, serialNumber } from "./SerialNumber";
 import type { Vehicle } from "@/lib/fuel-tracker/types";
 
 export function VehicleTable({
   vehicles,
   loading,
   error,
+  currentPage = 1,
+  pageSize = 50,
   onAdd,
   onEdit,
 }: {
   vehicles: Vehicle[];
   loading: boolean;
   error: string | null;
+  currentPage?: number;
+  pageSize?: number;
   onAdd: () => void;
   onEdit: (vehicle: Vehicle) => void;
 }) {
@@ -64,6 +69,7 @@ export function VehicleTable({
         <table className="min-w-180 w-full text-left text-sm">
           <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
             <tr>
+              <th className={SERIAL_COLUMN_CLASS}>S.No</th>
               <th className="px-4 py-3 font-semibold">Vehicle Number</th>
               <th className="px-4 py-3 font-semibold">Vehicle Type</th>
               <th className="px-4 py-3 font-semibold">Leo Company</th>
@@ -73,11 +79,14 @@ export function VehicleTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-            {vehicles.map((vehicle) => (
+            {vehicles.map((vehicle, index) => (
               <tr
                 key={vehicle.id}
                 className="text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900/70"
               >
+                <td className={SERIAL_COLUMN_CLASS}>
+                  {serialNumber(index, currentPage, pageSize)}
+                </td>
                 <td className="px-4 py-3 font-semibold text-gray-950 dark:text-gray-50">
                   {vehicle.vehicle_no}
                 </td>

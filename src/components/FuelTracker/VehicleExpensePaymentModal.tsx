@@ -1,5 +1,6 @@
 import { X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { SERIAL_COLUMN_CLASS, serialNumber } from "./SerialNumber";
 import type { FormEvent } from "react";
 import type {
   CreateVehicleExpensePaymentPayload,
@@ -191,6 +192,7 @@ export function VehicleExpensePaymentModal({
               <table className="min-w-245 w-full text-left text-sm">
                 <thead className="sticky top-0 border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
                   <tr>
+                    <th className={SERIAL_COLUMN_CLASS}>S.No</th>
                     <th className="w-12 px-4 py-3 font-semibold">Select</th>
                     <th className="px-4 py-3 font-semibold">Date</th>
                     <th className="px-4 py-3 font-semibold">Vehicle</th>
@@ -206,14 +208,14 @@ export function VehicleExpensePaymentModal({
                   {pendingExpenses.length === 0 ? (
                     <tr>
                       <td
-                        colSpan={7}
+                        colSpan={8}
                         className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400"
                       >
                         No pending expenses available.
                       </td>
                     </tr>
                   ) : (
-                    pendingExpenses.map((expense) => {
+                    pendingExpenses.map((expense, index) => {
                       const vehicle = expense.vehicle_id
                         ? vehiclesById.get(expense.vehicle_id)
                         : null;
@@ -224,6 +226,9 @@ export function VehicleExpensePaymentModal({
                           key={expense.id}
                           className="text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900/70"
                         >
+                          <td className={SERIAL_COLUMN_CLASS}>
+                            {serialNumber(index)}
+                          </td>
                           <td className="px-4 py-3">
                             <input
                               type="checkbox"

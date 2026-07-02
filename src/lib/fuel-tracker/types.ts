@@ -289,12 +289,151 @@ export type CreateVehicleExpensePaymentPayload = {
   expenseIds: string[];
 };
 
+export type VehicleExpenseInvoiceStatus =
+  | "unpaid"
+  | "partially_paid"
+  | "paid";
+
+export type VehicleExpenseInvoiceItem = {
+  id: string;
+  invoice_id: string;
+  vehicle_id: string | null;
+  vehicle_no: string | null;
+  vehicles: {
+    id: string;
+    vehicle_no: string;
+    vehicle_type: string;
+  }[];
+  expense_type: string;
+  description: string | null;
+  amount: number;
+  created_at: string;
+};
+
+export type VehicleExpenseInvoicePayment = {
+  id: string;
+  payment_batch_id: string;
+  invoice_id: string;
+  vendor_name: string;
+  payment_date: string;
+  amount: number;
+  payment_mode: string | null;
+  reference_number: string | null;
+  remarks: string | null;
+  created_by: string | null;
+  created_at: string;
+};
+
+export type VehicleExpenseInvoice = {
+  id: string;
+  vendor_name: string;
+  invoice_number: string | null;
+  invoice_date: string;
+  due_date: string | null;
+  total_amount: number;
+  paid_amount: number;
+  balance_amount: number;
+  status: VehicleExpenseInvoiceStatus;
+  remarks: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  items: VehicleExpenseInvoiceItem[];
+  payments: VehicleExpenseInvoicePayment[];
+};
+
+export type VehicleExpenseInvoiceAnalytics = {
+  invoiceCount: number;
+  invoiceTotal: number;
+  paidInvoiceCount: number;
+  paidAmount: number;
+  unpaidInvoiceCount: number;
+  unpaidAmount: number;
+  partiallyPaidInvoiceCount: number;
+  partiallyPaidOutstanding: number;
+  outstandingAmount: number;
+  paymentBatchCount: number;
+  paymentTotal: number;
+  latestPaymentDate: string | null;
+  averagePaymentAmount: number;
+  thisMonthPaid: number;
+  paymentsThisMonth: number;
+};
+
+export type VehicleExpensePaymentBatchAllocation = {
+  id: string;
+  payment_batch_id: string;
+  invoice_id: string;
+  invoice_vendor_name: string;
+  invoice_number: string | null;
+  invoice_date: string;
+  invoice_status: VehicleExpenseInvoiceStatus;
+  invoice_total_amount: number;
+  invoice_paid_amount: number;
+  invoice_balance_amount: number;
+  allocated_amount: number;
+  created_at: string;
+};
+
+export type VehicleExpensePaymentBatch = {
+  id: string;
+  vendor_name: string;
+  payment_date: string;
+  payment_mode: string | null;
+  reference_number: string | null;
+  remarks: string | null;
+  total_amount: number;
+  invoice_count: number;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  allocations: VehicleExpensePaymentBatchAllocation[];
+};
+
+export type CreateVehicleExpenseInvoicePayload = {
+  vendorName: string;
+  invoiceNumber: string | null;
+  invoiceDate: string;
+  dueDate: string | null;
+  remarks: string | null;
+  items: {
+    vehicleId: string | null;
+    vehicleIds?: string[];
+    expenseType: string;
+    description: string | null;
+    amount: number;
+  }[];
+};
+
+export type UpdateVehicleExpenseInvoicePayload =
+  CreateVehicleExpenseInvoicePayload;
+
+export type CreateVehicleExpenseInvoicePaymentPayload = {
+  paymentDate: string;
+  amount: number;
+  paymentMode: string | null;
+  referenceNumber: string | null;
+  remarks: string | null;
+};
+
+export type CreateVehicleExpensePaymentBatchPayload = {
+  vendorName: string;
+  paymentDate: string;
+  paymentMode: string | null;
+  referenceNumber: string | null;
+  remarks: string | null;
+  allocations: {
+    invoiceId: string;
+    allocatedAmount: number;
+  }[];
+};
+
 export type FuelTab =
   | "dashboard"
   | "vehicles"
   | "fuel-entries"
-  | "other-expenses"
-  | "paid-expenses";
+  | "vendor-invoices"
+  | "vendor-payments";
 
 export type FuelApiResponse<T> =
   | { ok: true; data: T }
