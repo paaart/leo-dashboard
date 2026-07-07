@@ -1,8 +1,17 @@
 import { Pencil, Plus } from "lucide-react";
 import { FuelEmptyState } from "./FuelEmptyState";
 import { FuelStatusBadge } from "./FuelStatusBadge";
+import { FuelTooltip } from "./FuelTooltip";
 import { SERIAL_COLUMN_CLASS, serialNumber } from "./SerialNumber";
 import type { Vehicle } from "@/lib/fuel-tracker/types";
+
+function vehicleDetails(vehicle: Vehicle) {
+  return [
+    `Starting Odometer: ${String(vehicle.starting_odometer)}`,
+    `Created: ${vehicle.created_at}`,
+    `Updated: ${vehicle.updated_at}`,
+  ].join("\n");
+}
 
 export function VehicleTable({
   vehicles,
@@ -66,14 +75,13 @@ export function VehicleTable({
   return (
     <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
       <div className="overflow-x-auto">
-        <table className="min-w-180 w-full text-left text-sm">
+        <table className="min-w-160 w-full text-left text-sm">
           <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
             <tr>
               <th className={SERIAL_COLUMN_CLASS}>S.No</th>
               <th className="px-4 py-3 font-semibold">Vehicle Number</th>
               <th className="px-4 py-3 font-semibold">Vehicle Type</th>
-              <th className="px-4 py-3 font-semibold">Leo Company</th>
-              <th className="px-4 py-3 font-semibold">Starting Odometer</th>
+              <th className="px-4 py-3 font-semibold">Company</th>
               <th className="px-4 py-3 font-semibold">Status</th>
               <th className="px-4 py-3 font-semibold">Actions</th>
             </tr>
@@ -87,16 +95,22 @@ export function VehicleTable({
                 <td className={SERIAL_COLUMN_CLASS}>
                   {serialNumber(index, currentPage, pageSize)}
                 </td>
-                <td className="px-4 py-3 font-semibold text-gray-950 dark:text-gray-50">
-                  {vehicle.vehicle_no}
+                <td className="max-w-44 px-4 py-3 font-semibold text-gray-950 dark:text-gray-50">
+                  <FuelTooltip
+                    content={vehicleDetails(vehicle)}
+                    className="truncate"
+                  >
+                    {vehicle.vehicle_no}
+                  </FuelTooltip>
                 </td>
                 <td className="px-4 py-3">{vehicle.vehicle_type}</td>
                 <td className="px-4 py-3">{vehicle.company || "-"}</td>
                 <td className="px-4 py-3">
-                  {String(vehicle.starting_odometer)}
-                </td>
-                <td className="px-4 py-3">
-                  <FuelStatusBadge status={vehicle.status} />
+                  <FuelTooltip content={vehicleDetails(vehicle)}>
+                    <span className="inline-flex">
+                      <FuelStatusBadge status={vehicle.status} />
+                    </span>
+                  </FuelTooltip>
                 </td>
                 <td className="px-4 py-3">
                   <button

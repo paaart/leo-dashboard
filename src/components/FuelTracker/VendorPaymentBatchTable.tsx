@@ -1,5 +1,6 @@
 import { Eye, Plus, Trash2 } from "lucide-react";
 import { FuelEmptyState } from "./FuelEmptyState";
+import { FuelTooltip } from "./FuelTooltip";
 import { SERIAL_COLUMN_CLASS, serialNumber } from "./SerialNumber";
 import type { VehicleExpensePaymentBatch } from "@/lib/fuel-tracker/types";
 
@@ -9,6 +10,33 @@ function formatCurrency(value: number) {
     currency: "INR",
     maximumFractionDigits: 2,
   }).format(value);
+}
+
+function allocationSummary(batch: VehicleExpensePaymentBatch) {
+  if (batch.allocations.length === 0) return "-";
+
+  return batch.allocations
+    .map((allocation) => {
+      const invoice = allocation.invoice_number ?? allocation.invoice_id;
+      return `${invoice}: ${formatCurrency(allocation.allocated_amount)}`;
+    })
+    .join("\n");
+}
+
+function paymentDetails(batch: VehicleExpensePaymentBatch) {
+  return [
+    `Remarks: ${batch.remarks ?? "-"}`,
+    `Allocation Summary:\n${allocationSummary(batch)}`,
+    `Created: ${batch.created_at}`,
+  ].join("\n");
+}
+
+function paymentAmountDetails(batch: VehicleExpensePaymentBatch) {
+  return [
+    `Payment Amount: ${formatCurrency(batch.total_amount)}`,
+    `Invoice Count: ${batch.invoice_count}`,
+    `Allocation Summary:\n${allocationSummary(batch)}`,
+  ].join("\n");
 }
 
 export function VendorPaymentBatchTable({
@@ -75,21 +103,20 @@ export function VendorPaymentBatchTable({
   return (
     <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
       <div className="overflow-x-auto">
-        <table className="min-w-280 w-full text-left text-sm">
+        <table className="min-w-220 w-full text-left text-sm">
           <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
             <tr>
               <th className={SERIAL_COLUMN_CLASS}>S.No</th>
               <th className="px-4 py-3 font-semibold">Payment Date</th>
               <th className="px-4 py-3 font-semibold">Vendor</th>
               <th className="px-4 py-3 text-right font-semibold">
-                Total Paid
+                Payment Amount
               </th>
-              <th className="px-4 py-3 font-semibold">Mode</th>
-              <th className="px-4 py-3 font-semibold">Reference</th>
+              <th className="px-4 py-3 font-semibold">Payment Mode</th>
+              <th className="px-4 py-3 font-semibold">Reference Number</th>
               <th className="px-4 py-3 text-right font-semibold">
-                Invoices Covered
+                Invoice Count
               </th>
-              <th className="px-4 py-3 font-semibold">Remarks</th>
               <th className="px-4 py-3 font-semibold">Actions</th>
             </tr>
           </thead>
@@ -102,20 +129,35 @@ export function VendorPaymentBatchTable({
                 <td className={SERIAL_COLUMN_CLASS}>
                   {serialNumber(index, currentPage, pageSize)}
                 </td>
-                <td className="px-4 py-3">{batch.payment_date}</td>
-                <td className="px-4 py-3 font-semibold text-gray-950 dark:text-gray-50">
-                  {batch.vendor_name}
+                <td className="whitespace-nowrap px-4 py-3">
+                  {batch.payment_date}
+                </td>
+                <td className="max-w-44 px-4 py-3 font-semibold text-gray-950 dark:text-gray-50">
+                  <FuelTooltip
+                    content={paymentDetails(batch)}
+                    className="truncate"
+                  >
+                    {batch.vendor_name}
+                  </FuelTooltip>
                 </td>
                 <td className="px-4 py-3 text-right font-semibold">
-                  {formatCurrency(batch.total_amount)}
+                  <FuelTooltip content={paymentAmountDetails(batch)}>
+                    {formatCurrency(batch.total_amount)}
+                  </FuelTooltip>
                 </td>
                 <td className="px-4 py-3">{batch.payment_mode ?? "-"}</td>
-                <td className="px-4 py-3">{batch.reference_number ?? "-"}</td>
-                <td className="px-4 py-3 text-right">
-                  {batch.invoice_count}
+                <td className="max-w-36 px-4 py-3">
+                  <FuelTooltip
+                    content={batch.reference_number ?? null}
+                    className="truncate"
+                  >
+                    {batch.reference_number ?? "-"}
+                  </FuelTooltip>
                 </td>
-                <td className="max-w-72 truncate px-4 py-3">
-                  {batch.remarks ?? "-"}
+                <td className="px-4 py-3 text-right">
+                  <FuelTooltip content={paymentAmountDetails(batch)}>
+                    {batch.invoice_count}
+                  </FuelTooltip>
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex flex-wrap gap-2">

@@ -1235,6 +1235,15 @@ export async function getVehicleExpensePaymentBatch(paymentBatchId: string) {
   return batch;
 }
 
+async function syncInvoiceStatuses(client: PoolClient, invoiceIds: string[]) {
+  for (const invoiceId of invoiceIds) {
+    await client.query(
+      `select public.sync_vehicle_expense_invoice_status($1::uuid)`,
+      [invoiceId]
+    );
+  }
+}
+
 export async function createVehicleExpensePaymentBatch(
   input: ValidPaymentBatchInput,
   createdBy: string | null
@@ -1245,6 +1254,22 @@ export async function createVehicleExpensePaymentBatch(
     await client.query("BEGIN");
 
     const invoiceIds = input.allocations.map((allocation) => allocation.invoice_id);
+    const lockedInvoices = await client.query(
+      `
+      select id
+      from public.vehicle_expense_invoices
+      where id = any($1::uuid[])
+      for update
+      `,
+      [invoiceIds]
+    );
+
+    if (lockedInvoices.rows.length !== input.allocations.length) {
+      throw Object.assign(new Error("One or more invoices were not found"), {
+        status: 400,
+      });
+    }
+
     const invoices = await client.query<{
       id: string;
       total_amount: string | number;
@@ -1259,16 +1284,9 @@ export async function createVehicleExpensePaymentBatch(
       left join public.vehicle_expense_payment_allocations a on a.invoice_id = i.id
       where i.id = any($1::uuid[])
       group by i.id
-      for update of i
       `,
       [invoiceIds]
     );
-
-    if (invoices.rows.length !== input.allocations.length) {
-      throw Object.assign(new Error("One or more invoices were not found"), {
-        status: 400,
-      });
-    }
 
     const invoicesById = new Map(invoices.rows.map((row) => [row.id, row]));
 
@@ -1336,6 +1354,8 @@ export async function createVehicleExpensePaymentBatch(
       );
     }
 
+    await syncInvoiceStatuses(client, invoiceIds);
+
     await client.query("COMMIT");
 
     return getVehicleExpensePaymentBatch(batchId);
@@ -1371,6 +1391,26 @@ export async function deleteVehicleExpensePaymentBatch(
       });
     }
 
+    const allocations = await client.query<{ invoice_id: string }>(
+      `
+      select invoice_id
+      from public.vehicle_expense_payment_allocations
+      where payment_batch_id = $1::uuid
+      `,
+      [paymentBatchId]
+    );
+    const affectedInvoiceIds = [
+      ...new Set(allocations.rows.map((row) => String(row.invoice_id))),
+    ];
+
+    await client.query(
+      `
+      delete from public.vehicle_expense_payment_allocations
+      where payment_batch_id = $1::uuid
+      `,
+      [paymentBatchId]
+    );
+
     await client.query(
       `
       delete from public.vehicle_expense_payment_batches
@@ -1378,6 +1418,8 @@ export async function deleteVehicleExpensePaymentBatch(
       `,
       [paymentBatchId]
     );
+
+    await syncInvoiceStatuses(client, affectedInvoiceIds);
 
     await client.query("COMMIT");
   } catch (error) {

@@ -1,6 +1,7 @@
-import { ExternalLink, Pencil, Plus, Trash2 } from "lucide-react";
+import { ExternalLink, Info, Pencil, Plus, Trash2 } from "lucide-react";
 import { FuelEmptyState } from "./FuelEmptyState";
 import { FuelStatusBadge } from "./FuelStatusBadge";
+import { FuelTooltip } from "./FuelTooltip";
 import { SERIAL_COLUMN_CLASS, serialNumber } from "./SerialNumber";
 import type { FuelEntry, Vehicle } from "@/lib/fuel-tracker/types";
 
@@ -23,6 +24,55 @@ function formatNumber(value: number | null, digits = 2) {
 function formatOdometer(value: number | null) {
   if (value === null || !Number.isFinite(value)) return "-";
   return String(value);
+}
+
+function proofDetails(entry: FuelEntry) {
+  const proof = [
+    entry.bill_image_path ? `Bill: ${entry.bill_image_path}` : null,
+    entry.meter_image_path ? `Meter: ${entry.meter_image_path}` : null,
+  ].filter(Boolean);
+
+  return proof.length > 0 ? proof.join("\n") : "No Proof";
+}
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="space-y-0.5">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+        {label}
+      </p>
+      <p className="break-words text-xs text-white">{value}</p>
+    </div>
+  );
+}
+
+function FuelEntryDetails({ entry }: { entry: FuelEntry }) {
+  return (
+    <div className="space-y-3">
+      <DetailRow label="Company" value={entry.company || "-"} />
+      <DetailRow label="Driver" value={entry.driver_name || "-"} />
+      <DetailRow label="Mobile" value={entry.driver_mobile || "-"} />
+      <DetailRow
+        label="Distance Since Last Refill"
+        value={
+          entry.km_driven === null
+            ? "-"
+            : `${formatNumber(entry.km_driven, 0)} km`
+        }
+      />
+      <DetailRow
+        label="Approx Entry Mileage"
+        value={
+          entry.approx_mileage === null
+            ? "-"
+            : `${formatNumber(entry.approx_mileage, 2)} km/L`
+        }
+      />
+      <DetailRow label="Proof" value={proofDetails(entry)} />
+      <DetailRow label="Created At" value={entry.created_at || "-"} />
+      <DetailRow label="Updated At" value={entry.updated_at || "-"} />
+    </div>
+  );
 }
 
 export function FuelEntryTable({
@@ -93,23 +143,22 @@ export function FuelEntryTable({
   return (
     <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
       <div className="overflow-x-auto">
-        <table className="min-w-380 w-full text-left text-sm">
+        <table className="min-w-240 w-full text-left text-sm">
           <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
             <tr>
               <th className={SERIAL_COLUMN_CLASS}>S.No</th>
+              <th className="w-30 px-4 py-3 font-semibold">Date</th>
               <th className="px-4 py-3 font-semibold">Vehicle</th>
-              <th className="px-4 py-3 font-semibold">Company</th>
-              <th className="px-4 py-3 font-semibold">Driver Name</th>
-              <th className="px-4 py-3 font-semibold">Driver Mobile</th>
-              <th className="px-4 py-3 font-semibold">Fuel Amount</th>
-              <th className="px-4 py-3 font-semibold">Fuel Liters</th>
-              <th className="px-4 py-3 font-semibold">Odometer</th>
-              <th className="px-4 py-3 font-semibold">
-                Distance Since Last Refill
+              <th className="px-4 py-3 text-right font-semibold">
+                Fuel Amount
               </th>
-              <th className="px-4 py-3 font-semibold">Approx. Entry Mileage</th>
+              <th className="px-4 py-3 text-right font-semibold">
+                Fuel Litres
+              </th>
+              <th className="px-4 py-3 font-semibold">Odometer</th>
               <th className="px-4 py-3 font-semibold">Warning</th>
               <th className="px-4 py-3 font-semibold">Proof</th>
+              <th className="px-4 py-3 font-semibold">Details</th>
               <th className="px-4 py-3 font-semibold">Actions</th>
             </tr>
           </thead>
@@ -125,42 +174,27 @@ export function FuelEntryTable({
                   <td className={SERIAL_COLUMN_CLASS}>
                     {serialNumber(index, currentPage, pageSize)}
                   </td>
-                  <td className="px-4 py-3 font-semibold text-gray-950 dark:text-gray-50">
-                    {vehicle?.vehicle_no ?? "Unknown vehicle"}
+                  <td className="whitespace-nowrap px-4 py-3">
+                    {entry.fuel_date}
                   </td>
-                  <td className="px-4 py-3">{entry.company || "-"}</td>
-                  <td className="px-4 py-3">{entry.driver_name || "-"}</td>
-                  <td className="px-4 py-3">{entry.driver_mobile || "-"}</td>
-                  <td className="px-4 py-3">
+                  <td className="max-w-44 px-4 py-3 font-semibold text-gray-950 dark:text-gray-50">
+                    <span className="block truncate">
+                      {vehicle?.vehicle_no ?? "Unknown vehicle"}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-right">
                     {formatCurrency(entry.fuel_amount)}
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 text-right">
                     {formatNumber(entry.fuel_liters, 3)} L
                   </td>
                   <td className="px-4 py-3">
                     {formatOdometer(entry.odometer_reading)}
                   </td>
                   <td className="px-4 py-3">
-                    {entry.km_driven === null
-                      ? "-"
-                      : `${formatNumber(entry.km_driven, 0)} km`}
-                  </td>
-                  <td className="px-4 py-3">
-                    {entry.approx_mileage === null
-                      ? "-"
-                      : `${formatNumber(entry.approx_mileage, 2)} km/L`}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="space-y-1">
-                      <FuelStatusBadge
-                        status={entry.warning_flag ? "warning" : "normal"}
-                      />
-                      {entry.warning_flag && entry.warning_reason ? (
-                        <p className="max-w-55 text-xs text-amber-700 dark:text-amber-300">
-                          {entry.warning_reason}
-                        </p>
-                      ) : null}
-                    </div>
+                    <FuelStatusBadge
+                      status={entry.warning_flag ? "warning" : "normal"}
+                    />
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-2">
@@ -168,10 +202,9 @@ export function FuelEntryTable({
                         <button
                           type="button"
                           onClick={() => onViewProof(entry.bill_image_path!)}
-                          title={entry.bill_image_path}
-                          className="inline-flex items-center gap-1 rounded-md border border-gray-300 px-2 py-1 text-xs text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                          className="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-gray-300 px-2.5 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
                         >
-                          <ExternalLink className="h-3 w-3" />
+                          <ExternalLink className="h-3.5 w-3.5" />
                           Bill
                         </button>
                       ) : null}
@@ -179,19 +212,26 @@ export function FuelEntryTable({
                         <button
                           type="button"
                           onClick={() => onViewProof(entry.meter_image_path!)}
-                          title={entry.meter_image_path}
-                          className="inline-flex items-center gap-1 rounded-md border border-gray-300 px-2 py-1 text-xs text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                          className="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-gray-300 px-2.5 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
                         >
-                          <ExternalLink className="h-3 w-3" />
+                          <ExternalLink className="h-3.5 w-3.5" />
                           Meter
                         </button>
                       ) : null}
                       {!entry.bill_image_path && !entry.meter_image_path ? (
                         <span className="text-xs text-gray-500 dark:text-gray-400">
-                          No proof
+                          No Proof
                         </span>
                       ) : null}
                     </div>
+                  </td>
+                  <td className="px-4 py-3">
+                    <FuelTooltip content={<FuelEntryDetails entry={entry} />}>
+                      <span className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-gray-700 dark:text-gray-300 dark:hover:border-blue-900/60 dark:hover:bg-blue-950/40 dark:hover:text-blue-300">
+                        <Info className="h-3.5 w-3.5" />
+                        Details
+                      </span>
+                    </FuelTooltip>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-2">

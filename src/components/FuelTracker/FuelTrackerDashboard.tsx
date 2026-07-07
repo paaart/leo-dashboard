@@ -8,6 +8,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { FuelTooltip } from "./FuelTooltip";
 import { SERIAL_COLUMN_CLASS, serialNumber } from "./SerialNumber";
 import { TablePagination, paginateItems } from "./TablePagination";
 import type {
@@ -55,6 +56,20 @@ function performanceLabel(status: FuelDeviationStatus) {
   if (status === "good") return "Good";
   if (status === "low") return "Needs Review";
   return "No Data";
+}
+
+function performanceDetails(
+  vehicle: FuelDashboardAnalytics["vehicles"][number]
+) {
+  return [
+    `Total KM: ${formatNumber(vehicle.totalKm, 0)} km`,
+    `Total Liters: ${formatNumber(vehicle.totalLiters, 3)} L`,
+    `Cost / KM: ${
+      vehicle.costPerKm === null ? "-" : `${formatCurrency(vehicle.costPerKm)} / km`
+    }`,
+    `Warning Count: ${formatNumber(vehicle.warningCount, 0)}`,
+    `Last Odometer: ${formatOdometer(vehicle.lastOdometer)}`,
+  ].join("\n");
 }
 
 function InsightCard({
@@ -317,22 +332,19 @@ export function FuelTrackerDashboard({
               </p>
             </div>
             <div className="overflow-x-auto">
-              <table className="min-w-280 w-full text-left text-sm">
+              <table className="min-w-190 w-full text-left text-sm">
                 <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
                   <tr>
                     <th className={SERIAL_COLUMN_CLASS}>S.No</th>
-                    <th className="px-4 py-3 font-semibold">Vehicle No</th>
-                    <th className="px-4 py-3 font-semibold">Total KM</th>
-                    <th className="px-4 py-3 font-semibold">Total Liters</th>
+                    <th className="px-4 py-3 font-semibold">Vehicle</th>
+                    <th className="px-4 py-3 font-semibold">Mileage</th>
+                    <th className="px-4 py-3 font-semibold">
+                      Health/Deviation
+                    </th>
+                    <th className="px-4 py-3 font-semibold">Last Entry</th>
                     <th className="px-4 py-3 font-semibold">
                       Total Fuel Amount
                     </th>
-                    <th className="px-4 py-3 font-semibold">Average Mileage</th>
-                    <th className="px-4 py-3 font-semibold">Cost / KM</th>
-                    <th className="px-4 py-3 font-semibold">Warning Count</th>
-                    <th className="px-4 py-3 font-semibold">Performance</th>
-                    <th className="px-4 py-3 font-semibold">Last Fuel Date</th>
-                    <th className="px-4 py-3 font-semibold">Last Odometer</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
@@ -344,45 +356,37 @@ export function FuelTrackerDashboard({
                       <td className={SERIAL_COLUMN_CLASS}>
                         {serialNumber(index, performanceRows.page)}
                       </td>
-                      <td className="px-4 py-3 font-semibold text-gray-950 dark:text-gray-50">
-                        {vehicle.vehicleNo}
-                      </td>
-                      <td className="px-4 py-3">
-                        {formatNumber(vehicle.totalKm, 0)} km
-                      </td>
-                      <td className="px-4 py-3">
-                        {formatNumber(vehicle.totalLiters, 3)} L
-                      </td>
-                      <td className="px-4 py-3">
-                        {formatCurrency(vehicle.totalFuelAmount)}
-                      </td>
-                      <td className="px-4 py-3">
-                        {vehicle.averageMileage === null
-                          ? "-"
-                          : `${formatNumber(vehicle.averageMileage)} km/L`}
-                      </td>
-                      <td className="px-4 py-3">
-                        {vehicle.costPerKm === null
-                          ? "-"
-                          : `${formatCurrency(vehicle.costPerKm)} / km`}
-                      </td>
-                      <td className="px-4 py-3">
-                        {formatNumber(vehicle.warningCount, 0)}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${performanceBadge(
-                            vehicle.deviationStatus
-                          )}`}
+                      <td className="max-w-44 px-4 py-3 font-semibold text-gray-950 dark:text-gray-50">
+                        <FuelTooltip
+                          content={performanceDetails(vehicle)}
+                          className="truncate"
                         >
-                          {performanceLabel(vehicle.deviationStatus)}
-                        </span>
+                          {vehicle.vehicleNo}
+                        </FuelTooltip>
+                      </td>
+                      <td className="px-4 py-3">
+                        <FuelTooltip content={performanceDetails(vehicle)}>
+                          {vehicle.averageMileage === null
+                            ? "-"
+                            : `${formatNumber(vehicle.averageMileage)} km/L`}
+                        </FuelTooltip>
+                      </td>
+                      <td className="px-4 py-3">
+                        <FuelTooltip content={performanceDetails(vehicle)}>
+                          <span
+                            className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${performanceBadge(
+                              vehicle.deviationStatus
+                            )}`}
+                          >
+                            {performanceLabel(vehicle.deviationStatus)}
+                          </span>
+                        </FuelTooltip>
                       </td>
                       <td className="px-4 py-3">
                         {vehicle.lastFuelDate ?? "-"}
                       </td>
                       <td className="px-4 py-3">
-                        {formatOdometer(vehicle.lastOdometer)}
+                        {formatCurrency(vehicle.totalFuelAmount)}
                       </td>
                     </tr>
                   ))}

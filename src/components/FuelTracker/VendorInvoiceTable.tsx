@@ -1,5 +1,6 @@
 import { Eye, Pencil, Plus, Trash2 } from "lucide-react";
 import { FuelEmptyState } from "./FuelEmptyState";
+import { FuelTooltip } from "./FuelTooltip";
 import { SERIAL_COLUMN_CLASS, serialNumber } from "./SerialNumber";
 import type { VehicleExpenseInvoice } from "@/lib/fuel-tracker/types";
 
@@ -30,6 +31,24 @@ function statusClass(status: VehicleExpenseInvoice["status"]) {
 
 function canChangeInvoice(invoice: VehicleExpenseInvoice) {
   return invoice.status === "unpaid" && invoice.payments.length === 0;
+}
+
+function invoiceDetails(invoice: VehicleExpenseInvoice) {
+  return [
+    `Vendor: ${invoice.vendor_name}`,
+    `Due Date: ${invoice.due_date ?? "-"}`,
+    `Remarks: ${invoice.remarks ?? "-"}`,
+    `Item Count: ${invoice.items.length}`,
+  ].join("\n");
+}
+
+function invoiceAmountDetails(invoice: VehicleExpenseInvoice) {
+  return [
+    `Invoice Total: ${formatCurrency(invoice.total_amount)}`,
+    `Paid: ${formatCurrency(invoice.paid_amount)}`,
+    `Outstanding: ${formatCurrency(invoice.balance_amount)}`,
+    `Status: ${formatStatus(invoice.status)}`,
+  ].join("\n");
 }
 
 export function VendorInvoiceTable({
@@ -98,19 +117,21 @@ export function VendorInvoiceTable({
   return (
     <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
       <div className="overflow-x-auto">
-        <table className="min-w-300 w-full text-left text-sm">
+        <table className="min-w-230 w-full text-left text-sm">
           <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
             <tr>
               <th className={SERIAL_COLUMN_CLASS}>S.No</th>
-              <th className="px-4 py-3 font-semibold">Vendor Name</th>
-              <th className="px-4 py-3 font-semibold">Invoice Number</th>
               <th className="px-4 py-3 font-semibold">Invoice Date</th>
-              <th className="px-4 py-3 font-semibold">Due Date</th>
-              <th className="px-4 py-3 text-right font-semibold">Total</th>
+              <th className="px-4 py-3 font-semibold">Vendor</th>
+              <th className="px-4 py-3 font-semibold">Invoice Number</th>
+              <th className="px-4 py-3 text-right font-semibold">
+                Invoice Total
+              </th>
               <th className="px-4 py-3 text-right font-semibold">Paid</th>
-              <th className="px-4 py-3 text-right font-semibold">Balance</th>
+              <th className="px-4 py-3 text-right font-semibold">
+                Outstanding
+              </th>
               <th className="px-4 py-3 font-semibold">Status</th>
-              <th className="px-4 py-3 text-right font-semibold">Items</th>
               <th className="px-4 py-3 font-semibold">Actions</th>
             </tr>
           </thead>
@@ -126,32 +147,50 @@ export function VendorInvoiceTable({
                   <td className={SERIAL_COLUMN_CLASS}>
                     {serialNumber(index, currentPage, pageSize)}
                   </td>
-                  <td className="px-4 py-3 font-semibold text-gray-950 dark:text-gray-50">
-                    {invoice.vendor_name}
+                  <td className="whitespace-nowrap px-4 py-3">
+                    {invoice.invoice_date}
                   </td>
-                  <td className="px-4 py-3">{invoice.invoice_number ?? "-"}</td>
-                  <td className="px-4 py-3">{invoice.invoice_date}</td>
-                  <td className="px-4 py-3">{invoice.due_date ?? "-"}</td>
+                  <td className="max-w-44 px-4 py-3 font-semibold text-gray-950 dark:text-gray-50">
+                    <FuelTooltip
+                      content={invoiceDetails(invoice)}
+                      className="truncate"
+                    >
+                      {invoice.vendor_name}
+                    </FuelTooltip>
+                  </td>
+                  <td className="max-w-36 px-4 py-3">
+                    <FuelTooltip
+                      content={invoice.invoice_number ?? null}
+                      className="truncate"
+                    >
+                      {invoice.invoice_number ?? "-"}
+                    </FuelTooltip>
+                  </td>
                   <td className="px-4 py-3 text-right font-semibold">
-                    {formatCurrency(invoice.total_amount)}
+                    <FuelTooltip content={invoiceAmountDetails(invoice)}>
+                      {formatCurrency(invoice.total_amount)}
+                    </FuelTooltip>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    {formatCurrency(invoice.paid_amount)}
+                    <FuelTooltip content={invoiceAmountDetails(invoice)}>
+                      {formatCurrency(invoice.paid_amount)}
+                    </FuelTooltip>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    {formatCurrency(invoice.balance_amount)}
+                    <FuelTooltip content={invoiceAmountDetails(invoice)}>
+                      {formatCurrency(invoice.balance_amount)}
+                    </FuelTooltip>
                   </td>
                   <td className="px-4 py-3">
-                    <span
-                      className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${statusClass(
-                        invoice.status
-                      )}`}
-                    >
-                      {formatStatus(invoice.status)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    {invoice.items.length}
+                    <FuelTooltip content={invoiceDetails(invoice)}>
+                      <span
+                        className={`inline-flex rounded-full border px-2.5 py-0.5 text-xs font-medium ${statusClass(
+                          invoice.status
+                        )}`}
+                      >
+                        {formatStatus(invoice.status)}
+                      </span>
+                    </FuelTooltip>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-2">
