@@ -547,7 +547,9 @@ export default function FuelTrackerPage() {
     invoice: VehicleExpenseInvoice
   ) => {
     if (invoice.payments.length > 0) {
-      toast.error("Invoices with payments cannot be deleted.");
+      toast.error(
+        "Invoice cannot be deleted because it has already been allocated to a payment batch."
+      );
       return;
     }
 

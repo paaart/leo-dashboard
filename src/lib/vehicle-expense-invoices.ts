@@ -922,6 +922,51 @@ export async function createVehicleExpenseInvoice(
   }
 }
 
+async function lockInvoiceForChange(client: PoolClient, invoiceId: string) {
+  const existing = await client.query<{ id: string }>(
+    `
+    select id
+    from public.vehicle_expense_invoices
+    where id = $1::uuid
+    for update
+    `,
+    [invoiceId]
+  );
+
+  if (!existing.rows[0]) {
+    throw Object.assign(new Error("Vehicle expense invoice not found"), {
+      status: 404,
+    });
+  }
+}
+
+async function getInvoiceAllocationState(
+  client: PoolClient,
+  invoiceId: string
+) {
+  const result = await client.query<{
+    allocation_count: string | number;
+    payment_batch_count: string | number;
+  }>(
+    `
+    select
+      count(a.id)::int as allocation_count,
+      count(b.id)::int as payment_batch_count
+    from public.vehicle_expense_payment_allocations a
+    left join public.vehicle_expense_payment_batches b
+      on b.id = a.payment_batch_id
+    where a.invoice_id = $1::uuid
+    `,
+    [invoiceId]
+  );
+  const row = result.rows[0];
+
+  return {
+    allocationCount: Number(row?.allocation_count ?? 0),
+    paymentBatchCount: Number(row?.payment_batch_count ?? 0),
+  };
+}
+
 export async function updateVehicleExpenseInvoice(
   invoiceId: string,
   input: ValidInvoiceInput
@@ -931,29 +976,15 @@ export async function updateVehicleExpenseInvoice(
   try {
     await client.query("BEGIN");
 
-    const existing = await client.query<{ payment_count: number }>(
-      `
-      select count(a.id)::int as payment_count
-      from public.vehicle_expense_invoices i
-      left join public.vehicle_expense_payment_allocations a on a.invoice_id = i.id
-      where i.id = $1::uuid
-      group by i.id
-      for update of i
-      `,
-      [invoiceId]
-    );
-
-    if (!existing.rows[0]) {
-      throw Object.assign(new Error("Vehicle expense invoice not found"), {
-        status: 404,
-      });
-    }
-
-    const hasPayments = Number(existing.rows[0].payment_count) > 0;
+    await lockInvoiceForChange(client, invoiceId);
+    const allocationState = await getInvoiceAllocationState(client, invoiceId);
+    const hasPayments = allocationState.allocationCount > 0;
 
     if (input.items && hasPayments) {
       throw Object.assign(
-        new Error("Invoice items cannot be changed after payments exist"),
+        new Error(
+          "Invoice items cannot be changed because this invoice has already been allocated to a payment batch."
+        ),
         { status: 400 }
       );
     }
@@ -1026,27 +1057,23 @@ export async function deleteVehicleExpenseInvoice(
   try {
     await client.query("BEGIN");
 
-    const existing = await client.query<{ payment_count: number }>(
-      `
-      select count(a.id)::int as payment_count
-      from public.vehicle_expense_invoices i
-      left join public.vehicle_expense_payment_allocations a on a.invoice_id = i.id
-      where i.id = $1::uuid
-      group by i.id
-      for update of i
-      `,
-      [invoiceId]
-    );
+    await lockInvoiceForChange(client, invoiceId);
+    const allocationState = await getInvoiceAllocationState(client, invoiceId);
 
-    if (!existing.rows[0]) {
-      throw Object.assign(new Error("Vehicle expense invoice not found"), {
-        status: 404,
-      });
+    if (allocationState.paymentBatchCount > 0) {
+      throw Object.assign(
+        new Error(
+          "Invoice cannot be deleted because it has already been allocated to a payment batch."
+        ),
+        { status: 400 }
+      );
     }
 
-    if (Number(existing.rows[0].payment_count) > 0) {
+    if (allocationState.allocationCount > 0) {
       throw Object.assign(
-        new Error("Invoices with payments cannot be deleted"),
+        new Error(
+          "Invoice cannot be deleted because allocation records still reference it."
+        ),
         { status: 400 }
       );
     }

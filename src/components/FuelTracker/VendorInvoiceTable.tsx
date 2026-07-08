@@ -223,7 +223,7 @@ export function VendorInvoiceTable({
                         title={
                           editable
                             ? "Delete invoice"
-                            : "Invoices with payments cannot be deleted."
+                            : "Invoice cannot be deleted because it has already been allocated to a payment batch."
                         }
                         className="inline-flex min-h-9 items-center gap-2 rounded-md border border-red-200 px-3 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/40"
                       >
