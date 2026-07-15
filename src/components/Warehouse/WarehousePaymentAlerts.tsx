@@ -1,16 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { CreditCard, EyeOff, RefreshCw } from "lucide-react";
+import { useEffect, useState } from "react";
+import { EyeOff, RefreshCw } from "lucide-react";
 import toast from "react-hot-toast";
 
 import { getErrorMessage } from "@/lib/errors";
-import { recordWarehousePayment } from "@/lib/warehouse/ledger";
 import {
   dismissWarehousePaymentAlert,
   listWarehousePaymentAlerts,
   type WarehousePaymentAlertRow,
-  type WarehousePaymentAlertStatus,
 } from "@/lib/warehouse/pods";
 import {
   EmptyState,
@@ -18,16 +16,6 @@ import {
   PageHeader,
   SectionCard,
 } from "@/components/shared/DashboardUI";
-import WarehouseTxModal from "./Ledger/WarehouseTxModal";
-
-type FilterValue = "all" | WarehousePaymentAlertStatus;
-
-const FILTERS: Array<{ label: string; value: FilterValue }> = [
-  { label: "All", value: "all" },
-  { label: "Overdue", value: "overdue" },
-  { label: "Due Today", value: "due_today" },
-  { label: "Upcoming", value: "upcoming" },
-];
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("en-IN", {
@@ -44,31 +32,9 @@ function fmtDate(value?: string | null) {
   return dt.toLocaleDateString("en-IN");
 }
 
-function statusLabel(status: WarehousePaymentAlertStatus) {
-  if (status === "overdue") return "Overdue";
-  if (status === "due_today") return "Due Today";
-  return "Upcoming";
-}
-
-function statusBadgeClass(status: WarehousePaymentAlertStatus) {
-  if (status === "overdue") {
-    return "border-red-200 bg-red-50 text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300";
-  }
-
-  if (status === "due_today") {
-    return "border-yellow-200 bg-yellow-50 text-yellow-800 dark:border-yellow-900/60 dark:bg-yellow-950/40 dark:text-yellow-300";
-  }
-
-  return "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300";
-}
-
 export default function WarehousePaymentAlerts() {
   const [rows, setRows] = useState<WarehousePaymentAlertRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<FilterValue>("all");
-  const [payingRow, setPayingRow] = useState<WarehousePaymentAlertRow | null>(
-    null,
-  );
   const [dismissingKey, setDismissingKey] = useState<string | null>(null);
 
   const load = async () => {
@@ -88,27 +54,6 @@ export default function WarehousePaymentAlerts() {
   useEffect(() => {
     void load();
   }, []);
-
-  const filtered = useMemo(() => {
-    if (filter === "all") return rows;
-    return rows.filter((row) => row.alert_status === filter);
-  }, [filter, rows]);
-
-  const totalDue = useMemo(
-    () => filtered.reduce((sum, row) => sum + Number(row.total_due || 0), 0),
-    [filtered],
-  );
-
-  const counts = useMemo(() => {
-    return rows.reduce(
-      (acc, row) => {
-        acc.all += 1;
-        acc[row.alert_status] += 1;
-        return acc;
-      },
-      { all: 0, overdue: 0, due_today: 0, upcoming: 0 },
-    );
-  }, [rows]);
 
   const dismissAlert = async (row: WarehousePaymentAlertRow) => {
     const key = `${row.pod_id}:${row.next_payment_date}`;
@@ -153,43 +98,9 @@ export default function WarehousePaymentAlerts() {
         />
 
         <SectionCard
-          title="Payment Alerts"
-          description="Upcoming and overdue warehouse payment dates for active PODs."
+          title="Upcoming Payments"
+          description={`Due in the Next 5 Days • ${rows.length} Payments`}
           action={
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <div className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-                {filtered.length} alerts
-              </div>
-              <div className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-semibold text-blue-700 dark:border-gray-800 dark:bg-gray-900 dark:text-blue-300">
-                {formatCurrency(totalDue)}
-              </div>
-            </div>
-          }
-        >
-          <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex flex-wrap gap-2">
-              {FILTERS.map((item) => {
-                const active = filter === item.value;
-                return (
-                  <button
-                    key={item.value}
-                    type="button"
-                    onClick={() => setFilter(item.value)}
-                    className={`inline-flex min-h-9 items-center justify-center rounded-md border px-3 text-sm font-medium transition ${
-                      active
-                        ? "border-blue-600 bg-blue-600 text-white"
-                        : "border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
-                    }`}
-                  >
-                    {item.label}
-                    <span className="ml-2 text-xs opacity-80">
-                      {counts[item.value]}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
             <button
               type="button"
               onClick={() => void load()}
@@ -199,12 +110,12 @@ export default function WarehousePaymentAlerts() {
               <RefreshCw className="h-4 w-4" />
               Refresh
             </button>
-          </div>
-
-          {filtered.length === 0 ? (
+          }
+        >
+          {rows.length === 0 ? (
             <EmptyState
-              title="No payment alerts"
-              description="No payment alerts due right now."
+              title="No upcoming payments"
+              description="No payments are due in the next 5 days."
             />
           ) : (
             <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
@@ -232,9 +143,6 @@ export default function WarehousePaymentAlerts() {
                     <th className="border-b border-gray-200 px-4 py-3 text-right font-semibold dark:border-gray-800">
                       Total Due
                     </th>
-                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
-                      Alert Status
-                    </th>
                     <th className="border-b border-gray-200 px-4 py-3  font-semibold dark:border-gray-800">
                       Actions
                     </th>
@@ -242,7 +150,7 @@ export default function WarehousePaymentAlerts() {
                 </thead>
 
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                  {filtered.map((row, idx) => {
+                  {rows.map((row, idx) => {
                     const dismissKey = `${row.pod_id}:${row.next_payment_date}`;
                     const dismissing = dismissingKey === dismissKey;
 
@@ -278,24 +186,7 @@ export default function WarehousePaymentAlerts() {
                           {formatCurrency(Number(row.total_due))}
                         </td>
                         <td className="px-4 py-3">
-                          <span
-                            className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${statusBadgeClass(
-                              row.alert_status,
-                            )}`}
-                          >
-                            {statusLabel(row.alert_status)}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
                           <div className="flex justify-end gap-2">
-                            <button
-                              type="button"
-                              onClick={() => setPayingRow(row)}
-                              className="inline-flex min-h-9 items-center justify-center gap-2 rounded-md border border-blue-200 px-3 text-sm font-medium text-blue-700 transition hover:bg-blue-50 dark:border-blue-900/60 dark:text-blue-300 dark:hover:bg-blue-950/40"
-                            >
-                              <CreditCard className="h-4 w-4" />
-                              Record Payment
-                            </button>
                             <button
                               type="button"
                               onClick={() => void dismissAlert(row)}
@@ -318,27 +209,6 @@ export default function WarehousePaymentAlerts() {
           )}
         </SectionCard>
       </div>
-
-      <WarehouseTxModal
-        open={Boolean(payingRow)}
-        title="Record Payment"
-        kind="payment"
-        onClose={() => setPayingRow(null)}
-        onSubmit={async (value) => {
-          if (!payingRow) return;
-
-          await recordWarehousePayment({
-            podId: payingRow.pod_id,
-            amount: value.amount,
-            txDate: value.txDate,
-            title: value.title,
-            note: value.note,
-          });
-
-          toast.success("Payment recorded");
-          await load();
-        }}
-      />
     </div>
   );
 }

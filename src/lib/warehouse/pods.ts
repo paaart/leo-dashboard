@@ -243,11 +243,6 @@ export type WarehouseClosedPodsMeta = {
   totalPages: number;
 };
 
-export type WarehousePaymentAlertStatus =
-  | "overdue"
-  | "due_today"
-  | "upcoming";
-
 export type WarehousePaymentAlertRow = {
   pod_id: string;
   client_id: string | null;
@@ -257,7 +252,6 @@ export type WarehousePaymentAlertRow = {
   location_name: string | null;
   next_payment_date: string;
   total_due: number;
-  alert_status: WarehousePaymentAlertStatus;
 };
 
 export async function listWarehousePaymentAlerts(): Promise<

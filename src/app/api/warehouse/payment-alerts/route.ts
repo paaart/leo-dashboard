@@ -4,8 +4,6 @@ import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { WAREHOUSE_ACTIVE_POD_BALANCE_CTES } from "@/lib/warehouse/podBalanceSql";
 
-export type WarehousePaymentAlertStatus = "overdue" | "due_today" | "upcoming";
-
 export type WarehousePaymentAlertRow = {
   pod_id: string;
   client_id: string | null;
@@ -15,7 +13,6 @@ export type WarehousePaymentAlertRow = {
   location_name: string | null;
   next_payment_date: string;
   total_due: number;
-  alert_status: WarehousePaymentAlertStatus;
 };
 
 async function ensureDismissalsTable(client: PoolClient) {
@@ -52,12 +49,7 @@ export async function GET(req: NextRequest) {
         c.name as company_name,
         l.name as location_name,
         p.next_payment_date::date::text as next_payment_date,
-        coalesce(a.total_due_gross, 0)::numeric(12,2)::float8 as total_due,
-        case
-          when p.next_payment_date::date < current_date then 'overdue'
-          when p.next_payment_date::date = current_date then 'due_today'
-          else 'upcoming'
-        end as alert_status
+        coalesce(a.total_due_gross, 0)::numeric(12,2)::float8 as total_due
       from public.warehouse_pods p
       left join public.companies c on c.id = p.company_id
       left join public.locations l on l.id = p.location_id
@@ -67,12 +59,14 @@ export async function GET(req: NextRequest) {
        and d.next_payment_date = p.next_payment_date::date
       where p.status = 'active'::warehouse_pod_status
         and p.next_payment_date is not null
+        and p.next_payment_date::date >= current_date
         and p.next_payment_date::date <= current_date + interval '5 days'
         and coalesce(a.total_due_gross, 0) > 0
         and d.id is null
       order by
-        p.next_payment_date asc,
-        p.created_at asc nulls last,
+        p.next_payment_date desc,
+        lower(p.name) asc,
+        p.client_id asc nulls last,
         p.id asc
       `
     );
