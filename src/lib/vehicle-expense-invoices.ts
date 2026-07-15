@@ -1281,6 +1281,19 @@ export async function createVehicleExpensePaymentBatch(
     await client.query("BEGIN");
 
     const invoiceIds = input.allocations.map((allocation) => allocation.invoice_id);
+    const duplicateInvoiceIds = invoiceIds.filter(
+      (invoiceId, index) => invoiceIds.indexOf(invoiceId) !== index
+    );
+
+    if (duplicateInvoiceIds.length > 0) {
+      throw Object.assign(
+        new Error(
+          `Duplicate invoice allocation rejected for invoice ${duplicateInvoiceIds[0]}`
+        ),
+        { status: 400 }
+      );
+    }
+
     const lockedInvoices = await client.query(
       `
       select id
@@ -1299,12 +1312,16 @@ export async function createVehicleExpensePaymentBatch(
 
     const invoices = await client.query<{
       id: string;
+      invoice_number: string | null;
+      vendor_name: string;
       total_amount: string | number;
       paid_amount: string | number;
     }>(
       `
       select
         i.id,
+        i.invoice_number,
+        i.vendor_name,
         i.total_amount,
         coalesce(sum(a.allocated_amount), 0) as paid_amount
       from public.vehicle_expense_invoices i
@@ -1317,9 +1334,37 @@ export async function createVehicleExpensePaymentBatch(
 
     const invoicesById = new Map(invoices.rows.map((row) => [row.id, row]));
 
-    for (const allocation of input.allocations) {
+    for (const [index, allocation] of input.allocations.entries()) {
       const invoice = invoicesById.get(allocation.invoice_id);
-      if (!invoice) continue;
+      const rowLabel = `allocation ${index + 1}`;
+
+      if (
+        !Number.isFinite(allocation.allocated_amount) ||
+        allocation.allocated_amount <= 0
+      ) {
+        throw Object.assign(
+          new Error(`Allocated amount for ${rowLabel} must be greater than zero`),
+          { status: 400 }
+        );
+      }
+
+      if (!invoice) {
+        throw Object.assign(
+          new Error(`Invoice was not found for ${rowLabel}`),
+          { status: 400 }
+        );
+      }
+
+      if (invoice.vendor_name !== input.vendor_name) {
+        throw Object.assign(
+          new Error(
+            `Invoice ${
+              invoice.invoice_number ?? allocation.invoice_id
+            } for ${rowLabel} does not belong to vendor ${input.vendor_name}`
+          ),
+          { status: 400 }
+        );
+      }
 
       const outstanding = roundMoney(
         Number(invoice.total_amount) - Number(invoice.paid_amount)
@@ -1327,7 +1372,11 @@ export async function createVehicleExpensePaymentBatch(
 
       if (allocation.allocated_amount > outstanding) {
         throw Object.assign(
-          new Error("Allocated amount cannot exceed outstanding balance"),
+          new Error(
+            `Allocated amount for invoice ${
+              invoice.invoice_number ?? allocation.invoice_id
+            } at ${rowLabel} cannot exceed outstanding balance of ${outstanding}`
+          ),
           { status: 400 }
         );
       }

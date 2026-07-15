@@ -10,12 +10,14 @@ type AllocationForm = {
   invoiceId: string;
   invoiceSearch: string;
   allocatedAmount: string;
+  outstandingAmount: number | null;
 };
 
 const initialAllocation: AllocationForm = {
   invoiceId: "",
   invoiceSearch: "",
   allocatedAmount: "",
+  outstandingAmount: null,
 };
 
 function formatCurrency(value: number) {
@@ -65,8 +67,10 @@ export function VendorPaymentBatchFormModal({
   );
   const runningTotal = useMemo(() => {
     return form.allocations.reduce((sum, allocation) => {
+      if (!allocation.invoiceId) return sum;
+
       const amount = Number(allocation.allocatedAmount);
-      return Number.isFinite(amount) ? sum + amount : sum;
+      return Number.isFinite(amount) && amount > 0 ? sum + amount : sum;
     }, 0);
   }, [form.allocations]);
 
@@ -127,25 +131,40 @@ export function VendorPaymentBatchFormModal({
     for (const [index, allocation] of form.allocations.entries()) {
       const amount = Number(allocation.allocatedAmount);
       const invoice = invoicesById.get(allocation.invoiceId);
+      const hasInvoice = Boolean(allocation.invoiceId);
+      const hasAmount = Number.isFinite(amount) && amount > 0;
 
-      if (!allocation.invoiceId || !invoice) {
-        setError(`Select an invoice for allocation ${index + 1}.`);
+      if (!hasInvoice && !hasAmount) {
+        continue;
+      }
+
+      if (!hasInvoice && hasAmount) {
+        setError("Select an invoice for every allocated amount.");
         return;
       }
 
       if (seenInvoiceIds.has(allocation.invoiceId)) {
-        setError("Cannot allocate the same invoice twice.");
+        setError(`Invoice is selected more than once at allocation ${index + 1}.`);
         return;
       }
 
-      if (!Number.isFinite(amount) || amount <= 0) {
+      if (!invoice) {
+        setError(`Allocation ${index + 1} has an invalid invoice selected.`);
+        return;
+      }
+
+      if (!hasAmount) {
         setError(`Allocation ${index + 1} must be greater than zero.`);
         return;
       }
 
-      if (amount > invoice.balance_amount) {
+      const outstanding = allocation.outstandingAmount ?? invoice.balance_amount;
+
+      if (amount > outstanding) {
         setError(
-          `Allocation ${index + 1} cannot exceed the invoice outstanding balance.`
+          `Allocation ${index + 1} for ${
+            invoice.invoice_number ?? invoice.id
+          } cannot exceed the invoice outstanding balance.`
         );
         return;
       }
@@ -155,6 +174,11 @@ export function VendorPaymentBatchFormModal({
         invoiceId: allocation.invoiceId,
         allocatedAmount: amount,
       });
+    }
+
+    if (allocations.length === 0) {
+      setError("Add at least one complete invoice allocation.");
+      return;
     }
 
     await onSubmit({
@@ -172,7 +196,7 @@ export function VendorPaymentBatchFormModal({
       paymentMode: "",
       referenceNumber: "",
       remarks: "",
-      allocations: [initialAllocation],
+      allocations: [{ ...initialAllocation }],
     });
   };
 
@@ -303,8 +327,6 @@ export function VendorPaymentBatchFormModal({
             </div>
 
             {form.allocations.map((allocation, index) => {
-              const invoice = invoicesById.get(allocation.invoiceId);
-
               return (
                 <div
                   key={index}
@@ -333,10 +355,11 @@ export function VendorPaymentBatchFormModal({
                           invoiceSearch: nextInvoice
                             ? nextInvoice.invoice_number ??
                               nextInvoice.vendor_name
-                            : allocation.invoiceSearch,
-                          allocatedAmount: nextInvoice
-                            ? String(nextInvoice.balance_amount)
                             : "",
+                          outstandingAmount: nextInvoice
+                            ? nextInvoice.balance_amount
+                            : null,
+                          allocatedAmount: "",
                         });
                       }}
                       className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
@@ -361,7 +384,9 @@ export function VendorPaymentBatchFormModal({
                     </select>
                     <span className="block text-xs text-gray-500 dark:text-gray-400">
                       Outstanding:{" "}
-                      {invoice ? formatCurrency(invoice.balance_amount) : "-"}
+                      {allocation.outstandingAmount !== null
+                        ? formatCurrency(allocation.outstandingAmount)
+                        : "-"}
                     </span>
                   </div>
 
@@ -380,7 +405,7 @@ export function VendorPaymentBatchFormModal({
                         })
                       }
                       className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
-                      placeholder="2500"
+                      placeholder="Amount"
                     />
                   </label>
 
