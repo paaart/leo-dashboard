@@ -38,6 +38,25 @@ export async function listWarehousePods(args?: {
   return data.rows ?? [];
 }
 
+export type WarehouseDashboardSummary = {
+  activePods: number;
+  closedPods: number;
+  totalOutstanding: number;
+  monthlyCharges: number;
+  paymentsReceived: number;
+  overduePending: number;
+};
+
+export async function getWarehouseDashboardSummary(): Promise<WarehouseDashboardSummary> {
+  return fetchJson<WarehouseDashboardSummary>(
+    "/api/warehouse/dashboard-summary",
+    {
+      method: "GET",
+      cache: "no-store",
+    }
+  );
+}
+
 export type CreatePodBody = {
   name: string;
   email?: string | null;

@@ -10,11 +10,7 @@ import {
   PackageCheck,
 } from "lucide-react";
 import { MetricCard } from "@/components/shared/DashboardUI";
-import {
-  listClosedWarehousePods,
-  listWarehousePayments,
-  listWarehousePods,
-} from "@/lib/warehouse/pods";
+import { getWarehouseDashboardSummary } from "@/lib/warehouse/pods";
 import { getErrorMessage } from "@/lib/errors";
 
 function formatCurrency(value: number) {
@@ -53,33 +49,11 @@ export default function WarehouseSummaryCards() {
       setError(null);
 
       try {
-        const [activePods, closedPods, payments] = await Promise.all([
-          listWarehousePods({ status: "active", limit: 500 }),
-          listClosedWarehousePods({ page: 1, pageSize: 1 }),
-          listWarehousePayments({ page: 1, pageSize: 500 }),
-        ]);
+        const summary = await getWarehouseDashboardSummary();
 
         if (cancelled) return;
 
-        setSummary({
-          activePods: activePods.length,
-          closedPods: closedPods.meta.total,
-          totalOutstanding: activePods.reduce(
-            (sum, pod) => sum + Number(pod.total_due || 0),
-            0
-          ),
-          monthlyCharges: activePods.reduce(
-            (sum, pod) => sum + Number(pod.rate || 0),
-            0
-          ),
-          paymentsReceived: payments.rows.reduce(
-            (sum, row) => sum + Math.abs(Number(row.amount || 0)),
-            0
-          ),
-          overduePending: activePods
-            .filter((pod) => pod.severity_band === "red")
-            .reduce((sum, pod) => sum + Math.max(Number(pod.total_due || 0), 0), 0),
-        });
+        setSummary(summary);
       } catch (err: unknown) {
         if (!cancelled) {
           setError(getErrorMessage(err) || "Unable to load warehouse summary");
@@ -146,7 +120,7 @@ export default function WarehouseSummaryCards() {
               formatCurrency(summary.paymentsReceived)
             )
           }
-          hint="Latest payment records"
+          hint="Lifetime recorded payments"
           icon={<CreditCard className="h-5 w-5" />}
         />
         <MetricCard
@@ -161,4 +135,3 @@ export default function WarehouseSummaryCards() {
     </div>
   );
 }
-
