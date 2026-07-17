@@ -144,7 +144,9 @@ export function VendorPaymentBatchFormModal({
       }
 
       if (seenInvoiceIds.has(allocation.invoiceId)) {
-        setError(`Invoice is selected more than once at allocation ${index + 1}.`);
+        setError(
+          "This invoice is already included in this payment batch. If you want to split the payment across different dates, create another payment batch later."
+        );
         return;
       }
 

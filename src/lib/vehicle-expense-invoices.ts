@@ -225,6 +225,23 @@ function roundMoney(value: number) {
   return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
+const PAYMENT_STATUS_EPSILON = 0.01;
+
+function deriveInvoiceStatus(
+  totalAmount: number,
+  paidAmount: number
+): VehicleExpenseInvoiceStatus {
+  const outstandingAmount = roundMoney(totalAmount - paidAmount);
+
+  if (outstandingAmount <= PAYMENT_STATUS_EPSILON) return "paid";
+  if (paidAmount > PAYMENT_STATUS_EPSILON) return "partially_paid";
+  return "unpaid";
+}
+
+function quotePgIdentifier(value: string) {
+  return `"${value.replaceAll('"', '""')}"`;
+}
+
 function toDateOnly(value: unknown): string {
   if (value instanceof Date) return value.toISOString().slice(0, 10);
   return String(value).slice(0, 10);
@@ -277,6 +294,10 @@ function mapBatchAllocation(
 ): VehicleExpensePaymentBatchAllocation {
   const invoiceTotalAmount = Number(row.invoice_total_amount);
   const invoicePaidAmount = Number(row.invoice_paid_amount ?? 0);
+  const invoiceStatus = deriveInvoiceStatus(
+    invoiceTotalAmount,
+    invoicePaidAmount
+  );
 
   return {
     id: String(row.id),
@@ -285,7 +306,7 @@ function mapBatchAllocation(
     invoice_vendor_name: String(row.invoice_vendor_name),
     invoice_number: row.invoice_number ? String(row.invoice_number) : null,
     invoice_date: toDateOnly(row.invoice_date),
-    invoice_status: String(row.invoice_status) as VehicleExpenseInvoiceStatus,
+    invoice_status: invoiceStatus,
     invoice_total_amount: invoiceTotalAmount,
     invoice_paid_amount: invoicePaidAmount,
     invoice_balance_amount: roundMoney(invoiceTotalAmount - invoicePaidAmount),
@@ -323,6 +344,7 @@ function mapInvoice(
 ): VehicleExpenseInvoice {
   const totalAmount = Number(row.total_amount);
   const paidAmount = Number(row.paid_amount ?? 0);
+  const status = deriveInvoiceStatus(totalAmount, paidAmount);
 
   return {
     id: String(row.id),
@@ -333,7 +355,7 @@ function mapInvoice(
     total_amount: totalAmount,
     paid_amount: paidAmount,
     balance_amount: roundMoney(totalAmount - paidAmount),
-    status: String(row.status) as VehicleExpenseInvoiceStatus,
+    status,
     remarks: row.remarks ? String(row.remarks) : null,
     created_by: row.created_by ? String(row.created_by) : null,
     created_at: toIso(row.created_at),
@@ -537,7 +559,11 @@ export function validateCreatePaymentBatchInput(
     }
 
     if (seenInvoiceIds.has(invoiceId)) {
-      return { ok: false, error: "Cannot allocate the same invoice twice" };
+      return {
+        ok: false,
+        error:
+          "This invoice is already included in this payment batch. If you want to split the payment across different dates, create another payment batch later.",
+      };
     }
 
     if (!Number.isFinite(allocatedAmount) || allocatedAmount <= 0) {
@@ -755,7 +781,7 @@ export async function listVehicleExpenseInvoices(params: {
 
   if (params.status) {
     values.push(params.status);
-    clauses.push(`i.status = $${values.length}`);
+    clauses.push(`invoice_status = $${values.length}`);
   }
 
   if (params.vendorName) {
@@ -780,13 +806,29 @@ export async function listVehicleExpenseInvoices(params: {
 
   const result = await db.query(
     `
+    with invoice_paid as (
+      select
+        i.id,
+        i.vendor_name,
+        i.invoice_date,
+        i.created_at,
+        coalesce(sum(a.allocated_amount), 0) as paid_amount,
+        case
+          when round((i.total_amount - coalesce(sum(a.allocated_amount), 0))::numeric, 2) <= $${limitParam + 2}::numeric then 'paid'
+          when coalesce(sum(a.allocated_amount), 0) > $${limitParam + 2}::numeric then 'partially_paid'
+          else 'unpaid'
+        end as invoice_status
+      from public.vehicle_expense_invoices i
+      left join public.vehicle_expense_payment_allocations a on a.invoice_id = i.id
+      group by i.id
+    )
     select i.id
-    from public.vehicle_expense_invoices i
+    from invoice_paid i
     ${clauses.length ? `where ${clauses.join(" and ")}` : ""}
     order by i.invoice_date desc, i.created_at desc
     limit $${limitParam} offset $${offsetParam}
     `,
-    values
+    [...values, PAYMENT_STATUS_EPSILON]
   );
 
   return fetchInvoicesByIds(result.rows.map((row) => String(row.id)));
@@ -799,8 +841,12 @@ export async function getVehicleExpenseInvoiceAnalytics(): Promise<VehicleExpens
       select
         i.id,
         i.total_amount,
-        i.status,
-        coalesce(sum(a.allocated_amount), 0) as paid_amount
+        coalesce(sum(a.allocated_amount), 0) as paid_amount,
+        case
+          when round((i.total_amount - coalesce(sum(a.allocated_amount), 0))::numeric, 2) <= $1::numeric then 'paid'
+          when coalesce(sum(a.allocated_amount), 0) > $1::numeric then 'partially_paid'
+          else 'unpaid'
+        end as status
       from public.vehicle_expense_invoices i
       left join public.vehicle_expense_payment_allocations a on a.invoice_id = i.id
       group by i.id
@@ -843,7 +889,8 @@ export async function getVehicleExpenseInvoiceAnalytics(): Promise<VehicleExpens
     select *
     from invoice_summary
     cross join payment_summary
-    `
+    `,
+    [PAYMENT_STATUS_EPSILON]
   );
 
   const row = result.rows[0] ?? {};
@@ -1034,10 +1081,7 @@ export async function updateVehicleExpenseInvoice(
       await insertItems(client, invoiceId, input.items);
     }
 
-    await client.query(
-      `select public.sync_vehicle_expense_invoice_status($1::uuid)`,
-      [invoiceId]
-    );
+    await syncInvoiceStatuses(client, [invoiceId]);
     await client.query("COMMIT");
 
     return getInvoiceOrThrow(invoiceId);
@@ -1263,12 +1307,65 @@ export async function getVehicleExpensePaymentBatch(paymentBatchId: string) {
 }
 
 async function syncInvoiceStatuses(client: PoolClient, invoiceIds: string[]) {
-  for (const invoiceId of invoiceIds) {
+  const uniqueInvoiceIds = [...new Set(invoiceIds)];
+  if (uniqueInvoiceIds.length === 0) return;
+
+  await client.query(
+    `
+    with invoice_paid as (
+      select
+        i.id,
+        i.total_amount,
+        coalesce(sum(a.allocated_amount), 0) as paid_amount
+      from public.vehicle_expense_invoices i
+      left join public.vehicle_expense_payment_allocations a on a.invoice_id = i.id
+      where i.id = any($1::uuid[])
+      group by i.id
+    )
+    update public.vehicle_expense_invoices i
+    set status = case
+        when round((invoice_paid.total_amount - invoice_paid.paid_amount)::numeric, 2) <= $2::numeric then 'paid'
+        when invoice_paid.paid_amount > $2::numeric then 'partially_paid'
+        else 'unpaid'
+      end,
+      updated_at = now()
+    from invoice_paid
+    where i.id = invoice_paid.id
+    `,
+    [uniqueInvoiceIds, PAYMENT_STATUS_EPSILON]
+  );
+}
+
+async function ensurePaymentAllocationCrossBatchSupport(client: PoolClient) {
+  const invoiceOnlyConstraints = await client.query<{ conname: string }>(
+    `
+    select c.conname
+    from pg_constraint c
+    join pg_class t on t.oid = c.conrelid
+    join pg_namespace n on n.oid = t.relnamespace
+    join pg_attribute a
+      on a.attrelid = t.oid
+     and a.attnum = c.conkey[1]
+    where n.nspname = 'public'
+      and t.relname = 'vehicle_expense_payment_allocations'
+      and c.contype = 'u'
+      and array_length(c.conkey, 1) = 1
+      and a.attname = 'invoice_id'
+    `
+  );
+
+  for (const row of invoiceOnlyConstraints.rows) {
     await client.query(
-      `select public.sync_vehicle_expense_invoice_status($1::uuid)`,
-      [invoiceId]
+      `alter table public.vehicle_expense_payment_allocations drop constraint if exists ${quotePgIdentifier(
+        row.conname
+      )}`
     );
   }
+
+  await client.query(`
+    create unique index if not exists vehicle_expense_payment_allocations_batch_invoice_uidx
+    on public.vehicle_expense_payment_allocations (payment_batch_id, invoice_id)
+  `);
 }
 
 export async function createVehicleExpensePaymentBatch(
@@ -1280,6 +1377,8 @@ export async function createVehicleExpensePaymentBatch(
   try {
     await client.query("BEGIN");
 
+    await ensurePaymentAllocationCrossBatchSupport(client);
+
     const invoiceIds = input.allocations.map((allocation) => allocation.invoice_id);
     const duplicateInvoiceIds = invoiceIds.filter(
       (invoiceId, index) => invoiceIds.indexOf(invoiceId) !== index
@@ -1288,7 +1387,7 @@ export async function createVehicleExpensePaymentBatch(
     if (duplicateInvoiceIds.length > 0) {
       throw Object.assign(
         new Error(
-          `Duplicate invoice allocation rejected for invoice ${duplicateInvoiceIds[0]}`
+          "This invoice is already included in this payment batch. If you want to split the payment across different dates, create another payment batch later."
         ),
         { status: 400 }
       );
