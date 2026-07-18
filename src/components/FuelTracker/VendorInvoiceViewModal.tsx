@@ -16,6 +16,16 @@ function formatCurrency(value: number) {
   }).format(value);
 }
 
+function moneyCents(value: unknown) {
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) return NaN;
+  return Math.round((amount + Number.EPSILON) * 100);
+}
+
+function centsToNumber(cents: number) {
+  return cents / 100;
+}
+
 function formatStatus(status: VehicleExpenseInvoice["status"]) {
   if (status === "partially_paid") return "Partially Paid";
   return status === "paid" ? "Paid" : "Unpaid";
@@ -78,26 +88,27 @@ export function VendorInvoiceViewModal({
     event.preventDefault();
     setPaymentError(null);
 
-    const amount = Number(paymentForm.amount);
+    const amountCents = moneyCents(paymentForm.amount);
+    const balanceCents = moneyCents(invoice.balance_amount);
 
     if (!paymentForm.paymentDate) {
       setPaymentError("Payment date is required.");
       return;
     }
 
-    if (!Number.isFinite(amount) || amount <= 0) {
+    if (!Number.isFinite(amountCents) || amountCents <= 0) {
       setPaymentError("Amount must be greater than zero.");
       return;
     }
 
-    if (amount > invoice.balance_amount) {
+    if (amountCents > balanceCents) {
       setPaymentError("Amount cannot exceed outstanding balance.");
       return;
     }
 
     await onRecordPayment(invoice, {
       paymentDate: paymentForm.paymentDate,
-      amount,
+      amount: centsToNumber(amountCents),
       paymentMode: paymentForm.paymentMode.trim() || null,
       referenceNumber: paymentForm.referenceNumber.trim() || null,
       remarks: paymentForm.remarks.trim() || null,

@@ -28,6 +28,16 @@ function formatCurrency(value: number) {
   }).format(value);
 }
 
+function moneyCents(value: unknown) {
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) return NaN;
+  return Math.round((amount + Number.EPSILON) * 100);
+}
+
+function centsToNumber(cents: number) {
+  return cents / 100;
+}
+
 function invoiceLabel(invoice: VehicleExpenseInvoice) {
   return `${invoice.invoice_number ?? invoice.invoice_date} - ${
     invoice.vendor_name
@@ -66,12 +76,15 @@ export function VendorPaymentBatchFormModal({
     [invoices]
   );
   const runningTotal = useMemo(() => {
-    return form.allocations.reduce((sum, allocation) => {
+    const cents = form.allocations.reduce((sum, allocation) => {
       if (!allocation.invoiceId) return sum;
 
-      const amount = Number(allocation.allocatedAmount);
-      return Number.isFinite(amount) && amount > 0 ? sum + amount : sum;
+      const amountCents = moneyCents(allocation.allocatedAmount);
+      return Number.isFinite(amountCents) && amountCents > 0
+        ? sum + amountCents
+        : sum;
     }, 0);
+    return centsToNumber(cents);
   }, [form.allocations]);
 
   if (!open) return null;
@@ -129,10 +142,10 @@ export function VendorPaymentBatchFormModal({
     const allocations = [];
 
     for (const [index, allocation] of form.allocations.entries()) {
-      const amount = Number(allocation.allocatedAmount);
+      const amountCents = moneyCents(allocation.allocatedAmount);
       const invoice = invoicesById.get(allocation.invoiceId);
       const hasInvoice = Boolean(allocation.invoiceId);
-      const hasAmount = Number.isFinite(amount) && amount > 0;
+      const hasAmount = Number.isFinite(amountCents) && amountCents > 0;
 
       if (!hasInvoice && !hasAmount) {
         continue;
@@ -161,8 +174,9 @@ export function VendorPaymentBatchFormModal({
       }
 
       const outstanding = allocation.outstandingAmount ?? invoice.balance_amount;
+      const outstandingCents = moneyCents(outstanding);
 
-      if (amount > outstanding) {
+      if (amountCents > outstandingCents) {
         setError(
           `Allocation ${index + 1} for ${
             invoice.invoice_number ?? invoice.id
@@ -174,7 +188,7 @@ export function VendorPaymentBatchFormModal({
       seenInvoiceIds.add(allocation.invoiceId);
       allocations.push({
         invoiceId: allocation.invoiceId,
-        allocatedAmount: amount,
+        allocatedAmount: centsToNumber(amountCents),
       });
     }
 

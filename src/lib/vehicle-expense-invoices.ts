@@ -221,20 +221,39 @@ function toAmount(value: unknown): number {
   return Number(value);
 }
 
-function roundMoney(value: number) {
-  return Math.round((value + Number.EPSILON) * 100) / 100;
+function moneyCents(value: unknown): number {
+  const amount = toAmount(value);
+  if (!Number.isFinite(amount)) return NaN;
+  return Math.round((amount + Number.EPSILON) * 100);
 }
 
-const PAYMENT_STATUS_EPSILON = 0.01;
+function centsToNumber(cents: number) {
+  return cents / 100;
+}
+
+function centsToDecimal(cents: number) {
+  const sign = cents < 0 ? "-" : "";
+  const absCents = Math.abs(cents);
+  return `${sign}${Math.floor(absCents / 100)}.${String(
+    absCents % 100
+  ).padStart(2, "0")}`;
+}
+
+function roundMoney(value: unknown) {
+  const cents = moneyCents(value);
+  return Number.isFinite(cents) ? centsToNumber(cents) : NaN;
+}
 
 function deriveInvoiceStatus(
   totalAmount: number,
   paidAmount: number
 ): VehicleExpenseInvoiceStatus {
-  const outstandingAmount = roundMoney(totalAmount - paidAmount);
+  const totalCents = moneyCents(totalAmount);
+  const paidCents = moneyCents(paidAmount);
+  const outstandingCents = totalCents - paidCents;
 
-  if (outstandingAmount <= PAYMENT_STATUS_EPSILON) return "paid";
-  if (paidAmount > PAYMENT_STATUS_EPSILON) return "partially_paid";
+  if (outstandingCents <= 0) return "paid";
+  if (paidCents > 0) return "partially_paid";
   return "unpaid";
 }
 
@@ -264,7 +283,7 @@ function mapItem(
     vehicles,
     expense_type: String(row.expense_type),
     description: row.description ? String(row.description) : null,
-    amount: Number(row.amount),
+    amount: roundMoney(row.amount),
     created_at: toIso(row.created_at),
   };
 }
@@ -278,7 +297,7 @@ function mapPayment(
     invoice_id: String(row.invoice_id),
     vendor_name: String(row.vendor_name),
     payment_date: toDateOnly(row.payment_date),
-    amount: Number(row.amount),
+    amount: roundMoney(row.amount),
     payment_mode: row.payment_mode ? String(row.payment_mode) : null,
     reference_number: row.reference_number
       ? String(row.reference_number)
@@ -292,8 +311,10 @@ function mapPayment(
 function mapBatchAllocation(
   row: Record<string, unknown>
 ): VehicleExpensePaymentBatchAllocation {
-  const invoiceTotalAmount = Number(row.invoice_total_amount);
-  const invoicePaidAmount = Number(row.invoice_paid_amount ?? 0);
+  const invoiceTotalCents = moneyCents(row.invoice_total_amount);
+  const invoicePaidCents = moneyCents(row.invoice_paid_amount ?? 0);
+  const invoiceTotalAmount = centsToNumber(invoiceTotalCents);
+  const invoicePaidAmount = centsToNumber(invoicePaidCents);
   const invoiceStatus = deriveInvoiceStatus(
     invoiceTotalAmount,
     invoicePaidAmount
@@ -309,8 +330,10 @@ function mapBatchAllocation(
     invoice_status: invoiceStatus,
     invoice_total_amount: invoiceTotalAmount,
     invoice_paid_amount: invoicePaidAmount,
-    invoice_balance_amount: roundMoney(invoiceTotalAmount - invoicePaidAmount),
-    allocated_amount: Number(row.allocated_amount),
+    invoice_balance_amount: centsToNumber(
+      invoiceTotalCents - invoicePaidCents
+    ),
+    allocated_amount: roundMoney(row.allocated_amount),
     created_at: toIso(row.created_at),
   };
 }
@@ -328,7 +351,7 @@ function mapPaymentBatch(
       ? String(row.reference_number)
       : null,
     remarks: row.remarks ? String(row.remarks) : null,
-    total_amount: Number(row.total_amount),
+    total_amount: roundMoney(row.total_amount),
     invoice_count: Number(row.invoice_count ?? allocations.length),
     created_by: row.created_by ? String(row.created_by) : null,
     created_at: toIso(row.created_at),
@@ -342,8 +365,10 @@ function mapInvoice(
   items: VehicleExpenseInvoiceItem[],
   payments: VehicleExpenseInvoicePayment[]
 ): VehicleExpenseInvoice {
-  const totalAmount = Number(row.total_amount);
-  const paidAmount = Number(row.paid_amount ?? 0);
+  const totalCents = moneyCents(row.total_amount);
+  const paidCents = moneyCents(row.paid_amount ?? 0);
+  const totalAmount = centsToNumber(totalCents);
+  const paidAmount = centsToNumber(paidCents);
   const status = deriveInvoiceStatus(totalAmount, paidAmount);
 
   return {
@@ -354,7 +379,7 @@ function mapInvoice(
     due_date: row.due_date ? toDateOnly(row.due_date) : null,
     total_amount: totalAmount,
     paid_amount: paidAmount,
-    balance_amount: roundMoney(totalAmount - paidAmount),
+    balance_amount: centsToNumber(totalCents - paidCents),
     status,
     remarks: row.remarks ? String(row.remarks) : null,
     created_by: row.created_by ? String(row.created_by) : null,
@@ -734,7 +759,7 @@ async function insertItems(
         description,
         amount
       )
-      values ($1::uuid, $2::uuid, $3, $4, $5::numeric(12,2))
+      values ($1::uuid, $2::uuid, $3, $4, $5::numeric(14,2))
       returning id
       `,
       [
@@ -814,8 +839,8 @@ export async function listVehicleExpenseInvoices(params: {
         i.created_at,
         coalesce(sum(a.allocated_amount), 0) as paid_amount,
         case
-          when round((i.total_amount - coalesce(sum(a.allocated_amount), 0))::numeric, 2) <= $${limitParam + 2}::numeric then 'paid'
-          when coalesce(sum(a.allocated_amount), 0) > $${limitParam + 2}::numeric then 'partially_paid'
+          when round((i.total_amount - coalesce(sum(a.allocated_amount), 0))::numeric, 2) <= 0 then 'paid'
+          when round(coalesce(sum(a.allocated_amount), 0)::numeric, 2) > 0 then 'partially_paid'
           else 'unpaid'
         end as invoice_status
       from public.vehicle_expense_invoices i
@@ -828,7 +853,7 @@ export async function listVehicleExpenseInvoices(params: {
     order by i.invoice_date desc, i.created_at desc
     limit $${limitParam} offset $${offsetParam}
     `,
-    [...values, PAYMENT_STATUS_EPSILON]
+    values
   );
 
   return fetchInvoicesByIds(result.rows.map((row) => String(row.id)));
@@ -843,8 +868,8 @@ export async function getVehicleExpenseInvoiceAnalytics(): Promise<VehicleExpens
         i.total_amount,
         coalesce(sum(a.allocated_amount), 0) as paid_amount,
         case
-          when round((i.total_amount - coalesce(sum(a.allocated_amount), 0))::numeric, 2) <= $1::numeric then 'paid'
-          when coalesce(sum(a.allocated_amount), 0) > $1::numeric then 'partially_paid'
+          when round((i.total_amount - coalesce(sum(a.allocated_amount), 0))::numeric, 2) <= 0 then 'paid'
+          when round(coalesce(sum(a.allocated_amount), 0)::numeric, 2) > 0 then 'partially_paid'
           else 'unpaid'
         end as status
       from public.vehicle_expense_invoices i
@@ -890,7 +915,6 @@ export async function getVehicleExpenseInvoiceAnalytics(): Promise<VehicleExpens
     from invoice_summary
     cross join payment_summary
     `,
-    [PAYMENT_STATUS_EPSILON]
   );
 
   const row = result.rows[0] ?? {};
@@ -942,7 +966,7 @@ export async function createVehicleExpenseInvoice(
         remarks,
         created_by
       )
-      values ($1, $2, $3::date, $4::date, $5::numeric(12,2), 'unpaid', $6, $7::uuid)
+      values ($1, $2, $3::date, $4::date, $5::numeric(14,2), 'unpaid', $6, $7::uuid)
       returning id
       `,
       [
@@ -1047,7 +1071,7 @@ export async function updateVehicleExpenseInvoice(
         invoice_date = $4::date,
         due_date = $5::date,
         remarks = $6
-        ${input.items ? ", total_amount = $7::numeric(12,2)" : ""}
+        ${input.items ? ", total_amount = $7::numeric(14,2)" : ""}
       where id = $1::uuid
       `,
       input.items
@@ -1324,15 +1348,15 @@ async function syncInvoiceStatuses(client: PoolClient, invoiceIds: string[]) {
     )
     update public.vehicle_expense_invoices i
     set status = case
-        when round((invoice_paid.total_amount - invoice_paid.paid_amount)::numeric, 2) <= $2::numeric then 'paid'
-        when invoice_paid.paid_amount > $2::numeric then 'partially_paid'
+        when round((invoice_paid.total_amount - invoice_paid.paid_amount)::numeric, 2) <= 0 then 'paid'
+        when round(invoice_paid.paid_amount::numeric, 2) > 0 then 'partially_paid'
         else 'unpaid'
       end,
       updated_at = now()
     from invoice_paid
     where i.id = invoice_paid.id
     `,
-    [uniqueInvoiceIds, PAYMENT_STATUS_EPSILON]
+    [uniqueInvoiceIds]
   );
 }
 
@@ -1465,27 +1489,30 @@ export async function createVehicleExpensePaymentBatch(
         );
       }
 
-      const outstanding = roundMoney(
-        Number(invoice.total_amount) - Number(invoice.paid_amount)
-      );
+      const outstandingCents =
+        moneyCents(invoice.total_amount) - moneyCents(invoice.paid_amount);
 
-      if (allocation.allocated_amount > outstanding) {
+      if (moneyCents(allocation.allocated_amount) > outstandingCents) {
         throw Object.assign(
           new Error(
             `Allocated amount for invoice ${
               invoice.invoice_number ?? allocation.invoice_id
-            } at ${rowLabel} cannot exceed outstanding balance of ${outstanding}`
+            } at ${rowLabel} cannot exceed outstanding balance of ${centsToDecimal(
+              outstandingCents
+            )}`
           ),
           { status: 400 }
         );
       }
     }
 
-    const totalAmount = roundMoney(
-      input.allocations.reduce(
-        (sum, allocation) => sum + allocation.allocated_amount,
-        0
-      )
+    const allocationsWithCents = input.allocations.map((allocation) => ({
+      ...allocation,
+      allocated_amount_cents: moneyCents(allocation.allocated_amount),
+    }));
+    const totalAmountCents = allocationsWithCents.reduce(
+      (sum, allocation) => sum + allocation.allocated_amount_cents,
+      0
     );
 
     const batchResult = await client.query(
@@ -1499,7 +1526,7 @@ export async function createVehicleExpensePaymentBatch(
         total_amount,
         created_by
       )
-      values ($1, $2::date, $3, $4, $5, $6::numeric(12,2), $7::uuid)
+      values ($1, $2::date, $3, $4, $5, $6::numeric(14,2), $7::uuid)
       returning id
       `,
       [
@@ -1508,14 +1535,14 @@ export async function createVehicleExpensePaymentBatch(
         input.payment_mode,
         input.reference_number,
         input.remarks,
-        totalAmount,
+        centsToDecimal(totalAmountCents),
         createdBy,
       ]
     );
 
     const batchId = String(batchResult.rows[0].id);
 
-    for (const allocation of input.allocations) {
+    for (const allocation of allocationsWithCents) {
       await client.query(
         `
         insert into public.vehicle_expense_payment_allocations (
@@ -1523,9 +1550,13 @@ export async function createVehicleExpensePaymentBatch(
           invoice_id,
           allocated_amount
         )
-        values ($1::uuid, $2::uuid, $3::numeric(12,2))
+        values ($1::uuid, $2::uuid, $3::numeric(14,2))
         `,
-        [batchId, allocation.invoice_id, allocation.allocated_amount]
+        [
+          batchId,
+          allocation.invoice_id,
+          centsToDecimal(allocation.allocated_amount_cents),
+        ]
       );
     }
 
