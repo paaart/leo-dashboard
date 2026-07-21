@@ -1,5 +1,4 @@
 import { NextResponse, type NextRequest } from "next/server";
-import type { PoolClient } from "pg";
 import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { WAREHOUSE_ACTIVE_POD_BALANCE_CTES } from "@/lib/warehouse/podBalanceSql";
@@ -15,20 +14,6 @@ export type WarehousePaymentAlertRow = {
   total_due: number;
 };
 
-async function ensureDismissalsTable(client: PoolClient) {
-  await client.query(`
-    create table if not exists public.warehouse_payment_alert_dismissals (
-      id uuid primary key default gen_random_uuid(),
-      pod_id uuid not null,
-      next_payment_date date not null,
-      dismissed_by uuid null,
-      dismissed_at timestamptz default now(),
-      created_at timestamptz default now(),
-      unique (pod_id, next_payment_date)
-    )
-  `);
-}
-
 export async function GET(req: NextRequest) {
   const auth = await requireAdmin(req);
   if (!auth.ok) return auth.response;
@@ -36,8 +21,6 @@ export async function GET(req: NextRequest) {
   const client = await db.connect();
 
   try {
-    await ensureDismissalsTable(client);
-
     const res = await client.query<WarehousePaymentAlertRow>(
       `
       with ${WAREHOUSE_ACTIVE_POD_BALANCE_CTES}
