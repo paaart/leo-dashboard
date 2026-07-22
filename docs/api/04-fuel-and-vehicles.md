@@ -20,23 +20,39 @@ return `{ ok, value } | { ok:false, error }`.
 
 ### GET `/api/vehicles`
 List vehicles. Query: `?status`, `?limit` (default 500, max 2000), `?offset`.
-→ `{ ok: true, data }` via `listVehicles`.
+→ `{ ok: true, data }` via `listVehicles`. Rows include the three optional renewal
+date/amount/vendor groups for National Permit, Insurance, and Road Tax.
 
 ### POST `/api/vehicles`
 Create a vehicle. Validated by `validateVehicleInput`. On success **201** `{ ok, data }`.
 A duplicate `vehicle_no` maps the `vehicles_vehicle_no_unique` constraint error to
-**409** `"vehicle_no must be unique"`.
+**409** `"vehicle_no must be unique"`. Accepts renewal date/amount/vendor fields in
+either snake_case or camelCase (`nationalPermitRenewalDate`,
+`nationalPermitRenewalAmount`, `nationalPermitRenewalVendor`, etc.). Dates are
+optional `YYYY-MM-DD`; amounts are optional numbers > 0.
 
 ### PATCH `/api/vehicles/[id]`
 Update a vehicle. Validated by `validateVehicleUpdateInput`. Errors carry a `status`
 propagated from the lib layer (e.g. 404 for not found).
+
+### GET `/api/vehicles/renewal-alerts`
+Lists active vehicle renewal reminders due in the next 15 days or overdue, excluding
+alerts dismissed for the exact `(vehicle, renewal type, renewal date)`. Returns
+vehicle number/type/company, renewal label/type/date/amount/vendor, days until renewal,
+and `status` (`overdue` \| `due_today` \| `due_soon`).
+
+### POST `/api/vehicles/renewal-alerts/dismiss`
+Body `{ vehicleId, renewalType, renewalDate }`, where `renewalType` is
+`national_permit`, `insurance`, or `road_tax`, and `renewalDate` is `YYYY-MM-DD`.
+Persists a dismissal for that exact item/date; changing the saved renewal date creates
+a fresh alert.
 
 ### GET `/api/vehicles/public` — **public, no auth**
 Minimal list for the driver form: active vehicles only, via the **raw `pg` Pool**
 directly (not the fuel-tracker lib). Returns `{ id, vehicleNo, vehicleType }[]`. Exposes
 nothing sensitive by design.
 
-**Touches:** `vehicles`.
+**Touches:** `vehicles`, `vehicle_renewal_alert_dismissals`.
 
 ---
 

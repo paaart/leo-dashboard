@@ -17,6 +17,15 @@ export type ValidVehicleInput = {
   company: string | null;
   starting_odometer: number;
   status: "active" | "inactive";
+  national_permit_renewal_date: string | null;
+  national_permit_renewal_amount: number | null;
+  national_permit_renewal_vendor: string | null;
+  insurance_renewal_date: string | null;
+  insurance_renewal_amount: number | null;
+  insurance_renewal_vendor: string | null;
+  road_tax_renewal_date: string | null;
+  road_tax_renewal_amount: number | null;
+  road_tax_renewal_vendor: string | null;
 };
 
 export type ValidVehicleUpdateInput = Partial<ValidVehicleInput>;
@@ -66,6 +75,34 @@ function toNumber(value: unknown): number {
   return Number(value);
 }
 
+function optionalPositiveNumber(
+  value: unknown,
+  fieldName: string
+): ValidationResult<number | null> {
+  if (value === null || value === undefined || value === "") {
+    return { ok: true, value: null };
+  }
+
+  const number = Number(value);
+  if (!Number.isFinite(number) || number <= 0) {
+    return { ok: false, error: `${fieldName} must be > 0` };
+  }
+
+  return { ok: true, value: number };
+}
+
+function optionalDate(value: unknown, fieldName: string): ValidationResult<string | null> {
+  if (value === null || value === undefined || value === "") {
+    return { ok: true, value: null };
+  }
+
+  if (!isISODate(value)) {
+    return { ok: false, error: `${fieldName} must be YYYY-MM-DD` };
+  }
+
+  return { ok: true, value };
+}
+
 export function validateVehicleInput(
   input: CreateVehicleInput
 ): ValidationResult<ValidVehicleInput> {
@@ -77,6 +114,36 @@ export function validateVehicleInput(
     input.starting_odometer ?? input.startingOdometer ?? 0
   );
   const status = input.status ?? "active";
+  const nationalPermitRenewalDate = optionalDate(
+    input.national_permit_renewal_date ?? input.nationalPermitRenewalDate,
+    "national_permit_renewal_date"
+  );
+  if (!nationalPermitRenewalDate.ok) return nationalPermitRenewalDate;
+  const nationalPermitRenewalAmount = optionalPositiveNumber(
+    input.national_permit_renewal_amount ?? input.nationalPermitRenewalAmount,
+    "national_permit_renewal_amount"
+  );
+  if (!nationalPermitRenewalAmount.ok) return nationalPermitRenewalAmount;
+  const insuranceRenewalDate = optionalDate(
+    input.insurance_renewal_date ?? input.insuranceRenewalDate,
+    "insurance_renewal_date"
+  );
+  if (!insuranceRenewalDate.ok) return insuranceRenewalDate;
+  const insuranceRenewalAmount = optionalPositiveNumber(
+    input.insurance_renewal_amount ?? input.insuranceRenewalAmount,
+    "insurance_renewal_amount"
+  );
+  if (!insuranceRenewalAmount.ok) return insuranceRenewalAmount;
+  const roadTaxRenewalDate = optionalDate(
+    input.road_tax_renewal_date ?? input.roadTaxRenewalDate,
+    "road_tax_renewal_date"
+  );
+  if (!roadTaxRenewalDate.ok) return roadTaxRenewalDate;
+  const roadTaxRenewalAmount = optionalPositiveNumber(
+    input.road_tax_renewal_amount ?? input.roadTaxRenewalAmount,
+    "road_tax_renewal_amount"
+  );
+  if (!roadTaxRenewalAmount.ok) return roadTaxRenewalAmount;
 
   if (!vehicleNo) return { ok: false, error: "vehicle_no is required" };
   if (!vehicleType) return { ok: false, error: "vehicle_type is required" };
@@ -98,6 +165,22 @@ export function validateVehicleInput(
       company: optionalText(input.company),
       starting_odometer: startingOdometer,
       status,
+      national_permit_renewal_date: nationalPermitRenewalDate.value,
+      national_permit_renewal_amount: nationalPermitRenewalAmount.value,
+      national_permit_renewal_vendor: optionalText(
+        input.national_permit_renewal_vendor ??
+          input.nationalPermitRenewalVendor
+      ),
+      insurance_renewal_date: insuranceRenewalDate.value,
+      insurance_renewal_amount: insuranceRenewalAmount.value,
+      insurance_renewal_vendor: optionalText(
+        input.insurance_renewal_vendor ?? input.insuranceRenewalVendor
+      ),
+      road_tax_renewal_date: roadTaxRenewalDate.value,
+      road_tax_renewal_amount: roadTaxRenewalAmount.value,
+      road_tax_renewal_vendor: optionalText(
+        input.road_tax_renewal_vendor ?? input.roadTaxRenewalVendor
+      ),
     },
   };
 }
@@ -143,6 +226,88 @@ export function validateVehicleUpdateInput(
       return { ok: false, error: "status must be active or inactive" };
     }
     value.status = input.status;
+  }
+
+  if (
+    "national_permit_renewal_date" in input ||
+    "nationalPermitRenewalDate" in input
+  ) {
+    const date = optionalDate(
+      input.national_permit_renewal_date ?? input.nationalPermitRenewalDate,
+      "national_permit_renewal_date"
+    );
+    if (!date.ok) return date;
+    value.national_permit_renewal_date = date.value;
+  }
+
+  if (
+    "national_permit_renewal_amount" in input ||
+    "nationalPermitRenewalAmount" in input
+  ) {
+    const amount = optionalPositiveNumber(
+      input.national_permit_renewal_amount ?? input.nationalPermitRenewalAmount,
+      "national_permit_renewal_amount"
+    );
+    if (!amount.ok) return amount;
+    value.national_permit_renewal_amount = amount.value;
+  }
+
+  if (
+    "national_permit_renewal_vendor" in input ||
+    "nationalPermitRenewalVendor" in input
+  ) {
+    value.national_permit_renewal_vendor = optionalText(
+      input.national_permit_renewal_vendor ??
+        input.nationalPermitRenewalVendor
+    );
+  }
+
+  if ("insurance_renewal_date" in input || "insuranceRenewalDate" in input) {
+    const date = optionalDate(
+      input.insurance_renewal_date ?? input.insuranceRenewalDate,
+      "insurance_renewal_date"
+    );
+    if (!date.ok) return date;
+    value.insurance_renewal_date = date.value;
+  }
+
+  if ("insurance_renewal_amount" in input || "insuranceRenewalAmount" in input) {
+    const amount = optionalPositiveNumber(
+      input.insurance_renewal_amount ?? input.insuranceRenewalAmount,
+      "insurance_renewal_amount"
+    );
+    if (!amount.ok) return amount;
+    value.insurance_renewal_amount = amount.value;
+  }
+
+  if ("insurance_renewal_vendor" in input || "insuranceRenewalVendor" in input) {
+    value.insurance_renewal_vendor = optionalText(
+      input.insurance_renewal_vendor ?? input.insuranceRenewalVendor
+    );
+  }
+
+  if ("road_tax_renewal_date" in input || "roadTaxRenewalDate" in input) {
+    const date = optionalDate(
+      input.road_tax_renewal_date ?? input.roadTaxRenewalDate,
+      "road_tax_renewal_date"
+    );
+    if (!date.ok) return date;
+    value.road_tax_renewal_date = date.value;
+  }
+
+  if ("road_tax_renewal_amount" in input || "roadTaxRenewalAmount" in input) {
+    const amount = optionalPositiveNumber(
+      input.road_tax_renewal_amount ?? input.roadTaxRenewalAmount,
+      "road_tax_renewal_amount"
+    );
+    if (!amount.ok) return amount;
+    value.road_tax_renewal_amount = amount.value;
+  }
+
+  if ("road_tax_renewal_vendor" in input || "roadTaxRenewalVendor" in input) {
+    value.road_tax_renewal_vendor = optionalText(
+      input.road_tax_renewal_vendor ?? input.roadTaxRenewalVendor
+    );
   }
 
   if (Object.keys(value).length === 0) {

@@ -8,9 +8,53 @@ import type { Vehicle } from "@/lib/fuel-tracker/types";
 function vehicleDetails(vehicle: Vehicle) {
   return [
     `Starting Odometer: ${String(vehicle.starting_odometer)}`,
+    `National Permit: ${vehicle.national_permit_renewal_date ?? "-"}`,
+    `Insurance: ${vehicle.insurance_renewal_date ?? "-"}`,
+    `Road Tax: ${vehicle.road_tax_renewal_date ?? "-"}`,
     `Created: ${vehicle.created_at}`,
     `Updated: ${vehicle.updated_at}`,
   ].join("\n");
+}
+
+function fmtDate(value: string | null) {
+  if (!value) return "-";
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleDateString("en-IN");
+}
+
+function fmtCurrency(value: number | null) {
+  if (value === null) return "-";
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function RenewalDate({
+  label,
+  value,
+  amount,
+  vendor,
+}: {
+  label: string;
+  value: string | null;
+  amount: number | null;
+  vendor: string | null;
+}) {
+  return (
+    <div className="grid grid-cols-[4.5rem_1fr] gap-2 text-xs">
+      <span className="text-gray-500 dark:text-gray-400">{label}</span>
+      <span className="text-gray-800 dark:text-gray-200">
+        <span className="font-medium">{fmtDate(value)}</span>
+        <span className="ml-2 text-gray-500 dark:text-gray-400">
+          {fmtCurrency(amount)}
+          {vendor ? ` · ${vendor}` : ""}
+        </span>
+      </span>
+    </div>
+  );
 }
 
 export function VehicleTable({
@@ -82,6 +126,7 @@ export function VehicleTable({
               <th className="px-4 py-3 font-semibold">Vehicle Number</th>
               <th className="px-4 py-3 font-semibold">Vehicle Type</th>
               <th className="px-4 py-3 font-semibold">Company</th>
+              <th className="px-4 py-3 font-semibold">Renewals</th>
               <th className="px-4 py-3 font-semibold">Status</th>
               <th className="px-4 py-3 font-semibold">Actions</th>
             </tr>
@@ -105,6 +150,28 @@ export function VehicleTable({
                 </td>
                 <td className="px-4 py-3">{vehicle.vehicle_type}</td>
                 <td className="px-4 py-3">{vehicle.company || "-"}</td>
+                <td className="min-w-52 px-4 py-3">
+                  <div className="space-y-1.5">
+                    <RenewalDate
+                      label="Permit"
+                      value={vehicle.national_permit_renewal_date}
+                      amount={vehicle.national_permit_renewal_amount}
+                      vendor={vehicle.national_permit_renewal_vendor}
+                    />
+                    <RenewalDate
+                      label="Insurance"
+                      value={vehicle.insurance_renewal_date}
+                      amount={vehicle.insurance_renewal_amount}
+                      vendor={vehicle.insurance_renewal_vendor}
+                    />
+                    <RenewalDate
+                      label="Road Tax"
+                      value={vehicle.road_tax_renewal_date}
+                      amount={vehicle.road_tax_renewal_amount}
+                      vendor={vehicle.road_tax_renewal_vendor}
+                    />
+                  </div>
+                </td>
                 <td className="px-4 py-3">
                   <FuelTooltip content={vehicleDetails(vehicle)}>
                     <span className="inline-flex">

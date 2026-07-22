@@ -5,7 +5,7 @@
 > **unverified** (inferred, or true-in-code but not exercised at runtime during this
 > pass — re-check before relying on it).
 
-Last verification pass: **2026-07-21** (initial docs creation. Routes read from
+Last verification pass: **2026-07-22** (initial docs creation. Routes read from
 `src/app/api/`, components from `src/components/`, schema from `supabase/migrations/`
 plus the type definitions in `src/lib/**/types.ts`).
 
@@ -46,6 +46,7 @@ plus the type definitions in `src/lib/**/types.ts`).
 - **Transport calculators** — verified in code. Domestic reads `transport_quotes` /
   `vehicle_quotes` / `transport_distances` directly from Supabase; International saves
   quotes through `/api/international/**` and renders a PDF via `@react-pdf/renderer`.
+  Those calculator lookup tables are now versioned in migrations and seeded locally.
 
 ## What's legacy (present, but not the path forward)
 
@@ -70,15 +71,15 @@ plus the type definitions in `src/lib/**/types.ts`).
 
 ## Risks / known problems
 
-- **Schema migration drift — real, verify before trusting `supabase/migrations/`.**
-  The migrations folder only contains fuel, profiles, vehicle-expense, and the
-  warehouse-alert-dismissals tables. The **warehouse core tables**
+- **Schema migration drift — still real, but slightly better.**
+  The migrations folder now also includes the calculator lookup tables and seed data,
+  plus fuel, profiles, vehicle-expense, and the warehouse-alert-dismissals tables. The
+  **warehouse core tables**
   (`warehouse_pods`, `warehouse_pod_cycles`, `warehouse_pod_transactions`), the
   **loans tables** (`employees`, `employee_loans`, `companies`, `locations`), and the
-  **calculator tables** (`transport_quotes`, `vehicle_quotes`, `transport_distances`,
-  and the international quotes table) were created directly in Supabase and are **not**
-  in version control. A fresh `supabase db reset` will NOT reproduce the full schema.
-  See [database/02](database/02-migrations-and-drift.md).
+  warehouse enum types are still created directly in Supabase and are **not** in version
+  control. A fresh `supabase db reset` will NOT reproduce the full schema. See
+  [database/02](database/02-migrations-and-drift.md).
 - **RLS posture is uneven.** Modules that talk to Supabase directly from the browser
   (Domestic, Loans, parts of Warehouse client UI) rely on Row-Level Security to be
   safe, because they use the anon key. Whether every such table has correct RLS

@@ -28,6 +28,14 @@ type LineItemForm = {
   amount: string;
 };
 
+export type VendorInvoiceFormDraft = {
+  vendorName?: string;
+  invoiceDate?: string;
+  dueDate?: string;
+  remarks?: string;
+  items: LineItemForm[];
+};
+
 const initialItem: LineItemForm = {
   expenseScope: "vehicle",
   vehicleId: "",
@@ -200,6 +208,7 @@ export function VendorInvoiceFormModal({
   vehicles,
   loading,
   invoice,
+  draft,
   onClose,
   onSubmit,
 }: {
@@ -207,6 +216,7 @@ export function VendorInvoiceFormModal({
   vehicles: Vehicle[];
   loading: boolean;
   invoice?: VehicleExpenseInvoice | null;
+  draft?: VendorInvoiceFormDraft | null;
   onClose: () => void;
   onSubmit: (payload: CreateVehicleExpenseInvoicePayload) => Promise<void>;
 }) {
@@ -237,13 +247,23 @@ export function VendorInvoiceFormModal({
                 ? invoice.items.map(itemFromInvoice)
                 : [{ ...initialItem }],
           }
+        : draft
+        ? {
+            ...initialForm,
+            vendorName: draft.vendorName ?? "",
+            invoiceDate:
+              draft.invoiceDate ?? new Date().toISOString().slice(0, 10),
+            dueDate: draft.dueDate ?? "",
+            remarks: draft.remarks ?? "",
+            items: draft.items.length > 0 ? draft.items : [{ ...initialItem }],
+          }
         : {
             ...initialForm,
             items: [{ ...initialItem }],
           }
     );
     setError(null);
-  }, [invoice, open]);
+  }, [draft, invoice, open]);
 
   if (!open) return null;
 

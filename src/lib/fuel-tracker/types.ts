@@ -1,5 +1,10 @@
 export type VehicleStatus = "active" | "inactive";
 
+export type VehicleRenewalType =
+  | "national_permit"
+  | "insurance"
+  | "road_tax";
+
 export type Vehicle = {
   id: string;
   vehicle_no: string;
@@ -7,6 +12,15 @@ export type Vehicle = {
   company: string | null;
   starting_odometer: number;
   status: VehicleStatus;
+  national_permit_renewal_date: string | null;
+  national_permit_renewal_amount: number | null;
+  national_permit_renewal_vendor: string | null;
+  insurance_renewal_date: string | null;
+  insurance_renewal_amount: number | null;
+  insurance_renewal_vendor: string | null;
+  road_tax_renewal_date: string | null;
+  road_tax_renewal_amount: number | null;
+  road_tax_renewal_vendor: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -44,6 +58,24 @@ export type CreateVehicleInput = {
   starting_odometer?: number | string | null;
   startingOdometer?: number | string | null;
   status?: VehicleStatus;
+  national_permit_renewal_date?: string | null;
+  nationalPermitRenewalDate?: string | null;
+  national_permit_renewal_amount?: number | string | null;
+  nationalPermitRenewalAmount?: number | string | null;
+  national_permit_renewal_vendor?: string | null;
+  nationalPermitRenewalVendor?: string | null;
+  insurance_renewal_date?: string | null;
+  insuranceRenewalDate?: string | null;
+  insurance_renewal_amount?: number | string | null;
+  insuranceRenewalAmount?: number | string | null;
+  insurance_renewal_vendor?: string | null;
+  insuranceRenewalVendor?: string | null;
+  road_tax_renewal_date?: string | null;
+  roadTaxRenewalDate?: string | null;
+  road_tax_renewal_amount?: number | string | null;
+  roadTaxRenewalAmount?: number | string | null;
+  road_tax_renewal_vendor?: string | null;
+  roadTaxRenewalVendor?: string | null;
 };
 
 export type UpdateVehicleInput = CreateVehicleInput;
@@ -218,9 +250,38 @@ export type CreateVehiclePayload = {
   company: string | null;
   startingOdometer: number;
   status: VehicleStatus;
+  nationalPermitRenewalDate: string | null;
+  nationalPermitRenewalAmount: number | null;
+  nationalPermitRenewalVendor: string | null;
+  insuranceRenewalDate: string | null;
+  insuranceRenewalAmount: number | null;
+  insuranceRenewalVendor: string | null;
+  roadTaxRenewalDate: string | null;
+  roadTaxRenewalAmount: number | null;
+  roadTaxRenewalVendor: string | null;
 };
 
 export type UpdateVehiclePayload = Partial<CreateVehiclePayload>;
+
+export type VehicleRenewalAlert = {
+  vehicleId: string;
+  vehicleNo: string;
+  vehicleType: string;
+  company: string | null;
+  renewalType: VehicleRenewalType;
+  renewalLabel: string;
+  renewalDate: string;
+  renewalAmount: number | null;
+  renewalVendor: string | null;
+  daysUntilRenewal: number;
+  status: "overdue" | "due_soon" | "due_today";
+};
+
+export type DismissVehicleRenewalAlertPayload = {
+  vehicleId: string;
+  renewalType: VehicleRenewalType;
+  renewalDate: string;
+};
 
 export type CreateFuelEntryPayload = {
   vehicleId: string;

@@ -13,7 +13,20 @@ const initialForm = {
   company: "",
   startingOdometer: "",
   status: "active" as VehicleStatus,
+  nationalPermitRenewalDate: "",
+  nationalPermitRenewalAmount: "",
+  nationalPermitRenewalVendor: "",
+  insuranceRenewalDate: "",
+  insuranceRenewalAmount: "",
+  insuranceRenewalVendor: "",
+  roadTaxRenewalDate: "",
+  roadTaxRenewalAmount: "",
+  roadTaxRenewalVendor: "",
 };
+
+function optionalAmount(value: string) {
+  return value.trim() ? Number(value) : null;
+}
 
 export function VehicleFormModal({
   open,
@@ -44,6 +57,26 @@ export function VehicleFormModal({
               company: vehicle.company ?? "",
               startingOdometer: String(vehicle.starting_odometer),
               status: vehicle.status,
+              nationalPermitRenewalDate:
+                vehicle.national_permit_renewal_date ?? "",
+              nationalPermitRenewalAmount:
+                vehicle.national_permit_renewal_amount === null
+                  ? ""
+                  : String(vehicle.national_permit_renewal_amount),
+              nationalPermitRenewalVendor:
+                vehicle.national_permit_renewal_vendor ?? "",
+              insuranceRenewalDate: vehicle.insurance_renewal_date ?? "",
+              insuranceRenewalAmount:
+                vehicle.insurance_renewal_amount === null
+                  ? ""
+                  : String(vehicle.insurance_renewal_amount),
+              insuranceRenewalVendor: vehicle.insurance_renewal_vendor ?? "",
+              roadTaxRenewalDate: vehicle.road_tax_renewal_date ?? "",
+              roadTaxRenewalAmount:
+                vehicle.road_tax_renewal_amount === null
+                  ? ""
+                  : String(vehicle.road_tax_renewal_amount),
+              roadTaxRenewalVendor: vehicle.road_tax_renewal_vendor ?? "",
             }
           : initialForm
       );
@@ -72,12 +105,39 @@ export function VehicleFormModal({
       return;
     }
 
+    const renewalAmounts = [
+      form.nationalPermitRenewalAmount,
+      form.insuranceRenewalAmount,
+      form.roadTaxRenewalAmount,
+    ].map(optionalAmount);
+
+    if (
+      renewalAmounts.some(
+        (amount) => amount !== null && (!Number.isFinite(amount) || amount <= 0)
+      )
+    ) {
+      setError("Renewal amounts must be greater than zero.");
+      return;
+    }
+
     await onSubmit({
       vehicleNo: form.vehicleNo.trim().toUpperCase(),
       vehicleType: form.vehicleType.trim(),
       company: form.company.trim() || null,
       startingOdometer,
       status: form.status,
+      nationalPermitRenewalDate: form.nationalPermitRenewalDate || null,
+      nationalPermitRenewalAmount: optionalAmount(
+        form.nationalPermitRenewalAmount
+      ),
+      nationalPermitRenewalVendor:
+        form.nationalPermitRenewalVendor.trim() || null,
+      insuranceRenewalDate: form.insuranceRenewalDate || null,
+      insuranceRenewalAmount: optionalAmount(form.insuranceRenewalAmount),
+      insuranceRenewalVendor: form.insuranceRenewalVendor.trim() || null,
+      roadTaxRenewalDate: form.roadTaxRenewalDate || null,
+      roadTaxRenewalAmount: optionalAmount(form.roadTaxRenewalAmount),
+      roadTaxRenewalVendor: form.roadTaxRenewalVendor.trim() || null,
     });
   };
 
@@ -211,6 +271,145 @@ export function VehicleFormModal({
               <option value="inactive">Inactive</option>
             </select>
           </label>
+
+          <div className="space-y-3 rounded-lg border border-gray-200 p-4 dark:border-gray-800">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-950 dark:text-gray-50">
+                Renewal Dates
+              </h3>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Alerts appear 15 days before each renewal date.
+              </p>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-3">
+              <label className="space-y-1.5">
+                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                  National Permit
+                </span>
+                <input
+                  type="date"
+                  value={form.nationalPermitRenewalDate}
+                  onChange={(event) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      nationalPermitRenewalDate: event.target.value,
+                    }))
+                  }
+                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                />
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.nationalPermitRenewalAmount}
+                  onChange={(event) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      nationalPermitRenewalAmount: event.target.value,
+                    }))
+                  }
+                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                  placeholder="Amount"
+                />
+                <input
+                  value={form.nationalPermitRenewalVendor}
+                  onChange={(event) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      nationalPermitRenewalVendor: event.target.value,
+                    }))
+                  }
+                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                  placeholder="Vendor / authority"
+                />
+              </label>
+
+              <label className="space-y-1.5">
+                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                  Insurance
+                </span>
+                <input
+                  type="date"
+                  value={form.insuranceRenewalDate}
+                  onChange={(event) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      insuranceRenewalDate: event.target.value,
+                    }))
+                  }
+                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                />
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.insuranceRenewalAmount}
+                  onChange={(event) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      insuranceRenewalAmount: event.target.value,
+                    }))
+                  }
+                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                  placeholder="Amount"
+                />
+                <input
+                  value={form.insuranceRenewalVendor}
+                  onChange={(event) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      insuranceRenewalVendor: event.target.value,
+                    }))
+                  }
+                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                  placeholder="Vendor / authority"
+                />
+              </label>
+
+              <label className="space-y-1.5">
+                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                  Road Tax
+                </span>
+                <input
+                  type="date"
+                  value={form.roadTaxRenewalDate}
+                  onChange={(event) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      roadTaxRenewalDate: event.target.value,
+                    }))
+                  }
+                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                />
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.roadTaxRenewalAmount}
+                  onChange={(event) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      roadTaxRenewalAmount: event.target.value,
+                    }))
+                  }
+                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                  placeholder="Amount"
+                />
+                <input
+                  value={form.roadTaxRenewalVendor}
+                  onChange={(event) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      roadTaxRenewalVendor: event.target.value,
+                    }))
+                  }
+                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                  placeholder="Vendor / authority"
+                />
+              </label>
+            </div>
+          </div>
 
           {error ? (
             <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">

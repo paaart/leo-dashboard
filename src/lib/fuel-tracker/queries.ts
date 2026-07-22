@@ -9,6 +9,8 @@ import type {
   FuelDashboardSummary,
   FuelEntry,
   Vehicle,
+  VehicleRenewalAlert,
+  VehicleRenewalType,
   VehicleExpense,
   VehicleExpensePayment,
   VehicleExpensePaymentItem,
@@ -39,8 +41,64 @@ function toVehicle(row: Record<string, unknown>): Vehicle {
     company: row.company ? String(row.company) : null,
     starting_odometer: Number(row.starting_odometer),
     status: row.status as Vehicle["status"],
+    national_permit_renewal_date: row.national_permit_renewal_date
+      ? toDateOnly(row.national_permit_renewal_date)
+      : null,
+    national_permit_renewal_amount:
+      row.national_permit_renewal_amount === null
+        ? null
+        : Number(row.national_permit_renewal_amount),
+    national_permit_renewal_vendor: row.national_permit_renewal_vendor
+      ? String(row.national_permit_renewal_vendor)
+      : null,
+    insurance_renewal_date: row.insurance_renewal_date
+      ? toDateOnly(row.insurance_renewal_date)
+      : null,
+    insurance_renewal_amount:
+      row.insurance_renewal_amount === null
+        ? null
+        : Number(row.insurance_renewal_amount),
+    insurance_renewal_vendor: row.insurance_renewal_vendor
+      ? String(row.insurance_renewal_vendor)
+      : null,
+    road_tax_renewal_date: row.road_tax_renewal_date
+      ? toDateOnly(row.road_tax_renewal_date)
+      : null,
+    road_tax_renewal_amount:
+      row.road_tax_renewal_amount === null
+        ? null
+        : Number(row.road_tax_renewal_amount),
+    road_tax_renewal_vendor: row.road_tax_renewal_vendor
+      ? String(row.road_tax_renewal_vendor)
+      : null,
     created_at: String(row.created_at),
     updated_at: String(row.updated_at),
+  };
+}
+
+function toVehicleRenewalAlert(
+  row: Record<string, unknown>
+): VehicleRenewalAlert {
+  const daysUntilRenewal = Number(row.days_until_renewal);
+
+  return {
+    vehicleId: String(row.vehicle_id),
+    vehicleNo: String(row.vehicle_no),
+    vehicleType: String(row.vehicle_type),
+    company: row.company ? String(row.company) : null,
+    renewalType: String(row.renewal_type) as VehicleRenewalType,
+    renewalLabel: String(row.renewal_label),
+    renewalDate: toDateOnly(row.renewal_date),
+    renewalAmount:
+      row.renewal_amount === null ? null : Number(row.renewal_amount),
+    renewalVendor: row.renewal_vendor ? String(row.renewal_vendor) : null,
+    daysUntilRenewal,
+    status:
+      daysUntilRenewal < 0
+        ? "overdue"
+        : daysUntilRenewal === 0
+        ? "due_today"
+        : "due_soon",
   };
 }
 
@@ -147,9 +205,18 @@ export async function createVehicle(
       vehicle_type,
       company,
       starting_odometer,
-      status
+      status,
+      national_permit_renewal_date,
+      insurance_renewal_date,
+      road_tax_renewal_date,
+      national_permit_renewal_amount,
+      national_permit_renewal_vendor,
+      insurance_renewal_amount,
+      insurance_renewal_vendor,
+      road_tax_renewal_amount,
+      road_tax_renewal_vendor
     )
-    values ($1, $2, $3, $4, $5)
+    values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
     returning *
     `,
     [
@@ -158,6 +225,15 @@ export async function createVehicle(
       input.company,
       input.starting_odometer,
       input.status,
+      input.national_permit_renewal_date,
+      input.insurance_renewal_date,
+      input.road_tax_renewal_date,
+      input.national_permit_renewal_amount,
+      input.national_permit_renewal_vendor,
+      input.insurance_renewal_amount,
+      input.insurance_renewal_vendor,
+      input.road_tax_renewal_amount,
+      input.road_tax_renewal_vendor,
     ]
   );
 
@@ -234,7 +310,43 @@ export async function updateVehicle(
       vehicle_type = coalesce($3, vehicle_type),
       company = case when $4::boolean then $5 else company end,
       starting_odometer = coalesce($6, starting_odometer),
-      status = coalesce($7, status)
+      status = coalesce($7, status),
+      national_permit_renewal_date = case
+        when $8::boolean then $9::date
+        else national_permit_renewal_date
+      end,
+      insurance_renewal_date = case
+        when $10::boolean then $11::date
+        else insurance_renewal_date
+      end,
+      road_tax_renewal_date = case
+        when $12::boolean then $13::date
+        else road_tax_renewal_date
+      end,
+      national_permit_renewal_amount = case
+        when $14::boolean then $15::numeric
+        else national_permit_renewal_amount
+      end,
+      national_permit_renewal_vendor = case
+        when $16::boolean then $17
+        else national_permit_renewal_vendor
+      end,
+      insurance_renewal_amount = case
+        when $18::boolean then $19::numeric
+        else insurance_renewal_amount
+      end,
+      insurance_renewal_vendor = case
+        when $20::boolean then $21
+        else insurance_renewal_vendor
+      end,
+      road_tax_renewal_amount = case
+        when $22::boolean then $23::numeric
+        else road_tax_renewal_amount
+      end,
+      road_tax_renewal_vendor = case
+        when $24::boolean then $25
+        else road_tax_renewal_vendor
+      end
     where id = $1
     returning *
     `,
@@ -246,10 +358,155 @@ export async function updateVehicle(
       input.company ?? null,
       input.starting_odometer ?? null,
       input.status ?? null,
+      "national_permit_renewal_date" in input,
+      input.national_permit_renewal_date ?? null,
+      "insurance_renewal_date" in input,
+      input.insurance_renewal_date ?? null,
+      "road_tax_renewal_date" in input,
+      input.road_tax_renewal_date ?? null,
+      "national_permit_renewal_amount" in input,
+      input.national_permit_renewal_amount ?? null,
+      "national_permit_renewal_vendor" in input,
+      input.national_permit_renewal_vendor ?? null,
+      "insurance_renewal_amount" in input,
+      input.insurance_renewal_amount ?? null,
+      "insurance_renewal_vendor" in input,
+      input.insurance_renewal_vendor ?? null,
+      "road_tax_renewal_amount" in input,
+      input.road_tax_renewal_amount ?? null,
+      "road_tax_renewal_vendor" in input,
+      input.road_tax_renewal_vendor ?? null,
     ]
   );
 
   return toVehicle(result.rows[0]);
+}
+
+export async function listVehicleRenewalAlerts(): Promise<
+  VehicleRenewalAlert[]
+> {
+  const result = await db.query(
+    `
+    with renewal_dates as (
+      select
+        v.id as vehicle_id,
+        v.vehicle_no,
+        v.vehicle_type,
+        v.company,
+        renewal.renewal_type,
+        renewal.renewal_label,
+        renewal.renewal_date,
+        renewal.renewal_amount,
+        renewal.renewal_vendor
+      from public.vehicles v
+      cross join lateral (
+        values
+          (
+            'national_permit',
+            'National Permit',
+            v.national_permit_renewal_date,
+            v.national_permit_renewal_amount,
+            v.national_permit_renewal_vendor
+          ),
+          (
+            'insurance',
+            'Insurance',
+            v.insurance_renewal_date,
+            v.insurance_renewal_amount,
+            v.insurance_renewal_vendor
+          ),
+          (
+            'road_tax',
+            'Road Tax',
+            v.road_tax_renewal_date,
+            v.road_tax_renewal_amount,
+            v.road_tax_renewal_vendor
+          )
+      ) as renewal(
+        renewal_type,
+        renewal_label,
+        renewal_date,
+        renewal_amount,
+        renewal_vendor
+      )
+      where v.status = 'active'
+        and renewal.renewal_date is not null
+    )
+    select
+      r.vehicle_id,
+      r.vehicle_no,
+      r.vehicle_type,
+      r.company,
+      r.renewal_type,
+      r.renewal_label,
+      r.renewal_date,
+      r.renewal_amount,
+      r.renewal_vendor,
+      (r.renewal_date - current_date)::int as days_until_renewal
+    from renewal_dates r
+    left join public.vehicle_renewal_alert_dismissals d
+      on d.vehicle_id = r.vehicle_id
+      and d.renewal_type = r.renewal_type
+      and d.renewal_date = r.renewal_date
+    where r.renewal_date <= current_date + interval '15 days'
+      and d.id is null
+    order by r.renewal_date asc, r.vehicle_no asc, r.renewal_label asc
+    `
+  );
+
+  return result.rows.map(toVehicleRenewalAlert);
+}
+
+export async function dismissVehicleRenewalAlert(input: {
+  vehicleId: string;
+  renewalType: VehicleRenewalType;
+  renewalDate: string;
+  dismissedBy: string;
+}): Promise<{ ok: true }> {
+  const alert = await db.query(
+    `
+    select 1
+    from public.vehicles v
+    cross join lateral (
+      values
+        ('national_permit', v.national_permit_renewal_date),
+        ('insurance', v.insurance_renewal_date),
+        ('road_tax', v.road_tax_renewal_date)
+    ) as renewal(renewal_type, renewal_date)
+    where v.id = $1
+      and v.status = 'active'
+      and renewal.renewal_type = $2
+      and renewal.renewal_date = $3::date
+      and renewal.renewal_date <= current_date + interval '15 days'
+    limit 1
+    `,
+    [input.vehicleId, input.renewalType, input.renewalDate]
+  );
+
+  if (alert.rowCount === 0) {
+    throw Object.assign(new Error("No active renewal alert found"), {
+      status: 404,
+    });
+  }
+
+  await db.query(
+    `
+    insert into public.vehicle_renewal_alert_dismissals (
+      vehicle_id,
+      renewal_type,
+      renewal_date,
+      dismissed_by
+    )
+    values ($1, $2, $3, $4)
+    on conflict (vehicle_id, renewal_type, renewal_date)
+    do update set
+      dismissed_by = excluded.dismissed_by,
+      dismissed_at = now()
+    `,
+    [input.vehicleId, input.renewalType, input.renewalDate, input.dismissedBy]
+  );
+
+  return { ok: true };
 }
 
 async function getVehicleForUpdate(client: PoolClient, vehicleId: string) {

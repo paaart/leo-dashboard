@@ -109,6 +109,8 @@ Fuel & vehicles — [api/04](04-fuel-and-vehicles.md)
 |---|---|---|
 | GET / POST | `/api/vehicles` | auth |
 | PATCH | `/api/vehicles/[id]` | auth |
+| GET | `/api/vehicles/renewal-alerts` | auth |
+| POST | `/api/vehicles/renewal-alerts/dismiss` | auth |
 | GET | `/api/vehicles/public` | **public** |
 | GET / POST | `/api/fuel-entries` | auth |
 | PATCH / DELETE | `/api/fuel-entries/[id]` | auth |

@@ -9,6 +9,7 @@ import { FuelEntryFormModal } from "./FuelEntryFormModal";
 import { FuelEntryTable } from "./FuelEntryTable";
 import { FuelTrackerTabs } from "./FuelTrackerTabs";
 import { VehicleFormModal } from "./VehicleFormModal";
+import { VehicleRenewalAlerts } from "./VehicleRenewalAlerts";
 import { VehicleTable } from "./VehicleTable";
 import {
   TablePagination,
@@ -16,6 +17,7 @@ import {
   paginateItems,
 } from "./TablePagination";
 import { VendorInvoiceFormModal } from "./VendorInvoiceFormModal";
+import type { VendorInvoiceFormDraft } from "./VendorInvoiceFormModal";
 import { VendorInvoiceTable } from "./VendorInvoiceTable";
 import { VendorInvoiceViewModal } from "./VendorInvoiceViewModal";
 import { VendorPaymentBatchFormModal } from "./VendorPaymentBatchFormModal";
@@ -32,9 +34,11 @@ import {
   deleteVehicleExpensePaymentBatch,
   updateFuelEntry,
   createVehicle,
+  dismissVehicleRenewalAlert,
   updateVehicle,
   fetchFuelDashboardAnalytics,
   fetchFuelEntries,
+  fetchVehicleRenewalAlerts,
   fetchVehicleExpenseInvoiceAnalytics,
   fetchVehicleExpenseInvoices,
   fetchVehicleExpensePaymentBatches,
@@ -55,6 +59,7 @@ import type {
   FuelEntry,
   FuelTab,
   Vehicle,
+  VehicleRenewalAlert,
   VehicleExpenseInvoiceAnalytics,
   VehicleExpenseInvoice,
   VehicleExpensePaymentBatch,
@@ -141,6 +146,9 @@ function SummaryCards({
 export default function FuelTrackerPage() {
   const [activeTab, setActiveTab] = useState<FuelTab>("dashboard");
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [vehicleRenewalAlerts, setVehicleRenewalAlerts] = useState<
+    VehicleRenewalAlert[]
+  >([]);
   const [fuelEntries, setFuelEntries] = useState<FuelEntry[]>([]);
   const [vendorInvoices, setVendorInvoices] = useState<
     VehicleExpenseInvoice[]
@@ -154,6 +162,7 @@ export default function FuelTrackerPage() {
     null
   );
   const [loading, setLoading] = useState(true);
+  const [renewalAlertsLoading, setRenewalAlertsLoading] = useState(true);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [analyticsError, setAnalyticsError] = useState<string | null>(null);
@@ -166,6 +175,8 @@ export default function FuelTrackerPage() {
     useState<VehicleExpenseInvoice | null>(null);
   const [editingVendorInvoice, setEditingVendorInvoice] =
     useState<VehicleExpenseInvoice | null>(null);
+  const [vendorInvoiceDraft, setVendorInvoiceDraft] =
+    useState<VendorInvoiceFormDraft | null>(null);
   const [viewingVendorPaymentBatch, setViewingVendorPaymentBatch] =
     useState<VehicleExpensePaymentBatch | null>(null);
   const [fuelEntryModalOpen, setFuelEntryModalOpen] = useState(false);
@@ -173,6 +184,9 @@ export default function FuelTrackerPage() {
   const [vendorPaymentBatchModalOpen, setVendorPaymentBatchModalOpen] =
     useState(false);
   const [savingVehicle, setSavingVehicle] = useState(false);
+  const [dismissingRenewalKey, setDismissingRenewalKey] = useState<
+    string | null
+  >(null);
   const [savingFuelEntry, setSavingFuelEntry] = useState(false);
   const [savingVendorInvoice, setSavingVendorInvoice] = useState(false);
   const [savingVendorInvoicePayment, setSavingVendorInvoicePayment] =
@@ -379,9 +393,31 @@ export default function FuelTrackerPage() {
     }
   }, []);
 
+  const loadVehicleRenewalAlerts = useCallback(async () => {
+    setRenewalAlertsLoading(true);
+
+    try {
+      const data = await fetchVehicleRenewalAlerts();
+      setVehicleRenewalAlerts(data);
+    } catch (loadError) {
+      const message =
+        loadError instanceof Error
+          ? loadError.message
+          : "Failed to load renewal alerts.";
+      toast.error(message);
+      setVehicleRenewalAlerts([]);
+    } finally {
+      setRenewalAlertsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     void loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    void loadVehicleRenewalAlerts();
+  }, [loadVehicleRenewalAlerts]);
 
   useEffect(() => {
     void loadAnalytics();
@@ -418,6 +454,7 @@ export default function FuelTrackerPage() {
       setEditingVehicle(null);
       await loadData();
       await loadAnalytics();
+      await loadVehicleRenewalAlerts();
     } catch (saveError) {
       const message =
         saveError instanceof Error
@@ -429,6 +466,61 @@ export default function FuelTrackerPage() {
     } finally {
       setSavingVehicle(false);
     }
+  };
+
+  const handleDismissVehicleRenewalAlert = async (
+    alert: VehicleRenewalAlert
+  ) => {
+    const key = `${alert.vehicleId}:${alert.renewalType}:${alert.renewalDate}`;
+    setDismissingRenewalKey(key);
+
+    try {
+      await dismissVehicleRenewalAlert({
+        vehicleId: alert.vehicleId,
+        renewalType: alert.renewalType,
+        renewalDate: alert.renewalDate,
+      });
+      await loadVehicleRenewalAlerts();
+      toast.success("Renewal reminder dismissed");
+    } catch (dismissError) {
+      const message =
+        dismissError instanceof Error
+          ? dismissError.message
+          : "Failed to dismiss renewal reminder.";
+      toast.error(message);
+    } finally {
+      setDismissingRenewalKey(null);
+    }
+  };
+
+  const handleCreateRenewalVendorInvoice = (alert: VehicleRenewalAlert) => {
+    if (alert.renewalAmount === null) {
+      toast.error("Add a renewal amount before creating the invoice.");
+      return;
+    }
+
+    setEditingVendorInvoice(null);
+    setVendorInvoiceDraft({
+      vendorName: alert.renewalVendor ?? "",
+      invoiceDate: new Date().toISOString().slice(0, 10),
+      dueDate: alert.renewalDate,
+      remarks: `Renewal reminder for ${alert.renewalLabel} (${alert.vehicleNo})`,
+      items: [
+        {
+          expenseScope: "vehicle",
+          vehicleId: alert.vehicleId,
+          expenseType:
+            alert.renewalType === "insurance"
+              ? "Insurance"
+              : alert.renewalType === "road_tax"
+              ? "Tax"
+              : "Permit",
+          description: `${alert.renewalLabel} renewal for ${alert.vehicleNo}`,
+          amount: String(alert.renewalAmount),
+        },
+      ],
+    });
+    setVendorInvoiceModalOpen(true);
   };
 
   const handleCreateFuelEntry = async (
@@ -711,13 +803,16 @@ export default function FuelTrackerPage() {
             onClick={() => {
               void loadData();
               void loadAnalytics();
+              void loadVehicleRenewalAlerts();
             }}
-            disabled={loading || analyticsLoading}
+            disabled={loading || analyticsLoading || renewalAlertsLoading}
             className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
           >
             <RefreshCw
               className={`h-4 w-4 ${
-                loading || analyticsLoading ? "animate-spin" : ""
+                loading || analyticsLoading || renewalAlertsLoading
+                  ? "animate-spin"
+                  : ""
               }`}
             />
             Refresh
@@ -758,6 +853,14 @@ export default function FuelTrackerPage() {
                   Add Vehicle
                 </AddButton>
               }
+            />
+            <VehicleRenewalAlerts
+              alerts={vehicleRenewalAlerts}
+              loading={renewalAlertsLoading}
+              dismissingKey={dismissingRenewalKey}
+              onRefresh={loadVehicleRenewalAlerts}
+              onDismiss={handleDismissVehicleRenewalAlert}
+              onCreateInvoice={handleCreateRenewalVendorInvoice}
             />
             <VehicleTable
               vehicles={paginatedVehicles.items}
@@ -881,6 +984,7 @@ export default function FuelTrackerPage() {
                 <AddButton
                   onClick={() => {
                     setEditingVendorInvoice(null);
+                    setVendorInvoiceDraft(null);
                     setVendorInvoiceModalOpen(true);
                   }}
                 >
@@ -931,6 +1035,7 @@ export default function FuelTrackerPage() {
               pageSize={VEHICLE_TRACKER_PAGE_SIZE}
               onAdd={() => {
                 setEditingVendorInvoice(null);
+                setVendorInvoiceDraft(null);
                 setVendorInvoiceModalOpen(true);
               }}
               onView={setViewingVendorInvoice}
@@ -940,6 +1045,7 @@ export default function FuelTrackerPage() {
                   return;
                 }
                 setEditingVendorInvoice(invoice);
+                setVendorInvoiceDraft(null);
                 setVendorInvoiceModalOpen(true);
               }}
               onDelete={handleDeleteVendorInvoice}
@@ -1025,9 +1131,11 @@ export default function FuelTrackerPage() {
         vehicles={vehicles}
         loading={savingVendorInvoice}
         invoice={editingVendorInvoice}
+        draft={vendorInvoiceDraft}
         onClose={() => {
           setVendorInvoiceModalOpen(false);
           setEditingVendorInvoice(null);
+          setVendorInvoiceDraft(null);
         }}
         onSubmit={handleSaveVendorInvoice}
       />

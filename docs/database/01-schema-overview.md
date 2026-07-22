@@ -34,18 +34,18 @@ Login requires `status = 'active'`. Signup creates `status = 'pending'`.
 
 ## Transport calculators
 
-### `transport_quotes` **[supabase-only]**
+### `transport_quotes` **[migration]**
 Domestic household-goods quotes. Columns (from `src/lib/api.ts`): `source`,
 `destination`, `packaging`, `transportation`.
 
-### `vehicle_quotes` **[supabase-only]**
+### `vehicle_quotes` **[migration]**
 Domestic vehicle-transport quotes. Columns: `source`, `destination`, `size`,
 `carrier_cost`, `leo_cost`.
 
-### `transport_distances` **[supabase-only]**
+### `transport_distances` **[migration]**
 Source→destination distances. Columns: `source`, `destination`, `distance`.
 
-### `international_quotes` **[supabase-only]**
+### `international_quotes` **[migration]**
 Saved international shipping quotes (written by `/api/international/save`). Columns:
 `customer_name`, `origin_city`, `origin_port`, `destination_city`,
 `destination_country`, `destination_port`, `mode`, `volume_cbm`, `packing_charges`,
@@ -85,6 +85,21 @@ from the browser (`supabase.rpc`).
 | `company` | text | nullable |
 | `starting_odometer` | numeric(12,2) | ≥ 0, default 0 |
 | `status` | text | `active` \| `inactive` |
+| `national_permit_renewal_date` | date | nullable |
+| `national_permit_renewal_amount` | numeric(12,2) | nullable, > 0 when set |
+| `national_permit_renewal_vendor` | text | nullable |
+| `insurance_renewal_date` | date | nullable |
+| `insurance_renewal_amount` | numeric(12,2) | nullable, > 0 when set |
+| `insurance_renewal_vendor` | text | nullable |
+| `road_tax_renewal_date` | date | nullable |
+| `road_tax_renewal_amount` | numeric(12,2) | nullable, > 0 when set |
+| `road_tax_renewal_vendor` | text | nullable |
+
+### `vehicle_renewal_alert_dismissals` **[migration]**
+Persists dismissed renewal reminders for the three fixed vehicle renewal items.
+`vehicle_id`, `renewal_type` (`national_permit` \| `insurance` \| `road_tax`),
+`renewal_date`, `dismissed_by`, `dismissed_at`. `(vehicle_id, renewal_type,
+renewal_date)` is unique, so changing a renewal date creates a fresh alert.
 
 ### `fuel_entries` **[migration]**
 One fuel refill. FK `vehicle_id` → `vehicles` (on delete restrict).

@@ -6,6 +6,7 @@ import type {
   CreateVehicleExpensePaymentPayload,
   CreateVehicleExpensePayload,
   CreateVehiclePayload,
+  DismissVehicleRenewalAlertPayload,
   UpdateFuelEntryPayload,
   UpdateVehicleExpenseInvoicePayload,
   UpdateVehiclePayload,
@@ -15,6 +16,7 @@ import type {
   FuelDashboardSummary,
   FuelEntry,
   Vehicle,
+  VehicleRenewalAlert,
   VehicleExpense,
   VehicleExpenseInvoiceAnalytics,
   VehicleExpenseInvoice,
@@ -47,6 +49,10 @@ export function fetchVehicles() {
   return requestJson<Vehicle[]>("/api/vehicles");
 }
 
+export function fetchVehicleRenewalAlerts() {
+  return requestJson<VehicleRenewalAlert[]>("/api/vehicles/renewal-alerts");
+}
+
 export function createVehicle(payload: CreateVehiclePayload) {
   return requestJson<Vehicle>("/api/vehicles", {
     method: "POST",
@@ -57,6 +63,15 @@ export function createVehicle(payload: CreateVehiclePayload) {
 export function updateVehicle(id: string, payload: UpdateVehiclePayload) {
   return requestJson<Vehicle>(`/api/vehicles/${id}`, {
     method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function dismissVehicleRenewalAlert(
+  payload: DismissVehicleRenewalAlertPayload
+) {
+  return requestJson<{ ok: true }>("/api/vehicles/renewal-alerts/dismiss", {
+    method: "POST",
     body: JSON.stringify(payload),
   });
 }

@@ -36,7 +36,11 @@ components still exist (`VehicleExpenseTable`, `VehicleExpenseFormModal`,
   (with `vehicleId`/`dateFrom`/`dateTo` filters). Shows total km, fuel spend, litres,
   average mileage, cost/km per vehicle, plus best/worst insights.
 - **Vehicles** — list + create/edit via `/api/vehicles` (`POST`) and `/api/vehicles/[id]`
-  (`PATCH`). A duplicate `vehicle_no` surfaces the 409 as a toast.
+  (`PATCH`). Captures optional National Permit, Insurance, and Road Tax renewal
+  date/amount/vendor values. A top-of-tab alert panel lists renewals due within 15 days
+  or overdue, allows dismissing one vehicle/item/date reminder, and can open a prefilled
+  Vendor Invoice draft for the selected renewal. A duplicate `vehicle_no` surfaces the
+  409 as a toast.
 - **Fuel Entries** — list + create/edit/delete via `/api/fuel-entries[/id]`. Flagged
   entries (bad odometer) show a warning via `FuelStatusBadge`/`FuelTooltip`.
 - **Vendor Invoices** — list (with a status filter: all / unpaid / partially_paid / paid),
