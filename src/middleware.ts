@@ -49,8 +49,35 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Hard 24h session limit: the marker cookie is set at login with a 24h
+  // maxAge and its timestamp is validated here, so sessions cannot outlive
+  // it via Supabase token refresh.
+  const sessionStart = request.cookies.get(SESSION_START_COOKIE)?.value;
+  const startedAt = Number(sessionStart);
+
+  if (
+    !sessionStart ||
+    !Number.isFinite(startedAt) ||
+    Date.now() - startedAt > SESSION_MAX_AGE_MS
+  ) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.search = "";
+    url.searchParams.set("expired", "1");
+
+    const redirect = NextResponse.redirect(url);
+    request.cookies.getAll().forEach(({ name }) => {
+      if (name.startsWith("sb-")) redirect.cookies.delete(name);
+    });
+    redirect.cookies.delete(SESSION_START_COOKIE);
+    return redirect;
+  }
+
   return response;
 }
+
+const SESSION_START_COOKIE = "leo_session_start";
+const SESSION_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],

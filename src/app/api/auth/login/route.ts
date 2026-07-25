@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return jsonWithAuthCookies(
+    const successResponse = jsonWithAuthCookies(
       {
         ok: true,
         user: {
@@ -100,6 +100,18 @@ export async function POST(request: NextRequest) {
         },
       }
     );
+
+    // Marker for the 24h session limit enforced in middleware. Supabase
+    // refresh tokens would otherwise keep the session alive indefinitely.
+    successResponse.cookies.set("leo_session_start", String(Date.now()), {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 60 * 24,
+    });
+
+    return successResponse;
   } catch (err) {
     console.error("LOGIN ROUTE CRASH:", err);
     const msg = err instanceof Error ? err.message : String(err);

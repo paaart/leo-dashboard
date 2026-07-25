@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { inputField, buttonPrimary, buttonSecondary } from "@/components/shared/ui";
 import { useRouter } from "next/navigation";
 
@@ -9,6 +9,14 @@ export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("expired") === "1") {
+      setNotice("Your session has expired. Please sign in again.");
+    }
+  }, []);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showRequestForm, setShowRequestForm] = useState(false);
@@ -45,7 +53,7 @@ export default function LoginPage() {
         return;
       }
 
-      router.push("/dashboard/domestic");
+      router.push("/dashboard/home");
       router.refresh();
     } catch (e) {
       setError(`Login failed. Please try again. ${e}`);
@@ -153,6 +161,12 @@ export default function LoginPage() {
             ? "Request dashboard access from an administrator."
             : "Sign in with your dashboard account."}
         </p>
+
+        {notice && !error && !success && (
+          <p className="mt-4 rounded-lg border border-warning/25 bg-warning-soft px-3 py-2 text-sm text-warning-soft-fg">
+            {notice}
+          </p>
+        )}
 
         {error && (
           <p className="mt-4 rounded-lg border border-danger/25 bg-danger-soft px-3 py-2 text-sm text-danger-soft-fg">
