@@ -13,6 +13,18 @@ import { MetricCard } from "@/components/shared/DashboardUI";
 import { alertDanger } from "@/components/shared/ui";
 import { getWarehouseDashboardSummary } from "@/lib/warehouse/pods";
 import { getErrorMessage } from "@/lib/errors";
+import { getCached, setCached } from "@/lib/clientCache";
+
+type Summary = {
+  activePods: number;
+  closedPods: number;
+  totalOutstanding: number;
+  monthlyCharges: number;
+  paymentsReceived: number;
+  overduePending: number;
+};
+
+const CACHE_KEY = "warehouse-dashboard-summary";
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("en-IN", {
@@ -31,22 +43,26 @@ function LoadingValue({ width = "w-24" }: { width?: string }) {
 }
 
 export default function WarehouseSummaryCards() {
-  const [loading, setLoading] = useState(true);
+  // Stale-while-revalidate: render the cached summary instantly (no
+  // skeletons on revisit) and refresh it in the background.
+  const cached = getCached<Summary>(CACHE_KEY);
+  const [loading, setLoading] = useState(!cached);
   const [error, setError] = useState<string | null>(null);
-  const [summary, setSummary] = useState({
-    activePods: 0,
-    closedPods: 0,
-    totalOutstanding: 0,
-    monthlyCharges: 0,
-    paymentsReceived: 0,
-    overduePending: 0,
-  });
+  const [summary, setSummary] = useState<Summary>(
+    cached ?? {
+      activePods: 0,
+      closedPods: 0,
+      totalOutstanding: 0,
+      monthlyCharges: 0,
+      paymentsReceived: 0,
+      overduePending: 0,
+    }
+  );
 
   useEffect(() => {
     let cancelled = false;
 
     const load = async () => {
-      setLoading(true);
       setError(null);
 
       try {
@@ -55,6 +71,7 @@ export default function WarehouseSummaryCards() {
         if (cancelled) return;
 
         setSummary(summary);
+        setCached(CACHE_KEY, summary);
       } catch (err: unknown) {
         if (!cancelled) {
           setError(getErrorMessage(err) || "Unable to load warehouse summary");

@@ -51,6 +51,7 @@ import {
   createFuelImageSignedUrl,
   uploadFuelImage,
 } from "@/lib/fuel-tracker/uploads";
+import { getCached, setCached } from "@/lib/clientCache";
 import type {
   CreateFuelEntryPayload,
   CreateVehicleExpenseInvoicePaymentPayload,
@@ -351,12 +352,22 @@ export default function FuelTrackerPage() {
   }, [vendorAnalytics]);
 
   const loadAnalytics = useCallback(async () => {
-    setAnalyticsLoading(true);
+    // Stale-while-revalidate: show the cached result for these filters
+    // immediately (skip skeletons) and refresh in the background.
+    const cacheKey = `fuel-analytics:${JSON.stringify(analyticsFilters)}`;
+    const cached = getCached<FuelDashboardAnalytics>(cacheKey);
+
+    if (cached) {
+      setAnalytics(cached);
+    } else {
+      setAnalyticsLoading(true);
+    }
     setAnalyticsError(null);
 
     try {
       const data = await fetchFuelDashboardAnalytics(analyticsFilters);
       setAnalytics(data);
+      setCached(cacheKey, data);
     } catch (loadError) {
       const message =
         loadError instanceof Error

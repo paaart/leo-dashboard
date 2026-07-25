@@ -67,6 +67,7 @@ scrolls horizontally on phones instead of crushing columns.
 | File | Exports / purpose |
 |---|---|
 | `src/lib/api.ts` | browser data helpers for Domestic (`getHHGQuoteMap`, `getVehicleQuotesDict`, `getDistance`) and International (`saveInternationalQuote`, `fetchInternationalQuote`); normalises the older international response shapes |
+| `src/lib/clientCache.ts` | `getCached`/`setCached` — tab-lifetime stale-while-revalidate cache for client KPI fetches (warehouse summary cards, fuel analytics): render the cached value instantly, refresh in the background |
 | `src/lib/errors.ts` | `getErrorMessage(err)` — safe message extraction (used by most API routes) |
 | `src/lib/utils.ts` | misc helpers, incl. `displayTransactionTitle` (warehouse ledger display) |
 | `src/lib/warehouse/ledgerMath.ts` | `fmtINR`, `fmtDate`, `toLedgerVMRows`, `computeLedgerTotals` — warehouse display formatting |

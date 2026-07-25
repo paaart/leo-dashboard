@@ -129,21 +129,6 @@ export default function WarehouseActivePods() {
     );
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-full bg-canvas px-4 py-6 text-fg sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-7xl space-y-6">
-          <PageHeader
-            eyebrow="Storage"
-            title="Warehouse Management"
-            subtitle="Manage warehouse clients, PODs, billing, payments, and storage ledgers."
-          />
-          <LoadingState label="Loading active PODs" />
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-full bg-canvas px-4 py-6 text-fg sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
@@ -159,14 +144,16 @@ export default function WarehouseActivePods() {
           title="Warehouse PODs"
           description="Review active PODs, balances, due dates, and ledger actions."
           action={
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <div className="rounded-lg border border-edge bg-surface-2 px-3 py-2 text-sm text-fg-muted">
-                {filtered.length} active
+            loading ? null : (
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <div className="rounded-lg border border-edge bg-surface-2 px-3 py-2 text-sm text-fg-muted">
+                  {filtered.length} active
+                </div>
+                <div className="rounded-lg border border-edge bg-surface-2 px-3 py-2 text-sm font-semibold text-accent">
+                  {formatCurrency(totalDueAll)}
+                </div>
               </div>
-              <div className="rounded-lg border border-edge bg-surface-2 px-3 py-2 text-sm font-semibold text-accent">
-                {formatCurrency(totalDueAll)}
-              </div>
-            </div>
+            )
           }
         >
           <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -188,7 +175,9 @@ export default function WarehouseActivePods() {
             </button>
           </div>
 
-          {filtered.length === 0 ? (
+          {loading ? (
+            <LoadingState label="Loading active PODs" />
+          ) : filtered.length === 0 ? (
             <EmptyState
               title="No active PODs"
               description="Active warehouse PODs will appear here once clients are created."
