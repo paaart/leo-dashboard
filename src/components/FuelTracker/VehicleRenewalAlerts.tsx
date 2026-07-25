@@ -9,9 +9,11 @@ function fmtDate(value: string) {
 
 function urgencyText(alert: VehicleRenewalAlert) {
   if (alert.daysUntilRenewal < 0) {
-    return `${Math.abs(alert.daysUntilRenewal)} days overdue`;
+    const days = Math.abs(alert.daysUntilRenewal);
+    return `${days} ${days === 1 ? "day" : "days"} overdue`;
   }
-  if (alert.daysUntilRenewal === 0) return "Due today";
+  if (alert.daysUntilRenewal === 0) return "Due Today";
+  if (alert.daysUntilRenewal === 1) return "Due Tomorrow";
   return `Due in ${alert.daysUntilRenewal} days`;
 }
 
@@ -98,7 +100,8 @@ export function VehicleRenewalAlerts({
                 <th className="px-4 py-3 font-semibold">Vehicle</th>
                 <th className="px-4 py-3 font-semibold">Company</th>
                 <th className="px-4 py-3 font-semibold">Renewal Item</th>
-                <th className="px-4 py-3 font-semibold">Renewal Date</th>
+                <th className="px-4 py-3 font-semibold">Last Renewal</th>
+                <th className="px-4 py-3 font-semibold">Next Renewal</th>
                 <th className="px-4 py-3 text-right font-semibold">Amount</th>
                 <th className="px-4 py-3 font-semibold">Vendor</th>
                 <th className="px-4 py-3 font-semibold">Urgency</th>
@@ -126,6 +129,11 @@ export function VehicleRenewalAlerts({
                     <td className="px-4 py-3">{alert.company ?? "-"}</td>
                     <td className="px-4 py-3 font-medium">
                       {alert.renewalLabel}
+                    </td>
+                    <td className="px-4 py-3">
+                      {alert.lastRenewalDate
+                        ? fmtDate(alert.lastRenewalDate)
+                        : "-"}
                     </td>
                     <td className="px-4 py-3">{fmtDate(alert.renewalDate)}</td>
                     <td className="px-4 py-3 text-right font-semibold tabular-nums">

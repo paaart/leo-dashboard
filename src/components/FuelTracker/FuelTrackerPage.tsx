@@ -10,6 +10,8 @@ import { FuelEntryTable } from "./FuelEntryTable";
 import { FuelTrackerTabs } from "./FuelTrackerTabs";
 import { VehicleFormModal } from "./VehicleFormModal";
 import { VehicleRenewalAlerts } from "./VehicleRenewalAlerts";
+import { VehicleRenewalsModal } from "./VehicleRenewalsModal";
+import { VehicleSearchSelect } from "./VehicleSearchSelect";
 import { VehicleTable } from "./VehicleTable";
 import {
   TablePagination,
@@ -168,6 +170,8 @@ export default function FuelTrackerPage() {
   const [analyticsError, setAnalyticsError] = useState<string | null>(null);
   const [vehicleModalOpen, setVehicleModalOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
+  const [viewingVehicleRenewals, setViewingVehicleRenewals] =
+    useState<Vehicle | null>(null);
   const [editingFuelEntry, setEditingFuelEntry] = useState<FuelEntry | null>(
     null
   );
@@ -196,7 +200,8 @@ export default function FuelTrackerPage() {
   const [invoiceStatusFilter, setInvoiceStatusFilter] = useState<
     "all" | VehicleExpenseInvoice["status"]
   >("all");
-  const [vehicleFilter, setVehicleFilter] = useState("all");
+  const [fuelVehicleFilter, setFuelVehicleFilter] = useState("");
+  const [vehicleFilter, setVehicleFilter] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [vehiclesPage, setVehiclesPage] = useState(1);
@@ -222,13 +227,19 @@ export default function FuelTrackerPage() {
   const filteredFuelEntries = useMemo(() => {
     return fuelEntries.filter((entry) => {
       const matchesVehicle =
-        vehicleFilter === "all" || entry.vehicle_id === vehicleFilter;
+        !fuelVehicleFilter || entry.vehicle_id === fuelVehicleFilter;
       const matchesFrom = !dateFrom || entry.fuel_date >= dateFrom;
       const matchesTo = !dateTo || entry.fuel_date <= dateTo;
 
       return matchesVehicle && matchesFrom && matchesTo;
     });
-  }, [dateFrom, dateTo, fuelEntries, vehicleFilter]);
+  }, [dateFrom, dateTo, fuelEntries, fuelVehicleFilter]);
+
+  const filteredVehicles = useMemo(() => {
+    if (!vehicleFilter) return vehicles;
+
+    return vehicles.filter((vehicle) => vehicle.id === vehicleFilter);
+  }, [vehicleFilter, vehicles]);
 
   const filteredVendorInvoices = useMemo(() => {
     if (invoiceStatusFilter === "all") return vendorInvoices;
@@ -238,8 +249,8 @@ export default function FuelTrackerPage() {
   }, [invoiceStatusFilter, vendorInvoices]);
 
   const paginatedVehicles = useMemo(
-    () => paginateItems(vehicles, vehiclesPage),
-    [vehicles, vehiclesPage]
+    () => paginateItems(filteredVehicles, vehiclesPage),
+    [filteredVehicles, vehiclesPage]
   );
 
   const paginatedFuelEntries = useMemo(
@@ -425,11 +436,11 @@ export default function FuelTrackerPage() {
 
   useEffect(() => {
     setVehiclesPage(1);
-  }, [vehicles.length]);
+  }, [vehicleFilter]);
 
   useEffect(() => {
     setFuelEntriesPage(1);
-  }, [dateFrom, dateTo, vehicleFilter]);
+  }, [dateFrom, dateTo, fuelVehicleFilter]);
 
   useEffect(() => {
     setVendorInvoicesPage(1);
@@ -515,6 +526,7 @@ export default function FuelTrackerPage() {
               : alert.renewalType === "road_tax"
               ? "Tax"
               : "Permit",
+          renewalType: alert.renewalType,
           description: `${alert.renewalLabel} renewal for ${alert.vehicleNo}`,
           amount: String(alert.renewalAmount),
         },
@@ -862,6 +874,23 @@ export default function FuelTrackerPage() {
               onDismiss={handleDismissVehicleRenewalAlert}
               onCreateInvoice={handleCreateRenewalVendorInvoice}
             />
+            <div className="grid gap-3 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950 md:grid-cols-2">
+              <label className="space-y-1.5">
+                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                  Vehicle Filter
+                </span>
+                <VehicleSearchSelect
+                  vehicles={vehicles}
+                  value={vehicleFilter}
+                  onChange={setVehicleFilter}
+                  emptyLabel="All vehicles"
+                />
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  Search and select a vehicle to narrow the list.
+                </span>
+              </label>
+            </div>
+
             <VehicleTable
               vehicles={paginatedVehicles.items}
               loading={loading}
@@ -876,10 +905,11 @@ export default function FuelTrackerPage() {
                 setEditingVehicle(vehicle);
                 setVehicleModalOpen(true);
               }}
+              onViewRenewals={setViewingVehicleRenewals}
             />
             <TablePagination
               page={paginatedVehicles.page}
-              totalItems={vehicles.length}
+              totalItems={filteredVehicles.length}
               onPageChange={setVehiclesPage}
               label="vehicles"
             />
@@ -909,18 +939,15 @@ export default function FuelTrackerPage() {
                 <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
                   Vehicle Filter
                 </span>
-                <select
-                  value={vehicleFilter}
-                  onChange={(event) => setVehicleFilter(event.target.value)}
-                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
-                >
-                  <option value="all">All vehicles</option>
-                  {vehicles.map((vehicle) => (
-                    <option key={vehicle.id} value={vehicle.id}>
-                      {vehicle.vehicle_no}
-                    </option>
-                  ))}
-                </select>
+                <VehicleSearchSelect
+                  vehicles={vehicles}
+                  value={fuelVehicleFilter}
+                  onChange={setFuelVehicleFilter}
+                  emptyLabel="All vehicles"
+                />
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  Search and select a vehicle to narrow the list.
+                </span>
               </label>
 
               <label className="space-y-1.5">
@@ -1112,6 +1139,11 @@ export default function FuelTrackerPage() {
           setEditingVehicle(null);
         }}
         onSubmit={handleCreateVehicle}
+      />
+
+      <VehicleRenewalsModal
+        vehicle={viewingVehicleRenewals}
+        onClose={() => setViewingVehicleRenewals(null)}
       />
 
       <FuelEntryFormModal

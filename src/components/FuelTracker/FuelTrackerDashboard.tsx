@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { FuelTooltip } from "./FuelTooltip";
+import { VehicleSearchSelect } from "./VehicleSearchSelect";
 import { SERIAL_COLUMN_CLASS, serialNumber } from "./SerialNumber";
 import { TablePagination, paginateItems } from "./TablePagination";
 import type {
@@ -205,20 +206,17 @@ export function FuelTrackerDashboard({
           <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
             Vehicle Filter
           </span>
-          <select
-            value={filters.vehicleId}
-            onChange={(event) =>
-              onFiltersChange({ ...filters, vehicleId: event.target.value })
+          <VehicleSearchSelect
+            vehicles={vehicles}
+            value={filters.vehicleId === "all" ? "" : filters.vehicleId}
+            onChange={(vehicleId) =>
+              onFiltersChange({
+                ...filters,
+                vehicleId: vehicleId || "all",
+              })
             }
-            className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
-          >
-            <option value="all">All vehicles</option>
-            {vehicles.map((vehicle) => (
-              <option key={vehicle.id} value={vehicle.id}>
-                {vehicle.vehicle_no}
-              </option>
-            ))}
-          </select>
+            emptyLabel="All vehicles"
+          />
         </label>
 
         <label className="space-y-1.5">

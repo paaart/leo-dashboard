@@ -17,12 +17,18 @@ export type ValidVehicleInput = {
   company: string | null;
   starting_odometer: number;
   status: "active" | "inactive";
+  national_permit_last_renewal_date: string | null;
+  national_permit_next_renewal_date: string | null;
   national_permit_renewal_date: string | null;
   national_permit_renewal_amount: number | null;
   national_permit_renewal_vendor: string | null;
+  insurance_last_renewal_date: string | null;
+  insurance_next_renewal_date: string | null;
   insurance_renewal_date: string | null;
   insurance_renewal_amount: number | null;
   insurance_renewal_vendor: string | null;
+  road_tax_last_renewal_date: string | null;
+  road_tax_next_renewal_date: string | null;
   road_tax_renewal_date: string | null;
   road_tax_renewal_amount: number | null;
   road_tax_renewal_vendor: string | null;
@@ -103,6 +109,13 @@ function optionalDate(value: unknown, fieldName: string): ValidationResult<strin
   return { ok: true, value };
 }
 
+function addDays(date: string | null, days: number): string | null {
+  if (!date) return null;
+  const value = new Date(`${date}T00:00:00Z`);
+  value.setUTCDate(value.getUTCDate() + days);
+  return value.toISOString().slice(0, 10);
+}
+
 export function validateVehicleInput(
   input: CreateVehicleInput
 ): ValidationResult<ValidVehicleInput> {
@@ -114,31 +127,65 @@ export function validateVehicleInput(
     input.starting_odometer ?? input.startingOdometer ?? 0
   );
   const status = input.status ?? "active";
-  const nationalPermitRenewalDate = optionalDate(
-    input.national_permit_renewal_date ?? input.nationalPermitRenewalDate,
-    "national_permit_renewal_date"
+  const nationalPermitLastRenewalDate = optionalDate(
+    input.national_permit_last_renewal_date ??
+      input.nationalPermitLastRenewalDate ??
+      input.national_permit_renewal_date ??
+      input.nationalPermitRenewalDate,
+    "national_permit_last_renewal_date"
   );
-  if (!nationalPermitRenewalDate.ok) return nationalPermitRenewalDate;
+  if (!nationalPermitLastRenewalDate.ok) return nationalPermitLastRenewalDate;
+  const nationalPermitNextRenewalDate = optionalDate(
+    input.national_permit_next_renewal_date ??
+      input.nationalPermitNextRenewalDate,
+    "national_permit_next_renewal_date"
+  );
+  if (!nationalPermitNextRenewalDate.ok) return nationalPermitNextRenewalDate;
+  const hasNationalPermitNextRenewalDate =
+    "national_permit_next_renewal_date" in input ||
+    "nationalPermitNextRenewalDate" in input;
   const nationalPermitRenewalAmount = optionalPositiveNumber(
     input.national_permit_renewal_amount ?? input.nationalPermitRenewalAmount,
     "national_permit_renewal_amount"
   );
   if (!nationalPermitRenewalAmount.ok) return nationalPermitRenewalAmount;
-  const insuranceRenewalDate = optionalDate(
-    input.insurance_renewal_date ?? input.insuranceRenewalDate,
-    "insurance_renewal_date"
+  const insuranceLastRenewalDate = optionalDate(
+    input.insurance_last_renewal_date ??
+      input.insuranceLastRenewalDate ??
+      input.insurance_renewal_date ??
+      input.insuranceRenewalDate,
+    "insurance_last_renewal_date"
   );
-  if (!insuranceRenewalDate.ok) return insuranceRenewalDate;
+  if (!insuranceLastRenewalDate.ok) return insuranceLastRenewalDate;
+  const insuranceNextRenewalDate = optionalDate(
+    input.insurance_next_renewal_date ?? input.insuranceNextRenewalDate,
+    "insurance_next_renewal_date"
+  );
+  if (!insuranceNextRenewalDate.ok) return insuranceNextRenewalDate;
+  const hasInsuranceNextRenewalDate =
+    "insurance_next_renewal_date" in input ||
+    "insuranceNextRenewalDate" in input;
   const insuranceRenewalAmount = optionalPositiveNumber(
     input.insurance_renewal_amount ?? input.insuranceRenewalAmount,
     "insurance_renewal_amount"
   );
   if (!insuranceRenewalAmount.ok) return insuranceRenewalAmount;
-  const roadTaxRenewalDate = optionalDate(
-    input.road_tax_renewal_date ?? input.roadTaxRenewalDate,
-    "road_tax_renewal_date"
+  const roadTaxLastRenewalDate = optionalDate(
+    input.road_tax_last_renewal_date ??
+      input.roadTaxLastRenewalDate ??
+      input.road_tax_renewal_date ??
+      input.roadTaxRenewalDate,
+    "road_tax_last_renewal_date"
   );
-  if (!roadTaxRenewalDate.ok) return roadTaxRenewalDate;
+  if (!roadTaxLastRenewalDate.ok) return roadTaxLastRenewalDate;
+  const roadTaxNextRenewalDate = optionalDate(
+    input.road_tax_next_renewal_date ?? input.roadTaxNextRenewalDate,
+    "road_tax_next_renewal_date"
+  );
+  if (!roadTaxNextRenewalDate.ok) return roadTaxNextRenewalDate;
+  const hasRoadTaxNextRenewalDate =
+    "road_tax_next_renewal_date" in input ||
+    "roadTaxNextRenewalDate" in input;
   const roadTaxRenewalAmount = optionalPositiveNumber(
     input.road_tax_renewal_amount ?? input.roadTaxRenewalAmount,
     "road_tax_renewal_amount"
@@ -165,18 +212,30 @@ export function validateVehicleInput(
       company: optionalText(input.company),
       starting_odometer: startingOdometer,
       status,
-      national_permit_renewal_date: nationalPermitRenewalDate.value,
+      national_permit_last_renewal_date: nationalPermitLastRenewalDate.value,
+      national_permit_next_renewal_date: hasNationalPermitNextRenewalDate
+        ? nationalPermitNextRenewalDate.value
+        : addDays(nationalPermitLastRenewalDate.value, 365),
+      national_permit_renewal_date: nationalPermitLastRenewalDate.value,
       national_permit_renewal_amount: nationalPermitRenewalAmount.value,
       national_permit_renewal_vendor: optionalText(
         input.national_permit_renewal_vendor ??
           input.nationalPermitRenewalVendor
       ),
-      insurance_renewal_date: insuranceRenewalDate.value,
+      insurance_last_renewal_date: insuranceLastRenewalDate.value,
+      insurance_next_renewal_date: hasInsuranceNextRenewalDate
+        ? insuranceNextRenewalDate.value
+        : addDays(insuranceLastRenewalDate.value, 365),
+      insurance_renewal_date: insuranceLastRenewalDate.value,
       insurance_renewal_amount: insuranceRenewalAmount.value,
       insurance_renewal_vendor: optionalText(
         input.insurance_renewal_vendor ?? input.insuranceRenewalVendor
       ),
-      road_tax_renewal_date: roadTaxRenewalDate.value,
+      road_tax_last_renewal_date: roadTaxLastRenewalDate.value,
+      road_tax_next_renewal_date: hasRoadTaxNextRenewalDate
+        ? roadTaxNextRenewalDate.value
+        : addDays(roadTaxLastRenewalDate.value, 365),
+      road_tax_renewal_date: roadTaxLastRenewalDate.value,
       road_tax_renewal_amount: roadTaxRenewalAmount.value,
       road_tax_renewal_vendor: optionalText(
         input.road_tax_renewal_vendor ?? input.roadTaxRenewalVendor
@@ -228,16 +287,39 @@ export function validateVehicleUpdateInput(
     value.status = input.status;
   }
 
-  if (
+  const hasNationalPermitLastRenewalDate =
+    "national_permit_last_renewal_date" in input ||
+    "nationalPermitLastRenewalDate" in input ||
     "national_permit_renewal_date" in input ||
-    "nationalPermitRenewalDate" in input
-  ) {
+    "nationalPermitRenewalDate" in input;
+  const hasNationalPermitNextRenewalDate =
+    "national_permit_next_renewal_date" in input ||
+    "nationalPermitNextRenewalDate" in input;
+
+  if (hasNationalPermitLastRenewalDate) {
     const date = optionalDate(
-      input.national_permit_renewal_date ?? input.nationalPermitRenewalDate,
-      "national_permit_renewal_date"
+      input.national_permit_last_renewal_date ??
+        input.nationalPermitLastRenewalDate ??
+        input.national_permit_renewal_date ??
+        input.nationalPermitRenewalDate,
+      "national_permit_last_renewal_date"
     );
     if (!date.ok) return date;
+    value.national_permit_last_renewal_date = date.value;
     value.national_permit_renewal_date = date.value;
+    if (!hasNationalPermitNextRenewalDate) {
+      value.national_permit_next_renewal_date = addDays(date.value, 365);
+    }
+  }
+
+  if (hasNationalPermitNextRenewalDate) {
+    const date = optionalDate(
+      input.national_permit_next_renewal_date ??
+        input.nationalPermitNextRenewalDate,
+      "national_permit_next_renewal_date"
+    );
+    if (!date.ok) return date;
+    value.national_permit_next_renewal_date = date.value;
   }
 
   if (
@@ -262,13 +344,38 @@ export function validateVehicleUpdateInput(
     );
   }
 
-  if ("insurance_renewal_date" in input || "insuranceRenewalDate" in input) {
+  const hasInsuranceLastRenewalDate =
+    "insurance_last_renewal_date" in input ||
+    "insuranceLastRenewalDate" in input ||
+    "insurance_renewal_date" in input ||
+    "insuranceRenewalDate" in input;
+  const hasInsuranceNextRenewalDate =
+    "insurance_next_renewal_date" in input ||
+    "insuranceNextRenewalDate" in input;
+
+  if (hasInsuranceLastRenewalDate) {
     const date = optionalDate(
-      input.insurance_renewal_date ?? input.insuranceRenewalDate,
-      "insurance_renewal_date"
+      input.insurance_last_renewal_date ??
+        input.insuranceLastRenewalDate ??
+        input.insurance_renewal_date ??
+        input.insuranceRenewalDate,
+      "insurance_last_renewal_date"
     );
     if (!date.ok) return date;
+    value.insurance_last_renewal_date = date.value;
     value.insurance_renewal_date = date.value;
+    if (!hasInsuranceNextRenewalDate) {
+      value.insurance_next_renewal_date = addDays(date.value, 365);
+    }
+  }
+
+  if (hasInsuranceNextRenewalDate) {
+    const date = optionalDate(
+      input.insurance_next_renewal_date ?? input.insuranceNextRenewalDate,
+      "insurance_next_renewal_date"
+    );
+    if (!date.ok) return date;
+    value.insurance_next_renewal_date = date.value;
   }
 
   if ("insurance_renewal_amount" in input || "insuranceRenewalAmount" in input) {
@@ -286,13 +393,38 @@ export function validateVehicleUpdateInput(
     );
   }
 
-  if ("road_tax_renewal_date" in input || "roadTaxRenewalDate" in input) {
+  const hasRoadTaxLastRenewalDate =
+    "road_tax_last_renewal_date" in input ||
+    "roadTaxLastRenewalDate" in input ||
+    "road_tax_renewal_date" in input ||
+    "roadTaxRenewalDate" in input;
+  const hasRoadTaxNextRenewalDate =
+    "road_tax_next_renewal_date" in input ||
+    "roadTaxNextRenewalDate" in input;
+
+  if (hasRoadTaxLastRenewalDate) {
     const date = optionalDate(
-      input.road_tax_renewal_date ?? input.roadTaxRenewalDate,
-      "road_tax_renewal_date"
+      input.road_tax_last_renewal_date ??
+        input.roadTaxLastRenewalDate ??
+        input.road_tax_renewal_date ??
+        input.roadTaxRenewalDate,
+      "road_tax_last_renewal_date"
     );
     if (!date.ok) return date;
+    value.road_tax_last_renewal_date = date.value;
     value.road_tax_renewal_date = date.value;
+    if (!hasRoadTaxNextRenewalDate) {
+      value.road_tax_next_renewal_date = addDays(date.value, 365);
+    }
+  }
+
+  if (hasRoadTaxNextRenewalDate) {
+    const date = optionalDate(
+      input.road_tax_next_renewal_date ?? input.roadTaxNextRenewalDate,
+      "road_tax_next_renewal_date"
+    );
+    if (!date.ok) return date;
+    value.road_tax_next_renewal_date = date.value;
   }
 
   if ("road_tax_renewal_amount" in input || "roadTaxRenewalAmount" in input) {

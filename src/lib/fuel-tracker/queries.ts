@@ -41,6 +41,12 @@ function toVehicle(row: Record<string, unknown>): Vehicle {
     company: row.company ? String(row.company) : null,
     starting_odometer: Number(row.starting_odometer),
     status: row.status as Vehicle["status"],
+    national_permit_last_renewal_date: row.national_permit_last_renewal_date
+      ? toDateOnly(row.national_permit_last_renewal_date)
+      : null,
+    national_permit_next_renewal_date: row.national_permit_next_renewal_date
+      ? toDateOnly(row.national_permit_next_renewal_date)
+      : null,
     national_permit_renewal_date: row.national_permit_renewal_date
       ? toDateOnly(row.national_permit_renewal_date)
       : null,
@@ -51,6 +57,12 @@ function toVehicle(row: Record<string, unknown>): Vehicle {
     national_permit_renewal_vendor: row.national_permit_renewal_vendor
       ? String(row.national_permit_renewal_vendor)
       : null,
+    insurance_last_renewal_date: row.insurance_last_renewal_date
+      ? toDateOnly(row.insurance_last_renewal_date)
+      : null,
+    insurance_next_renewal_date: row.insurance_next_renewal_date
+      ? toDateOnly(row.insurance_next_renewal_date)
+      : null,
     insurance_renewal_date: row.insurance_renewal_date
       ? toDateOnly(row.insurance_renewal_date)
       : null,
@@ -60,6 +72,12 @@ function toVehicle(row: Record<string, unknown>): Vehicle {
         : Number(row.insurance_renewal_amount),
     insurance_renewal_vendor: row.insurance_renewal_vendor
       ? String(row.insurance_renewal_vendor)
+      : null,
+    road_tax_last_renewal_date: row.road_tax_last_renewal_date
+      ? toDateOnly(row.road_tax_last_renewal_date)
+      : null,
+    road_tax_next_renewal_date: row.road_tax_next_renewal_date
+      ? toDateOnly(row.road_tax_next_renewal_date)
       : null,
     road_tax_renewal_date: row.road_tax_renewal_date
       ? toDateOnly(row.road_tax_renewal_date)
@@ -88,6 +106,9 @@ function toVehicleRenewalAlert(
     company: row.company ? String(row.company) : null,
     renewalType: String(row.renewal_type) as VehicleRenewalType,
     renewalLabel: String(row.renewal_label),
+    lastRenewalDate: row.last_renewal_date
+      ? toDateOnly(row.last_renewal_date)
+      : null,
     renewalDate: toDateOnly(row.renewal_date),
     renewalAmount:
       row.renewal_amount === null ? null : Number(row.renewal_amount),
@@ -206,8 +227,14 @@ export async function createVehicle(
       company,
       starting_odometer,
       status,
+      national_permit_last_renewal_date,
+      national_permit_next_renewal_date,
       national_permit_renewal_date,
+      insurance_last_renewal_date,
+      insurance_next_renewal_date,
       insurance_renewal_date,
+      road_tax_last_renewal_date,
+      road_tax_next_renewal_date,
       road_tax_renewal_date,
       national_permit_renewal_amount,
       national_permit_renewal_vendor,
@@ -216,7 +243,11 @@ export async function createVehicle(
       road_tax_renewal_amount,
       road_tax_renewal_vendor
     )
-    values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+    values (
+      $1, $2, $3, $4, $5,
+      $6, $7, $8, $9, $10, $11, $12, $13, $14,
+      $15, $16, $17, $18, $19, $20
+    )
     returning *
     `,
     [
@@ -225,8 +256,14 @@ export async function createVehicle(
       input.company,
       input.starting_odometer,
       input.status,
+      input.national_permit_last_renewal_date,
+      input.national_permit_next_renewal_date,
       input.national_permit_renewal_date,
+      input.insurance_last_renewal_date,
+      input.insurance_next_renewal_date,
       input.insurance_renewal_date,
+      input.road_tax_last_renewal_date,
+      input.road_tax_next_renewal_date,
       input.road_tax_renewal_date,
       input.national_permit_renewal_amount,
       input.national_permit_renewal_vendor,
@@ -311,40 +348,64 @@ export async function updateVehicle(
       company = case when $4::boolean then $5 else company end,
       starting_odometer = coalesce($6, starting_odometer),
       status = coalesce($7, status),
-      national_permit_renewal_date = case
+      national_permit_last_renewal_date = case
         when $8::boolean then $9::date
+        else national_permit_last_renewal_date
+      end,
+      national_permit_next_renewal_date = case
+        when $10::boolean then $11::date
+        else national_permit_next_renewal_date
+      end,
+      national_permit_renewal_date = case
+        when $12::boolean then $13::date
         else national_permit_renewal_date
       end,
+      insurance_last_renewal_date = case
+        when $14::boolean then $15::date
+        else insurance_last_renewal_date
+      end,
+      insurance_next_renewal_date = case
+        when $16::boolean then $17::date
+        else insurance_next_renewal_date
+      end,
       insurance_renewal_date = case
-        when $10::boolean then $11::date
+        when $18::boolean then $19::date
         else insurance_renewal_date
       end,
+      road_tax_last_renewal_date = case
+        when $20::boolean then $21::date
+        else road_tax_last_renewal_date
+      end,
+      road_tax_next_renewal_date = case
+        when $22::boolean then $23::date
+        else road_tax_next_renewal_date
+      end,
       road_tax_renewal_date = case
-        when $12::boolean then $13::date
+        when $24::boolean then $25::date
         else road_tax_renewal_date
       end,
       national_permit_renewal_amount = case
-        when $14::boolean then $15::numeric
+        when $26::boolean then $27::numeric
         else national_permit_renewal_amount
       end,
       national_permit_renewal_vendor = case
-        when $16::boolean then $17
+        when $28::boolean then $29
         else national_permit_renewal_vendor
       end,
       insurance_renewal_amount = case
-        when $18::boolean then $19::numeric
+        when $30::boolean then $31::numeric
         else insurance_renewal_amount
       end,
       insurance_renewal_vendor = case
-        when $20::boolean then $21
+        when $32::boolean then $33
         else insurance_renewal_vendor
       end,
       road_tax_renewal_amount = case
-        when $22::boolean then $23::numeric
+        when $34::boolean then $35::numeric
         else road_tax_renewal_amount
       end,
       road_tax_renewal_vendor = case
-        when $24::boolean then $25
+        when $36::boolean then $37
         else road_tax_renewal_vendor
       end
     where id = $1
@@ -358,10 +419,22 @@ export async function updateVehicle(
       input.company ?? null,
       input.starting_odometer ?? null,
       input.status ?? null,
+      "national_permit_last_renewal_date" in input,
+      input.national_permit_last_renewal_date ?? null,
+      "national_permit_next_renewal_date" in input,
+      input.national_permit_next_renewal_date ?? null,
       "national_permit_renewal_date" in input,
       input.national_permit_renewal_date ?? null,
+      "insurance_last_renewal_date" in input,
+      input.insurance_last_renewal_date ?? null,
+      "insurance_next_renewal_date" in input,
+      input.insurance_next_renewal_date ?? null,
       "insurance_renewal_date" in input,
       input.insurance_renewal_date ?? null,
+      "road_tax_last_renewal_date" in input,
+      input.road_tax_last_renewal_date ?? null,
+      "road_tax_next_renewal_date" in input,
+      input.road_tax_next_renewal_date ?? null,
       "road_tax_renewal_date" in input,
       input.road_tax_renewal_date ?? null,
       "national_permit_renewal_amount" in input,
@@ -395,6 +468,7 @@ export async function listVehicleRenewalAlerts(): Promise<
         v.company,
         renewal.renewal_type,
         renewal.renewal_label,
+        renewal.last_renewal_date,
         renewal.renewal_date,
         renewal.renewal_amount,
         renewal.renewal_vendor
@@ -404,27 +478,31 @@ export async function listVehicleRenewalAlerts(): Promise<
           (
             'national_permit',
             'National Permit',
-            v.national_permit_renewal_date,
+            v.national_permit_last_renewal_date,
+            v.national_permit_next_renewal_date,
             v.national_permit_renewal_amount,
             v.national_permit_renewal_vendor
           ),
           (
             'insurance',
             'Insurance',
-            v.insurance_renewal_date,
+            v.insurance_last_renewal_date,
+            v.insurance_next_renewal_date,
             v.insurance_renewal_amount,
             v.insurance_renewal_vendor
           ),
           (
             'road_tax',
             'Road Tax',
-            v.road_tax_renewal_date,
+            v.road_tax_last_renewal_date,
+            v.road_tax_next_renewal_date,
             v.road_tax_renewal_amount,
             v.road_tax_renewal_vendor
           )
       ) as renewal(
         renewal_type,
         renewal_label,
+        last_renewal_date,
         renewal_date,
         renewal_amount,
         renewal_vendor
@@ -439,6 +517,7 @@ export async function listVehicleRenewalAlerts(): Promise<
       r.company,
       r.renewal_type,
       r.renewal_label,
+      r.last_renewal_date,
       r.renewal_date,
       r.renewal_amount,
       r.renewal_vendor,
@@ -469,9 +548,9 @@ export async function dismissVehicleRenewalAlert(input: {
     from public.vehicles v
     cross join lateral (
       values
-        ('national_permit', v.national_permit_renewal_date),
-        ('insurance', v.insurance_renewal_date),
-        ('road_tax', v.road_tax_renewal_date)
+        ('national_permit', v.national_permit_next_renewal_date),
+        ('insurance', v.insurance_next_renewal_date),
+        ('road_tax', v.road_tax_next_renewal_date)
     ) as renewal(renewal_type, renewal_date)
     where v.id = $1
       and v.status = 'active'

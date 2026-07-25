@@ -6,6 +6,11 @@ export type VehicleExpenseInvoiceStatus =
   | "partially_paid"
   | "paid";
 
+export type VehicleRenewalType =
+  | "national_permit"
+  | "insurance"
+  | "road_tax";
+
 export type VehicleExpenseInvoiceItem = {
   id: string;
   invoice_id: string;
@@ -17,6 +22,7 @@ export type VehicleExpenseInvoiceItem = {
     vehicle_type: string;
   }[];
   expense_type: string;
+  renewal_type: VehicleRenewalType | null;
   description: string | null;
   amount: number;
   created_at: string;
@@ -109,6 +115,8 @@ export type VehicleExpenseInvoiceInputItem = {
   vehicle_ids?: unknown;
   expenseType?: unknown;
   expense_type?: unknown;
+  renewalType?: unknown;
+  renewal_type?: unknown;
   description?: unknown;
   amount?: unknown;
 };
@@ -164,6 +172,7 @@ export type ValidInvoiceItemInput = {
   vehicle_id: string | null;
   vehicle_ids: string[];
   expense_type: string;
+  renewal_type: VehicleRenewalType | null;
   description: string | null;
   amount: number;
 };
@@ -282,6 +291,9 @@ function mapItem(
     vehicle_no: row.vehicle_no ? String(row.vehicle_no) : null,
     vehicles,
     expense_type: String(row.expense_type),
+    renewal_type: row.renewal_type
+      ? (String(row.renewal_type) as VehicleRenewalType)
+      : null,
     description: row.description ? String(row.description) : null,
     amount: roundMoney(row.amount),
     created_at: toIso(row.created_at),
@@ -418,6 +430,7 @@ function validateItems(value: unknown): ValidationResult<ValidInvoiceItemInput[]
       : [];
     const dedupedVehicleIds = [...new Set(vehicleIds)];
     const expenseType = requiredText(item.expense_type ?? item.expenseType);
+    const renewalType = optionalText(item.renewal_type ?? item.renewalType);
     const amount = toAmount(item.amount);
 
     if (!expenseType) {
@@ -428,10 +441,21 @@ function validateItems(value: unknown): ValidationResult<ValidInvoiceItemInput[]
       return { ok: false, error: `items[${index}].amount must be > 0` };
     }
 
+    if (
+      renewalType &&
+      !["national_permit", "insurance", "road_tax"].includes(renewalType)
+    ) {
+      return {
+        ok: false,
+        error: `items[${index}].renewalType is invalid`,
+      };
+    }
+
     items.push({
       vehicle_id: dedupedVehicleIds[0] ?? null,
       vehicle_ids: dedupedVehicleIds,
       expense_type: expenseType,
+      renewal_type: renewalType as VehicleRenewalType | null,
       description: optionalText(item.description),
       amount: roundMoney(amount),
     });
@@ -756,16 +780,18 @@ async function insertItems(
         invoice_id,
         vehicle_id,
         expense_type,
+        renewal_type,
         description,
         amount
       )
-      values ($1::uuid, $2::uuid, $3, $4, $5::numeric(14,2))
+      values ($1::uuid, $2::uuid, $3, $4, $5, $6::numeric(14,2))
       returning id
       `,
       [
         invoiceId,
         item.vehicle_id,
         item.expense_type,
+        item.renewal_type,
         item.description,
         item.amount,
       ]
@@ -1360,6 +1386,109 @@ async function syncInvoiceStatuses(client: PoolClient, invoiceIds: string[]) {
   );
 }
 
+async function advancePaidInvoiceRenewals(
+  client: PoolClient,
+  invoiceIds: string[],
+  paymentDate: string
+) {
+  const uniqueInvoiceIds = [...new Set(invoiceIds)];
+  if (uniqueInvoiceIds.length === 0) return;
+
+  await client.query(
+    `
+    with renewal_lines as (
+      select
+        linked_vehicle.vehicle_id,
+        ii.renewal_type,
+        sum(ii.amount) as renewal_amount
+      from public.vehicle_expense_invoice_items ii
+      join public.vehicle_expense_invoices i on i.id = ii.invoice_id
+      cross join lateral (
+        select ii.vehicle_id
+        where ii.vehicle_id is not null
+        union
+        select iv.vehicle_id
+        from public.vehicle_expense_invoice_item_vehicles iv
+        where iv.invoice_item_id = ii.id
+      ) linked_vehicle
+      where ii.invoice_id = any($1::uuid[])
+        and i.status = 'paid'
+        and ii.renewal_type is not null
+      group by linked_vehicle.vehicle_id, ii.renewal_type
+    ),
+    renewals_by_vehicle as (
+      select
+        vehicle_id,
+        max(renewal_amount) filter (
+          where renewal_type = 'national_permit'
+        ) as national_permit_amount,
+        max(renewal_amount) filter (
+          where renewal_type = 'insurance'
+        ) as insurance_amount,
+        max(renewal_amount) filter (
+          where renewal_type = 'road_tax'
+        ) as road_tax_amount
+      from renewal_lines
+      group by vehicle_id
+    )
+    update public.vehicles v
+    set
+      national_permit_last_renewal_date = case
+        when r.national_permit_amount is not null then $2::date
+        else v.national_permit_last_renewal_date
+      end,
+      national_permit_next_renewal_date = case
+        when r.national_permit_amount is not null then $2::date + 365
+        else v.national_permit_next_renewal_date
+      end,
+      national_permit_renewal_date = case
+        when r.national_permit_amount is not null then $2::date
+        else v.national_permit_renewal_date
+      end,
+      national_permit_renewal_amount = coalesce(
+        r.national_permit_amount,
+        v.national_permit_renewal_amount
+      ),
+      insurance_last_renewal_date = case
+        when r.insurance_amount is not null then $2::date
+        else v.insurance_last_renewal_date
+      end,
+      insurance_next_renewal_date = case
+        when r.insurance_amount is not null then $2::date + 365
+        else v.insurance_next_renewal_date
+      end,
+      insurance_renewal_date = case
+        when r.insurance_amount is not null then $2::date
+        else v.insurance_renewal_date
+      end,
+      insurance_renewal_amount = coalesce(
+        r.insurance_amount,
+        v.insurance_renewal_amount
+      ),
+      road_tax_last_renewal_date = case
+        when r.road_tax_amount is not null then $2::date
+        else v.road_tax_last_renewal_date
+      end,
+      road_tax_next_renewal_date = case
+        when r.road_tax_amount is not null then $2::date + 365
+        else v.road_tax_next_renewal_date
+      end,
+      road_tax_renewal_date = case
+        when r.road_tax_amount is not null then $2::date
+        else v.road_tax_renewal_date
+      end,
+      road_tax_renewal_amount = coalesce(
+        r.road_tax_amount,
+        v.road_tax_renewal_amount
+      ),
+      updated_at = now()
+    from renewals_by_vehicle r
+    where v.id = r.vehicle_id
+    `,
+    [uniqueInvoiceIds, paymentDate]
+  );
+}
+
 async function ensurePaymentAllocationCrossBatchSupport(client: PoolClient) {
   const invoiceOnlyConstraints = await client.query<{ conname: string }>(
     `
@@ -1561,6 +1690,7 @@ export async function createVehicleExpensePaymentBatch(
     }
 
     await syncInvoiceStatuses(client, invoiceIds);
+    await advancePaidInvoiceRenewals(client, invoiceIds, input.payment_date);
 
     await client.query("COMMIT");
 

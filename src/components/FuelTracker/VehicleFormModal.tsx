@@ -6,6 +6,7 @@ import type {
   Vehicle,
   VehicleStatus,
 } from "@/lib/fuel-tracker/types";
+import { FuelTooltip } from "./FuelTooltip";
 
 const initialForm = {
   vehicleNo: "",
@@ -13,19 +14,37 @@ const initialForm = {
   company: "",
   startingOdometer: "",
   status: "active" as VehicleStatus,
-  nationalPermitRenewalDate: "",
+  nationalPermitLastRenewalDate: "",
+  nationalPermitNextRenewalDate: "",
   nationalPermitRenewalAmount: "",
   nationalPermitRenewalVendor: "",
-  insuranceRenewalDate: "",
+  insuranceLastRenewalDate: "",
+  insuranceNextRenewalDate: "",
   insuranceRenewalAmount: "",
   insuranceRenewalVendor: "",
-  roadTaxRenewalDate: "",
+  roadTaxLastRenewalDate: "",
+  roadTaxNextRenewalDate: "",
   roadTaxRenewalAmount: "",
   roadTaxRenewalVendor: "",
 };
 
+type RenewalType = "nationalPermit" | "insurance" | "roadTax";
+
+const initialNextRenewalEdited: Record<RenewalType, boolean> = {
+  nationalPermit: false,
+  insurance: false,
+  roadTax: false,
+};
+
 function optionalAmount(value: string) {
   return value.trim() ? Number(value) : null;
+}
+
+function addDays(value: string, days: number) {
+  if (!value) return "";
+  const date = new Date(`${value}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
 }
 
 export function VehicleFormModal({
@@ -44,6 +63,9 @@ export function VehicleFormModal({
   onSubmit: (payload: CreateVehiclePayload) => Promise<void>;
 }) {
   const [form, setForm] = useState(initialForm);
+  const [nextRenewalEdited, setNextRenewalEdited] = useState(
+    initialNextRenewalEdited
+  );
   const [error, setError] = useState<string | null>(null);
   const isEdit = Boolean(vehicle);
 
@@ -57,21 +79,29 @@ export function VehicleFormModal({
               company: vehicle.company ?? "",
               startingOdometer: String(vehicle.starting_odometer),
               status: vehicle.status,
-              nationalPermitRenewalDate:
-                vehicle.national_permit_renewal_date ?? "",
+              nationalPermitLastRenewalDate:
+                vehicle.national_permit_last_renewal_date ?? "",
+              nationalPermitNextRenewalDate:
+                vehicle.national_permit_next_renewal_date ?? "",
               nationalPermitRenewalAmount:
                 vehicle.national_permit_renewal_amount === null
                   ? ""
                   : String(vehicle.national_permit_renewal_amount),
               nationalPermitRenewalVendor:
                 vehicle.national_permit_renewal_vendor ?? "",
-              insuranceRenewalDate: vehicle.insurance_renewal_date ?? "",
+              insuranceLastRenewalDate:
+                vehicle.insurance_last_renewal_date ?? "",
+              insuranceNextRenewalDate:
+                vehicle.insurance_next_renewal_date ?? "",
               insuranceRenewalAmount:
                 vehicle.insurance_renewal_amount === null
                   ? ""
                   : String(vehicle.insurance_renewal_amount),
               insuranceRenewalVendor: vehicle.insurance_renewal_vendor ?? "",
-              roadTaxRenewalDate: vehicle.road_tax_renewal_date ?? "",
+              roadTaxLastRenewalDate:
+                vehicle.road_tax_last_renewal_date ?? "",
+              roadTaxNextRenewalDate:
+                vehicle.road_tax_next_renewal_date ?? "",
               roadTaxRenewalAmount:
                 vehicle.road_tax_renewal_amount === null
                   ? ""
@@ -80,6 +110,7 @@ export function VehicleFormModal({
             }
           : initialForm
       );
+      setNextRenewalEdited(initialNextRenewalEdited);
       setError(null);
     }
   }, [open, vehicle]);
@@ -126,24 +157,63 @@ export function VehicleFormModal({
       company: form.company.trim() || null,
       startingOdometer,
       status: form.status,
-      nationalPermitRenewalDate: form.nationalPermitRenewalDate || null,
+      nationalPermitLastRenewalDate:
+        form.nationalPermitLastRenewalDate || null,
+      nationalPermitNextRenewalDate:
+        form.nationalPermitNextRenewalDate || null,
       nationalPermitRenewalAmount: optionalAmount(
         form.nationalPermitRenewalAmount
       ),
       nationalPermitRenewalVendor:
         form.nationalPermitRenewalVendor.trim() || null,
-      insuranceRenewalDate: form.insuranceRenewalDate || null,
+      insuranceLastRenewalDate: form.insuranceLastRenewalDate || null,
+      insuranceNextRenewalDate: form.insuranceNextRenewalDate || null,
       insuranceRenewalAmount: optionalAmount(form.insuranceRenewalAmount),
       insuranceRenewalVendor: form.insuranceRenewalVendor.trim() || null,
-      roadTaxRenewalDate: form.roadTaxRenewalDate || null,
+      roadTaxLastRenewalDate: form.roadTaxLastRenewalDate || null,
+      roadTaxNextRenewalDate: form.roadTaxNextRenewalDate || null,
       roadTaxRenewalAmount: optionalAmount(form.roadTaxRenewalAmount),
       roadTaxRenewalVendor: form.roadTaxRenewalVendor.trim() || null,
     });
   };
 
+  const changeLastRenewalDate = (
+    type: RenewalType,
+    lastKey:
+      | "nationalPermitLastRenewalDate"
+      | "insuranceLastRenewalDate"
+      | "roadTaxLastRenewalDate",
+    nextKey:
+      | "nationalPermitNextRenewalDate"
+      | "insuranceNextRenewalDate"
+      | "roadTaxNextRenewalDate",
+    value: string
+  ) => {
+    setForm((previous) => ({
+      ...previous,
+      [lastKey]: value,
+      ...(nextRenewalEdited[type] ? {} : { [nextKey]: addDays(value, 365) }),
+    }));
+  };
+
+  const changeNextRenewalDate = (
+    type: RenewalType,
+    key:
+      | "nationalPermitNextRenewalDate"
+      | "insuranceNextRenewalDate"
+      | "roadTaxNextRenewalDate",
+    value: string
+  ) => {
+    setNextRenewalEdited((previous) => ({ ...previous, [type]: true }));
+    setForm((previous) => ({ ...previous, [key]: value }));
+  };
+
+  const renewalHelpText =
+    "Last Renewal Date is the date payment was actually made. Next Renewal Date is the date used for alerts and urgency.";
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-xl rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-950">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 p-4">
+      <div className="mx-auto my-4 flex w-full max-w-xl max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-950">
         <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 dark:border-gray-800">
           <div>
             <h2 className="text-lg font-semibold text-gray-950 dark:text-gray-50">
@@ -165,7 +235,10 @@ export function VehicleFormModal({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 px-5 py-5">
+        <form
+          onSubmit={handleSubmit}
+          className="flex-1 space-y-4 overflow-y-auto px-5 py-5"
+        >
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="space-y-1.5">
               <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
@@ -179,7 +252,7 @@ export function VehicleFormModal({
                     vehicleNo: event.target.value,
                   }))
                 }
-                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className="no-number-spinner h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
                 placeholder="KA01AB1234"
               />
               <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -274,30 +347,59 @@ export function VehicleFormModal({
 
           <div className="space-y-3 rounded-lg border border-gray-200 p-4 dark:border-gray-800">
             <div>
-              <h3 className="text-sm font-semibold text-gray-950 dark:text-gray-50">
-                Renewal Dates
-              </h3>
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Alerts appear 15 days before each renewal date.
-              </p>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-gray-950 dark:text-gray-50">
+                  Renewal Details
+                </h3>
+                <FuelTooltip content={renewalHelpText}>
+                  <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-gray-400/70 text-[10px] font-semibold text-gray-500 dark:border-gray-600 dark:text-gray-400">
+                    i
+                  </span>
+                </FuelTooltip>
+              </div>
             </div>
 
             <div className="grid gap-4 lg:grid-cols-3">
-              <label className="space-y-1.5">
-                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <div className="space-y-2">
+                <span className="text-base font-medium text-gray-800 dark:text-gray-200">
                   National Permit
+                </span>
+                <span className="block text-sm text-gray-500 dark:text-gray-400">
+                  Last Renewal Date
                 </span>
                 <input
                   type="date"
-                  value={form.nationalPermitRenewalDate}
+                  value={form.nationalPermitLastRenewalDate}
                   onChange={(event) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      nationalPermitRenewalDate: event.target.value,
-                    }))
+                    changeLastRenewalDate(
+                      "nationalPermit",
+                      "nationalPermitLastRenewalDate",
+                      "nationalPermitNextRenewalDate",
+                      event.target.value
+                    )
                   }
-                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                  title="Date on which payment was actually made."
+                  className="no-number-spinner h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
                 />
+                <span className="block text-sm text-gray-500 dark:text-gray-400">
+                  Next Renewal Date
+                </span>
+                <input
+                  type="date"
+                  value={form.nationalPermitNextRenewalDate}
+                  onChange={(event) =>
+                    changeNextRenewalDate(
+                      "nationalPermit",
+                      "nationalPermitNextRenewalDate",
+                      event.target.value
+                    )
+                  }
+                  title="Next expected renewal. Alerts are generated from this date."
+                  className="no-number-spinner h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                />
+                <span className="block text-sm text-gray-500 dark:text-gray-400">
+                  Last Renewal Amount
+                </span>
                 <input
                   type="number"
                   min="0"
@@ -307,39 +409,67 @@ export function VehicleFormModal({
                     setForm((prev) => ({
                       ...prev,
                       nationalPermitRenewalAmount: event.target.value,
-                    }))
+                  }))
                   }
-                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                  className="no-number-spinner h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
                   placeholder="Amount"
                 />
+                <span className="block text-sm text-gray-500 dark:text-gray-400">
+                  Vendor / Authority
+                </span>
                 <input
                   value={form.nationalPermitRenewalVendor}
                   onChange={(event) =>
                     setForm((prev) => ({
                       ...prev,
                       nationalPermitRenewalVendor: event.target.value,
-                    }))
+                  }))
                   }
                   className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
-                  placeholder="Vendor / authority"
+                  placeholder="Name"
                 />
-              </label>
+              </div>
 
-              <label className="space-y-1.5">
-                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <div className="space-y-2">
+                <span className="text-base font-medium text-gray-800 dark:text-gray-200">
                   Insurance
+                </span>
+                <span className="block text-sm text-gray-500 dark:text-gray-400">
+                  Last Renewal Date
                 </span>
                 <input
                   type="date"
-                  value={form.insuranceRenewalDate}
+                  value={form.insuranceLastRenewalDate}
                   onChange={(event) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      insuranceRenewalDate: event.target.value,
-                    }))
+                    changeLastRenewalDate(
+                      "insurance",
+                      "insuranceLastRenewalDate",
+                      "insuranceNextRenewalDate",
+                      event.target.value
+                    )
                   }
+                  title="Date on which payment was actually made."
                   className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
                 />
+                <span className="block text-sm text-gray-500 dark:text-gray-400">
+                  Next Renewal Date
+                </span>
+                <input
+                  type="date"
+                  value={form.insuranceNextRenewalDate}
+                  onChange={(event) =>
+                    changeNextRenewalDate(
+                      "insurance",
+                      "insuranceNextRenewalDate",
+                      event.target.value
+                    )
+                  }
+                  title="Next expected renewal. Alerts are generated from this date."
+                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                />
+                <span className="block text-sm text-gray-500 dark:text-gray-400">
+                  Last Renewal Amount
+                </span>
                 <input
                   type="number"
                   min="0"
@@ -349,39 +479,67 @@ export function VehicleFormModal({
                     setForm((prev) => ({
                       ...prev,
                       insuranceRenewalAmount: event.target.value,
-                    }))
+                  }))
                   }
                   className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
                   placeholder="Amount"
                 />
+                <span className="block text-sm text-gray-500 dark:text-gray-400">
+                  Vendor / Authority
+                </span>
                 <input
                   value={form.insuranceRenewalVendor}
                   onChange={(event) =>
                     setForm((prev) => ({
                       ...prev,
                       insuranceRenewalVendor: event.target.value,
-                    }))
+                  }))
                   }
                   className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
-                  placeholder="Vendor / authority"
+                  placeholder="Name"
                 />
-              </label>
+              </div>
 
-              <label className="space-y-1.5">
-                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <div className="space-y-2">
+                <span className="text-base font-medium text-gray-800 dark:text-gray-200">
                   Road Tax
+                </span>
+                <span className="block text-sm text-gray-500 dark:text-gray-400">
+                  Last Renewal Date
                 </span>
                 <input
                   type="date"
-                  value={form.roadTaxRenewalDate}
+                  value={form.roadTaxLastRenewalDate}
                   onChange={(event) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      roadTaxRenewalDate: event.target.value,
-                    }))
+                    changeLastRenewalDate(
+                      "roadTax",
+                      "roadTaxLastRenewalDate",
+                      "roadTaxNextRenewalDate",
+                      event.target.value
+                    )
                   }
+                  title="Date on which payment was actually made."
                   className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
                 />
+                <span className="block text-sm text-gray-500 dark:text-gray-400">
+                  Next Renewal Date
+                </span>
+                <input
+                  type="date"
+                  value={form.roadTaxNextRenewalDate}
+                  onChange={(event) =>
+                    changeNextRenewalDate(
+                      "roadTax",
+                      "roadTaxNextRenewalDate",
+                      event.target.value
+                    )
+                  }
+                  title="Next expected renewal. Alerts are generated from this date."
+                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                />
+                <span className="block text-sm text-gray-500 dark:text-gray-400">
+                  Last Renewal Amount
+                </span>
                 <input
                   type="number"
                   min="0"
@@ -391,23 +549,26 @@ export function VehicleFormModal({
                     setForm((prev) => ({
                       ...prev,
                       roadTaxRenewalAmount: event.target.value,
-                    }))
+                  }))
                   }
                   className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
                   placeholder="Amount"
                 />
+                <span className="block text-sm text-gray-500 dark:text-gray-400">
+                  Vendor / Authority
+                </span>
                 <input
                   value={form.roadTaxRenewalVendor}
                   onChange={(event) =>
                     setForm((prev) => ({
                       ...prev,
                       roadTaxRenewalVendor: event.target.value,
-                    }))
+                  }))
                   }
                   className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
-                  placeholder="Vendor / authority"
+                  placeholder="Name"
                 />
-              </label>
+              </div>
             </div>
           </div>
 

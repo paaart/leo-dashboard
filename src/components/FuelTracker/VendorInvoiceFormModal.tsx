@@ -1,10 +1,12 @@
 import { Copy, Plus, Trash2, X } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { SERIAL_COLUMN_CLASS, serialNumber } from "./SerialNumber";
+import { VehicleSearchSelect } from "./VehicleSearchSelect";
 import type { FormEvent } from "react";
 import type {
   CreateVehicleExpenseInvoicePayload,
   Vehicle,
+  VehicleRenewalType,
   VehicleExpenseInvoice,
 } from "@/lib/fuel-tracker/types";
 
@@ -24,6 +26,7 @@ type LineItemForm = {
   expenseScope: "vehicle" | "general";
   vehicleId: string;
   expenseType: string;
+  renewalType: VehicleRenewalType | null;
   description: string;
   amount: string;
 };
@@ -40,6 +43,7 @@ const initialItem: LineItemForm = {
   expenseScope: "vehicle",
   vehicleId: "",
   expenseType: expenseTypes[0],
+  renewalType: null,
   description: "",
   amount: "",
 };
@@ -70,137 +74,10 @@ function itemFromInvoice(
     expenseScope: linkedVehicleId ? "vehicle" : "general",
     vehicleId: linkedVehicleId,
     expenseType: item.expense_type,
+    renewalType: item.renewal_type,
     description: item.description ?? "",
     amount: String(item.amount),
   };
-}
-
-function VehicleSearchSelect({
-  vehicles,
-  value,
-  onChange,
-}: {
-  vehicles: Vehicle[];
-  value: string;
-  onChange: (vehicleId: string) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const [dropdownRect, setDropdownRect] = useState<DOMRect | null>(null);
-  const selectedVehicle =
-    vehicles.find((vehicle) => vehicle.id === value) ?? null;
-
-  function vehicleLabel(vehicle: Vehicle) {
-    return [
-      vehicle.vehicle_no,
-      vehicle.vehicle_type,
-      vehicle.company,
-    ]
-      .filter(Boolean)
-      .join(" - ");
-  }
-
-  const filteredVehicles = vehicles.filter((vehicle) => {
-    const term = query.trim().toLowerCase();
-    if (!term) return true;
-
-    return vehicleLabel(vehicle).toLowerCase().includes(term);
-  });
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
-        setOpen(false);
-        setQuery("");
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  useEffect(() => {
-    if (!open) return;
-    setDropdownRect(containerRef.current?.getBoundingClientRect() ?? null);
-  }, [open, query]);
-
-  const displayValue = open
-    ? query
-    : selectedVehicle
-    ? vehicleLabel(selectedVehicle)
-    : "";
-
-  return (
-    <div ref={containerRef} className="relative min-w-52">
-      <input
-        value={displayValue}
-        onClick={() => {
-          setOpen(true);
-          setDropdownRect(containerRef.current?.getBoundingClientRect() ?? null);
-          setQuery("");
-        }}
-        onChange={(event) => {
-          setQuery(event.target.value);
-          if (!open) setOpen(true);
-        }}
-        className="h-9 w-full rounded-md border border-gray-300 bg-white px-3 pr-7 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
-        placeholder="Search vehicle"
-      />
-      <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500">
-        ▼
-      </span>
-
-      {open ? (
-        <div
-          className="fixed z-[70] max-h-56 overflow-auto rounded-md border border-gray-200 bg-white text-sm shadow-lg dark:border-gray-800 dark:bg-gray-950"
-          style={{
-            left: dropdownRect?.left ?? 0,
-            top: (dropdownRect?.bottom ?? 0) + 4,
-            width: dropdownRect?.width ?? 240,
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => {
-              onChange("");
-              setOpen(false);
-              setQuery("");
-            }}
-            className="w-full px-3 py-2 text-left text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-900"
-          >
-            Select vehicle
-          </button>
-          {filteredVehicles.length === 0 ? (
-            <div className="px-3 py-2 text-gray-500 dark:text-gray-400">
-              {vehicles.length === 0 ? "No vehicles loaded" : "No vehicles found"}
-            </div>
-          ) : (
-            filteredVehicles.map((vehicle) => (
-              <button
-                type="button"
-                key={vehicle.id}
-                onClick={() => {
-                  onChange(vehicle.id);
-                  setOpen(false);
-                  setQuery("");
-                }}
-                className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-900"
-              >
-                <span>{vehicle.vehicle_no}</span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  {[vehicle.vehicle_type, vehicle.company].filter(Boolean).join(" - ")}
-                </span>
-              </button>
-            ))
-          )}
-        </div>
-      ) : null}
-    </div>
-  );
 }
 
 export function VendorInvoiceFormModal({
@@ -288,6 +165,7 @@ export function VendorInvoiceFormModal({
             ...initialItem,
             expenseScope: previous.expenseScope,
             expenseType: previous.expenseType,
+            renewalType: null,
             description: previous.description,
             amount: "",
             vehicleId: "",
@@ -303,6 +181,7 @@ export function VendorInvoiceFormModal({
       const duplicate: LineItemForm = {
         expenseScope: item.expenseScope,
         expenseType: item.expenseType,
+        renewalType: null,
         description: item.description,
         amount: item.amount,
         vehicleId: "",
@@ -370,6 +249,7 @@ export function VendorInvoiceFormModal({
         vehicleId: isVehicleItem ? item.vehicleId : null,
         vehicleIds: isVehicleItem ? [item.vehicleId] : [],
         expenseType: item.expenseType.trim(),
+        renewalType: item.renewalType,
         description: item.description.trim() || null,
         amount,
       });
@@ -577,6 +457,7 @@ export function VendorInvoiceFormModal({
                           onChange={(event) =>
                             updateItem(index, {
                               expenseType: event.target.value,
+                              renewalType: null,
                             })
                           }
                           className="h-9 w-40 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"

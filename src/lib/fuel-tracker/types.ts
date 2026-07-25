@@ -12,12 +12,21 @@ export type Vehicle = {
   company: string | null;
   starting_odometer: number;
   status: VehicleStatus;
+  national_permit_last_renewal_date: string | null;
+  national_permit_next_renewal_date: string | null;
+  /** @deprecated Use national_permit_last_renewal_date. */
   national_permit_renewal_date: string | null;
   national_permit_renewal_amount: number | null;
   national_permit_renewal_vendor: string | null;
+  insurance_last_renewal_date: string | null;
+  insurance_next_renewal_date: string | null;
+  /** @deprecated Use insurance_last_renewal_date. */
   insurance_renewal_date: string | null;
   insurance_renewal_amount: number | null;
   insurance_renewal_vendor: string | null;
+  road_tax_last_renewal_date: string | null;
+  road_tax_next_renewal_date: string | null;
+  /** @deprecated Use road_tax_last_renewal_date. */
   road_tax_renewal_date: string | null;
   road_tax_renewal_amount: number | null;
   road_tax_renewal_vendor: string | null;
@@ -58,18 +67,33 @@ export type CreateVehicleInput = {
   starting_odometer?: number | string | null;
   startingOdometer?: number | string | null;
   status?: VehicleStatus;
+  national_permit_last_renewal_date?: string | null;
+  nationalPermitLastRenewalDate?: string | null;
+  national_permit_next_renewal_date?: string | null;
+  nationalPermitNextRenewalDate?: string | null;
+  /** @deprecated Use nationalPermitLastRenewalDate. */
   national_permit_renewal_date?: string | null;
   nationalPermitRenewalDate?: string | null;
   national_permit_renewal_amount?: number | string | null;
   nationalPermitRenewalAmount?: number | string | null;
   national_permit_renewal_vendor?: string | null;
   nationalPermitRenewalVendor?: string | null;
+  insurance_last_renewal_date?: string | null;
+  insuranceLastRenewalDate?: string | null;
+  insurance_next_renewal_date?: string | null;
+  insuranceNextRenewalDate?: string | null;
+  /** @deprecated Use insuranceLastRenewalDate. */
   insurance_renewal_date?: string | null;
   insuranceRenewalDate?: string | null;
   insurance_renewal_amount?: number | string | null;
   insuranceRenewalAmount?: number | string | null;
   insurance_renewal_vendor?: string | null;
   insuranceRenewalVendor?: string | null;
+  road_tax_last_renewal_date?: string | null;
+  roadTaxLastRenewalDate?: string | null;
+  road_tax_next_renewal_date?: string | null;
+  roadTaxNextRenewalDate?: string | null;
+  /** @deprecated Use roadTaxLastRenewalDate. */
   road_tax_renewal_date?: string | null;
   roadTaxRenewalDate?: string | null;
   road_tax_renewal_amount?: number | string | null;
@@ -250,13 +274,16 @@ export type CreateVehiclePayload = {
   company: string | null;
   startingOdometer: number;
   status: VehicleStatus;
-  nationalPermitRenewalDate: string | null;
+  nationalPermitLastRenewalDate: string | null;
+  nationalPermitNextRenewalDate: string | null;
   nationalPermitRenewalAmount: number | null;
   nationalPermitRenewalVendor: string | null;
-  insuranceRenewalDate: string | null;
+  insuranceLastRenewalDate: string | null;
+  insuranceNextRenewalDate: string | null;
   insuranceRenewalAmount: number | null;
   insuranceRenewalVendor: string | null;
-  roadTaxRenewalDate: string | null;
+  roadTaxLastRenewalDate: string | null;
+  roadTaxNextRenewalDate: string | null;
   roadTaxRenewalAmount: number | null;
   roadTaxRenewalVendor: string | null;
 };
@@ -270,6 +297,8 @@ export type VehicleRenewalAlert = {
   company: string | null;
   renewalType: VehicleRenewalType;
   renewalLabel: string;
+  lastRenewalDate: string | null;
+  /** The next renewal date that drives this alert. */
   renewalDate: string;
   renewalAmount: number | null;
   renewalVendor: string | null;
@@ -366,6 +395,7 @@ export type VehicleExpenseInvoiceItem = {
     vehicle_type: string;
   }[];
   expense_type: string;
+  renewal_type: VehicleRenewalType | null;
   description: string | null;
   amount: number;
   created_at: string;
@@ -461,6 +491,7 @@ export type CreateVehicleExpenseInvoicePayload = {
     vehicleId: string | null;
     vehicleIds?: string[];
     expenseType: string;
+    renewalType?: VehicleRenewalType | null;
     description: string | null;
     amount: number;
   }[];
