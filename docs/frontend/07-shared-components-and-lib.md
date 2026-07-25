@@ -1,10 +1,11 @@
 # Frontend — Shared Components & Lib
 
-> Status: Current. Verified 2026-07-21.
+> Status: Current. Verified 2026-07-26.
 > The reusable pieces every module leans on: UI primitives, chrome, and shared helpers.
 
-There is **no** generic `components/ui/` design-system folder. Shared UI lives in one
-file, plus a couple of standalone widgets.
+There is **no** generic `components/ui/` design-system folder. Shared UI lives in two
+files — `DashboardUI.tsx` (primitives) and `ui.ts` (class constants) — plus a couple
+of standalone widgets. The tokens themselves are in `src/app/globals.css`.
 
 ---
 
@@ -78,12 +79,13 @@ scrolls horizontally on phones instead of crushing columns.
 `src/lib/` holds **both** browser code and server-only code — check before importing:
 
 - **Server-only** (assume Node + `pg`/service-role context): `db.ts`, `auth.ts`,
-  `supabase/admin.ts`, `supabase/route.ts`, `vehicle-expense-invoices.ts`, and the
-  server SQL files in `warehouse/` (`podBalanceSql.ts`, `queries.ts`, `billing.ts`,
-  `renew.ts`) and `fuel-tracker/queries.ts`. Importing these into a client component will
-  break (or leak server config).
+  `supabase/admin.ts`, `supabase/route.ts`, `supabase/server.ts`,
+  `vehicle-expense-invoices.ts`, the server SQL files in `warehouse/`
+  (`podBalanceSql.ts`, `summary.ts`), and `fuel-tracker/queries.ts`. Importing these
+  into a client component will break (or leak server config).
 - **Browser-safe:** `supabaseClient.ts`, `api.ts`, `errors.ts`, `utils.ts`,
-  `EmployeeSearchSelect.tsx`, `auth-routes.ts`, the warehouse client wrappers/formatters,
-  and the shared `types.ts` files.
+  `EmployeeSearchSelect.tsx`, `auth-routes.ts`, the warehouse client-side files
+  (`warehouse/api.ts`, `pods.ts`, `ledger.ts`, `queries.ts`, `renew.ts`, `billing.ts`,
+  `ledgerMath.ts`), and the shared `types.ts` files.
 
 When in doubt, follow how an existing component imports it.

@@ -1,6 +1,6 @@
 # Migrations & Schema Drift
 
-> Status: Current. Verified 2026-07-21.
+> Status: Current. Verified 2026-07-26.
 > Read this before assuming `supabase/migrations/` is the whole database. It isn't.
 
 ---
@@ -43,8 +43,7 @@ This is the important part. Only **some** of the live schema is in
 - `warehouse_payment_alert_dismissals` (`202607210001`)
 - vehicle renewal dates and alert dismissals (`20260722114426`)
 - vehicle renewal amount/vendor invoice prefill fields (`20260722115635`)
-- calculator lookup tables (`transport_quotes`, `vehicle_quotes`,
-  `transport_distances`, `international_quotes`) and their seed data
+- vehicle renewal last/next date split (`202607250001`)
 
 **NOT in migrations (created directly in Supabase — invisible to `db:reset`):**
 
@@ -54,14 +53,17 @@ This is the important part. Only **some** of the live schema is in
   `warehouse_tx_type`).
 - **Loans:** `employees`, `employee_loans`, `companies`, `locations`, and the
   `get_outstanding_loans()` RPC.
+- **Calculator lookup tables:** `transport_quotes`, `vehicle_quotes`,
+  `transport_distances`, `international_quotes`. Their data exists only via the ad-hoc
+  upload scripts in `scripts/` (`uploadQuotes.js`, `uploadVehicleQuotes.js`,
+  `transportdistance.js`).
 - **RLS policies** for every table (none of the policies are in the repo).
 
 ### Consequences
 
 1. **A fresh `supabase db reset` still does NOT give you a fully working database.**
-   The warehouse module will fail immediately (missing tables + enum types), and so will
-   loans. The domestic and international calculator lookup tables are now versioned, so
-   those specific tables do come back from migrations.
+   The warehouse module will fail immediately (missing tables + enum types), and so
+   will loans and both calculators (their lookup tables are not versioned either).
 2. **You can't review RLS by reading the repo.** Anything using the browser Supabase
    client (Domestic, Loans, International reads, parts of Warehouse UI) depends on RLS
    that lives only in the Supabase dashboard. See

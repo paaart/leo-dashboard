@@ -1,6 +1,6 @@
 # System Architecture
 
-> Status: Current. Verified against code/config 2026-07-21.
+> Status: Current. Verified against code/config 2026-07-26.
 > Scope: The big picture — stack, folder layout, request lifecycle, deployment.
 
 ---
@@ -31,16 +31,16 @@ Handlers under `src/app/api/`.
 
 ```
 src/
-  middleware.ts              page-route auth gate (skips /api and public routes)
+  middleware.ts              page-route auth gate + 24h session cap (skips /api and public routes)
   app/
-    layout.tsx               root layout (html, Toaster)
-    page.tsx                 entry — redirects into the dashboard
+    layout.tsx               root layout (html, Geist fonts, Toaster)
+    page.tsx                 entry — redirects to /dashboard/home
     login/page.tsx           login + request-access screen (public)
     driver/fuel-entry/       public driver fuel submission (public)
     dashboard/
-      layout.tsx             wraps DashboardShell in the auth provider
-      page.tsx               dashboard root
-      [module]/page.tsx      validates the module slug, renders null (see arch/04)
+      layout.tsx             wraps DashboardShell (children flow into it) in the auth provider
+      page.tsx               redirects to /dashboard/home
+      [module]/page.tsx      validates the slug; server-renders Home, null for the rest (see arch/04)
     warehouse/statement/     standalone warehouse statement page
     api/                     ← ALL backend logic lives here (Route Handlers)
       auth/                  login, logout, me, request-access
@@ -56,16 +56,17 @@ src/
       warehouse/             pods, cycles, transactions, payments, alerts, dashboard-summary
 
   components/                React components, grouped by module
-    Dashboard/               DashboardShell, DashboardAuthProvider
+    Dashboard/               DashboardShell, DashboardAuthProvider, HomeContent (server component)
     DomesticCalculator/  InternationalCalculator/  FuelTracker/
     Warehouse/  LoansAndAdvances/  UserManagement/  shared/
     Header.tsx  Sidebar.tsx
 
   lib/                       shared code
-    auth.ts                  requireAuth / requireAdmin / getCurrentAppUser
+    auth.ts                  requireAuth / requireAdmin / getCurrentAppUser / getServerComponentAppUser
     auth-routes.ts           isPublicRoute()
     db.ts                    raw pg Pool
     supabase/route.ts        SSR (cookie) Supabase client for Route Handlers
+    supabase/server.ts       read-only cookies() Supabase client for Server Components
     supabase/admin.ts        service-role Supabase client
     supabaseClient.ts        browser anon Supabase client
     errors.ts  utils.ts  api.ts
@@ -92,15 +93,20 @@ Browser requests /dashboard/...
   → src/middleware.ts runs
       → is it /_next, /api, a file (has a dot), or a public route?  → pass through
       → else: read Supabase session from cookies
-          → no session?  → redirect to /login?next=<path>
-          → session?     → continue
-  → Next.js renders the page (dashboard/layout.tsx → DashboardAuthProvider → DashboardShell)
+          → no session?                              → redirect to /login?next=<path>
+          → leo_session_start missing or > 24h old?  → clear auth cookies,
+                                                       redirect to /login?expired=1
+          → else continue
+  → Next.js renders the page (dashboard/layout.tsx → DashboardAuthProvider →
+    DashboardShell, with the [module] page's payload as children — for /dashboard/home
+    that payload is the server-rendered HomeContent with its data already fetched)
   → DashboardShell calls /api/auth/me to confirm the app-level user + role
 ```
 
-Note: middleware only checks that **a Supabase session exists** — not role or profile
-status. The real "are you an active app user" check is `/api/auth/me`
-(`getCurrentAppUser`), which the client calls on mount.
+Note: middleware only checks that **a Supabase session exists** and is within the 24h
+cap — not role or profile status. The real "are you an active app user" check is
+`/api/auth/me` (`getCurrentAppUser`), which the client calls on mount; the Home page
+does the equivalent server-side via `getServerComponentAppUser()`.
 
 ### API requests (`/api/...`)
 
@@ -151,4 +157,4 @@ URL must never reach the client.
 
 - Auth and who-can-do-what → [02-auth-and-access-control.md](02-auth-and-access-control.md)
 - The three database-access patterns → [03-data-access-patterns.md](03-data-access-patterns.md)
-- Why the dashboard routes render null → [04-dashboard-shell-and-routing.md](04-dashboard-shell-and-routing.md)
+- The single-shell UI, lazy modules, and the server-rendered Home → [04-dashboard-shell-and-routing.md](04-dashboard-shell-and-routing.md)

@@ -1,6 +1,6 @@
 # API — Warehouse Billing, Payments & Alerts
 
-> Status: Current. Verified 2026-07-21.
+> Status: Current. Verified 2026-07-26.
 > Routes: `warehouse/pods/accrue`, `warehouse/pods/accrue-due`, `warehouse/pods/payments`,
 > `warehouse/payments/export`, `warehouse/dashboard-summary`, `warehouse/payment-alerts`,
 > `warehouse/payment-alerts/dismiss`. All **admin-only**, raw `pg` Pool.
@@ -57,6 +57,10 @@ The warehouse dashboard cards, computed in one SQL round-trip using the shared b
 CTEs: `active_pods`, `closed_pods`, `total_outstanding`, `monthly_charges`
 (sum of active pod rates), `payments_received`, `overdue_pending`.
 
+The SQL lives in `src/lib/warehouse/summary.ts`
+(`getWarehouseDashboardSummary`), shared with the server-rendered Home page — the
+route is a thin auth + JSON wrapper around it.
+
 **Touches:** `warehouse_pods`, `warehouse_pod_transactions`.
 
 ---
@@ -64,9 +68,11 @@ CTEs: `active_pods`, `closed_pods`, `total_outstanding`, `monthly_charges`
 ## Payment alerts
 
 ### GET `/api/warehouse/payment-alerts`
-Active pods with an upcoming/current `next_payment_date` (`>= current_date`) and their
-outstanding `total_due`, **excluding** any that have been dismissed for that specific
-`next_payment_date` (left-joined against `warehouse_payment_alert_dismissals`).
+Active pods with an upcoming/current `next_payment_date` (`>= current_date`, within
+the next 5 days) and their outstanding `total_due`, **excluding** any that have been
+dismissed for that specific `next_payment_date` (left-joined against
+`warehouse_payment_alert_dismissals`). SQL lives in `src/lib/warehouse/summary.ts`
+(`listWarehousePaymentAlerts`), shared with the Home page.
 
 ### POST `/api/warehouse/payment-alerts/dismiss`
 Body `{ podId, nextPaymentDate (YYYY-MM-DD) }`. Records a dismissal so that alert stops

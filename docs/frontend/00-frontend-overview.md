@@ -1,8 +1,8 @@
 # Frontend Overview
 
-> Status: Current. Verified 2026-07-21.
+> Status: Current. Verified 2026-07-26.
 > Scope: how the UI is organised, conventions, and the module→component map. Per-module
-> detail is in `frontend/01`–`frontend/07`.
+> detail is in `frontend/01`–`frontend/08`.
 
 The frontend is a client-rendered dashboard. Read
 [architecture/04](../architecture/04-dashboard-shell-and-routing.md) first — it explains
@@ -13,11 +13,22 @@ the single-shell model that everything here plugs into.
 ## 1. Mental model
 
 - One **shell** (`DashboardShell`) renders the whole authenticated app and swaps
-  "sections" in state. Modules are self-contained components that fetch their own data.
+  "sections" in state. Modules are self-contained client components that fetch their
+  own data, and the shell loads each one lazily via `next/dynamic` so a page only
+  downloads the module it renders.
+- **Home is the exception:** `/dashboard/home` is a server component
+  (`app/dashboard/[module]/page.tsx` → `components/Dashboard/HomeContent.tsx`) that
+  queries the DB during the request — its KPIs/alerts arrive in the HTML, no client
+  fetches. Its data helpers live in `lib/warehouse/summary.ts` (shared with the API
+  routes) and `getServerComponentAppUser()` in `lib/auth.ts` provides auth in RSCs.
 - **Role-aware:** admins see Warehouse, Loans, and User Management; regular users don't
   (hidden in `Sidebar`, blocked in the shell — the real guard is server-side).
 - **Mobile matters:** drivers, warehouse staff, and managers use phones. Forms stay
-  simple; the driver fuel flow is a dedicated public mobile page.
+  simple; the driver fuel flow is a dedicated public mobile page. Hard rules: every
+  `<table>` keeps its natural width (`min-w-*`) inside an `overflow-x-auto` wrapper so
+  the container scrolls instead of crushing columns at 375px; modal panels cap at
+  `max-h-[90vh]` with a scrolling body; grids start at one column and expand at
+  `sm:`/`md:`; toolbars stack (`flex-col … sm:flex-row`).
 - **Light + dark throughout:** styling uses semantic design tokens defined in
   `src/app/globals.css` (`bg-surface`, `border-edge`, `text-fg`, `text-fg-muted`,
   accent/success/warning/danger tones) that flip automatically with the OS color
@@ -31,9 +42,11 @@ the single-shell model that everything here plugs into.
 
 ```
 src/components/
-  Dashboard/            DashboardShell, DashboardAuthProvider   (the frame)
-  Header.tsx  Sidebar.tsx                                        (chrome)
-  shared/DashboardUI.tsx   shared UI primitives (see frontend/07)
+  Dashboard/            DashboardShell, DashboardAuthProvider,
+                        HomeContent (server component — frontend/08)   (the frame)
+  Header.tsx  Sidebar.tsx                                              (chrome)
+  shared/DashboardUI.tsx   shared UI primitives      (see frontend/07)
+  shared/ui.ts             design-system class constants (see frontend/07)
 
   DomesticCalculator/       frontend/01
   InternationalCalculator/  frontend/02  (Calculator/, History/, PdfDocument, helpers)
@@ -49,8 +62,9 @@ src/lib/
 ```
 
 Components are grouped by **business module**, not by UI type. There is no generic
-`components/ui/` design-system folder — shared primitives live in one file,
-`shared/DashboardUI.tsx` (see [frontend/07](07-shared-components-and-lib.md)).
+`components/ui/` design-system folder — shared primitives live in
+`shared/DashboardUI.tsx` and the class constants in `shared/ui.ts`
+(see [frontend/07](07-shared-components-and-lib.md)).
 
 ---
 
@@ -60,6 +74,7 @@ This mirrors the [data-access patterns](../architecture/03-data-access-patterns.
 
 | Module | Data style |
 |---|---|
+| Home | **server component** — DB queried during the request; zero client fetches ([frontend/08](08-home.md)) |
 | Domestic Calculator | **browser → Supabase** directly (`src/lib/api.ts`) |
 | International Calculator | reads/writes via `/api/international/*` (helpers in `src/lib/api.ts`) |
 | Loans & Advances | **browser → Supabase** directly (`supabaseClient`, RPCs) |
@@ -76,8 +91,12 @@ When a module fetches its own routes, it handles loading/error/empty states loca
 
 From `DashboardShell.renderContent()`:
 
+All module components are lazy (`next/dynamic`) — see
+[architecture/04](../architecture/04-dashboard-shell-and-routing.md) §3.
+
 | Section (`main` / `sub`) | Component |
 |---|---|
+| `home` | the page's server-rendered `HomeContent`, passed through as `children` |
 | `domestic` | `DomesticCalculator` |
 | `international` / `calculator` | `InternationalShipping` |
 | `international` / `history` | `HistoryList` |

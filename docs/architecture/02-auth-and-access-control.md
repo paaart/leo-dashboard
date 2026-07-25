@@ -1,6 +1,6 @@
 # Auth and Access Control
 
-> Status: Current. Verified against code 2026-07-21.
+> Status: Current. Verified against code 2026-07-26.
 > Files: `src/middleware.ts`, `src/lib/auth.ts`, `src/lib/auth-routes.ts`,
 > `src/lib/supabase/*`, `src/app/api/auth/*`, `src/components/Dashboard/DashboardAuthProvider.tsx`.
 
@@ -37,8 +37,16 @@ and additionally passes through:
   `/api/vehicles/public`, `/api/fuel-entries/public`
 
 For everything else it reads the Supabase session from cookies. **No session →
-redirect to `/login?next=<path>`.** That's all it checks — it does **not** verify role
-or status. Middleware is a coarse "are you logged in at all" gate for pages.
+redirect to `/login?next=<path>`.** It does **not** verify role or status —
+middleware is a coarse "are you logged in at all" gate for pages.
+
+It also enforces the **24-hour session cap**: login sets an `httpOnly`
+`leo_session_start` cookie (timestamp value, 24h `maxAge`). If a logged-in request
+arrives with that cookie missing, malformed, or older than 24h, middleware deletes
+all `sb-*` auth cookies plus the marker and redirects to `/login?expired=1` (the
+login page shows a "session expired" notice for that query param). This exists
+because Supabase refresh tokens renew forever — see [DECISIONS.md](../DECISIONS.md)
+§11. Note it runs on page navigations only; middleware still skips `/api`.
 
 ### API routes — self-guarding
 
@@ -68,6 +76,14 @@ Both resolve the current user via `getCurrentAppUser(request)`:
 > A route that calls neither guard is public. If you add a route and forget the guard,
 > you've shipped an open endpoint.
 
+### Server components — `getServerComponentAppUser()`
+
+React Server Components (currently only the Home page) have no `NextRequest`, so
+`src/lib/auth.ts` exposes `getServerComponentAppUser()`: it reads the session via a
+`cookies()`-based read-only Supabase client (`src/lib/supabase/server.ts` — cookie
+writes are a no-op there; token refresh is middleware's job) and resolves the same
+active-`profiles`-row rule as `getCurrentAppUser`. Returns the `AppUser` or `null`.
+
 ---
 
 ## 3. Login flow (`POST /api/auth/login`)
@@ -86,10 +102,12 @@ body: { username, password }   (also accepts { identifier })
   → cross-check data.user.id === profile.auth_user_id (else 403 "Account profile mismatch")
   → 200 { ok: true, user: { id, email, username, fullName, role, status } }
        + session cookies attached to the response
+       + leo_session_start cookie (the 24h cap marker — see §2)
 ```
 
 The handler is careful to copy the Supabase auth cookies onto the JSON response
-(`jsonWithAuthCookies`) so the browser is actually signed in.
+(`jsonWithAuthCookies`) so the browser is actually signed in. On success the client
+navigates to `/dashboard/home`.
 
 ## 4. Signup / request access (`POST /api/auth/request-access`)
 
@@ -128,6 +146,7 @@ A React context (`useDashboardAuth`) that:
 
 | Section | `user` | `admin` |
 |---|:--:|:--:|
+| Home | ✅ (slimmer: no warehouse/loans KPIs) | ✅ |
 | Domestic Calculator | ✅ | ✅ |
 | International Calculator | ✅ | ✅ |
 | Vehicle Tracker | ✅ | ✅ |

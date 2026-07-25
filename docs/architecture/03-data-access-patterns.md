@@ -1,6 +1,6 @@
 # Data Access Patterns
 
-> Status: Current. Verified against code 2026-07-21.
+> Status: Current. Verified against code 2026-07-26.
 > This is the doc that makes the codebase stop feeling inconsistent. There are three
 > ways this app reaches Postgres, and each is a deliberate choice.
 
@@ -17,7 +17,16 @@
 
 The SSR client (`createRouteClient`) is a special case: it's used inside Route Handlers
 purely to **read the session cookie and identify the user** (login, `getCurrentSupabaseUser`).
-It isn't the workhorse for data — B and C are.
+It isn't the workhorse for data — B and C are. Its sibling
+`createServerComponentClient` (`src/lib/supabase/server.ts`) does the same job for
+React Server Components, read-only (used by `getServerComponentAppUser`).
+
+**Server components use B and C too — through shared lib functions.** The Home page
+(`HomeContent`, an RSC) calls `listVehicleRenewalAlerts()` (pattern C),
+`getWarehouseDashboardSummary()` / `listWarehousePaymentAlerts()` from
+`src/lib/warehouse/summary.ts` (pattern C — the same functions the API routes call),
+and the `get_outstanding_loans` RPC via the admin client (pattern B). The rule: SQL
+lives in `src/lib/**` functions shared by routes and RSCs, never inline in a page.
 
 ---
 

@@ -1,6 +1,6 @@
 # API — Auth
 
-> Status: Current. Verified 2026-07-21.
+> Status: Current. Verified 2026-07-26.
 > Routes: `src/app/api/auth/{login,logout,me,request-access}/route.ts`.
 > Concepts and the profiles model: [architecture/02](../architecture/02-auth-and-access-control.md).
 
@@ -27,7 +27,10 @@ Username + password login. Maps username → profile → Supabase email sign-in.
 | success | 200 | — |
 
 **Success:** `{ ok: true, user: { id, email, username, fullName, role, status } }`, with
-Supabase session cookies attached to the response.
+Supabase session cookies attached to the response, plus the `leo_session_start`
+cookie (`httpOnly`, 24h `maxAge`, timestamp value) that middleware uses to force
+re-login after 24 hours — see
+[architecture/02](../architecture/02-auth-and-access-control.md) §2.
 
 **Touches:** `profiles` (read via admin client), Supabase Auth (`signInWithPassword`).
 

@@ -1,6 +1,6 @@
 # Frontend — Warehouse
 
-> Status: Current. Verified 2026-07-21.
+> Status: Current. Verified 2026-07-26.
 > Components: `src/components/Warehouse/` (+ `Ledger/`). Client lib: `src/lib/warehouse/`.
 > Access: **admin only**. Data: `/api/warehouse/**` ([api/08](../api/08-warehouse-pods-and-cycles.md),
 > [09](../api/09-warehouse-transactions.md), [10](../api/10-warehouse-billing-payments-alerts.md)).
@@ -16,7 +16,7 @@ ledger.
 | Section | Component | Purpose |
 |---|---|---|
 | `add` | `WarehouseAddClient.tsx` | create a pod (client + billing config) |
-| `active` | `WarehouseActivePods.tsx` | active pods with balances + severity bands |
+| `active` | `WarehouseActivePods.tsx` | active pods with balances + severity bands; paginated 50/page (`TablePagination` from FuelTracker) — the count/total-due KPI chips aggregate the **full filtered set**, not the visible page |
 | `renewals` | `Ledger/WarehouseRenewals.tsx` | pods due for renewal, renew flow |
 | `payments` | `WarehousePayments.tsx` | payments list, filters, CSV export |
 | `closed` | `WarehouseClosedPods.tsx` | closed pods (paginated search) |
@@ -58,10 +58,12 @@ A few components (`WarehouseAddClient`, `EditPodModal`, `PodDetailsModal`) also 
 Supabase **directly** with the browser client — typically to load `companies` /
 `locations` dropdown options.
 
-> `src/lib/warehouse/` mixes three concerns: client fetch wrappers (above), **server-side
-> SQL** used by the routes (`podBalanceSql.ts`, `queries.ts`, `billing.ts`, `renew.ts`),
-> and shared formatting (`ledgerMath.ts`, `types.ts`). Check whether a file runs on the
-> client or server before importing it — the server ones assume the `pg` Pool context.
+> `src/lib/warehouse/` mixes three concerns: client-side code (`api.ts`, `pods.ts`,
+> `ledger.ts`, `queries.ts`, `renew.ts`, `billing.ts` — fetch wrappers, browser
+> Supabase reads, and display helpers), **server-side SQL** used by the routes and the
+> Home page (`podBalanceSql.ts`, `summary.ts` — these assume the `pg` Pool context),
+> and shared formatting/types (`ledgerMath.ts`, `types.ts`). Check which side a file
+> runs on before importing it.
 
 ---
 

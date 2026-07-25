@@ -12,15 +12,15 @@ hangs off it.
 
 ```
 docs/
-  AI_CONTEXT.md          ← read first: what this is, the six modules, non-negotiables
+  AI_CONTEXT.md          ← read first: what this is, the seven modules, non-negotiables
   PROJECT_STATE.md       ← owns all status: what works / broken / risky
   DECISIONS.md           ← why it's built this way (the real tradeoffs)
 
   architecture/
     01-system-architecture.md        request flow, layers, tech stack
-    02-auth-and-access-control.md     login, roles, middleware, route guards
+    02-auth-and-access-control.md     login, roles, middleware, 24h session cap, route guards
     03-data-access-patterns.md        the three ways we reach the database
-    04-dashboard-shell-and-routing.md the single-shell UI and why routes render null
+    04-dashboard-shell-and-routing.md the single-shell UI, lazy modules, and the server-rendered Home
 
   database/
     01-schema-overview.md            every table, grouped by module
@@ -48,6 +48,7 @@ docs/
     05-warehouse.md
     06-user-management.md
     07-shared-components-and-lib.md
+    08-home.md                       the server-rendered landing page
 ```
 
 ---

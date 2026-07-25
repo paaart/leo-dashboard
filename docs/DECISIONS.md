@@ -3,7 +3,7 @@
 > Why it's built this way. The tradeoffs behind choices that look odd until you know
 > the reason. If you're about to "clean up" something here, read its entry first.
 
-These are inferred from the code as it stands on 2026-07-21, plus the framing in the
+These are inferred from the code as it stands on 2026-07-26, plus the framing in the
 old `leodashboard.md`. Where a decision is a guess about intent rather than a stated
 rule, it says so.
 
@@ -100,16 +100,26 @@ responsible for integrity — wrap it in a transaction.
 
 ---
 
-## 5. The dashboard is one client shell, not a set of routes
+## 5. The dashboard is one client shell — with Home as the server-rendered exception
 
-`/dashboard/[module]/page.tsx` validates the slug and returns `null`. The real UI is
-`DashboardShell` (a client component) that reads the URL segment and swaps "sections"
-in React state.
+`/dashboard/[module]/page.tsx` validates the slug and returns `null` for the
+interactive modules. The real UI is `DashboardShell` (a client component) that reads
+the URL segment and swaps "sections" in React state, lazy-loading each module with
+`next/dynamic`.
 
 **Why (inferred):** it makes cross-module navigation instant (no server round-trip, no
 per-section data-fetch waterfall) and keeps one auth/layout context alive. The modules
 are self-contained client components that fetch their own data, so a full route per
-screen would add ceremony without benefit.
+screen would add ceremony without benefit. Lazy loading was added because static
+imports shipped every module's JS on every page — hydration dominated page load,
+especially on phones.
+
+**The Home exception (2026-07):** `/dashboard/home` is a real server component
+(`HomeContent`) that queries the DB during the request, so its KPIs/alerts arrive in
+the HTML with zero client data fetches. Home is read-only and first-thing-seen — the
+maximum SSR payoff at minimum risk. It's the pilot for the direction: read-heavy views
+may migrate to server components one at a time; heavily interactive modules (forms,
+modals, editable tables) stay client components, where SSR buys little.
 
 **Consequence:** don't expect `/dashboard/warehouse/payments` to be a real page. Deep
 links go to `/dashboard/<module>`; sub-section (e.g. warehouse "payments") is React
@@ -170,3 +180,40 @@ and advances it, so re-running is safe.
 
 **Consequence:** if charges look missing, check the cron ran — don't add
 "accrue-on-page-load" logic that could double-charge.
+
+---
+
+## 10. Styling is a semantic-token system, not per-component palettes
+
+All colors flow from CSS variables in `src/app/globals.css` (surface/border/text/
+accent/status tokens, light and dark values) exposed as Tailwind utilities
+(`bg-surface`, `border-edge`, `text-fg-muted`, …), plus canonical class constants in
+`src/components/shared/ui.ts` (buttons, inputs, modals, tables, badges, alerts).
+
+**Why (2026-07 redesign):** the previous UI hand-wrote `gray-*/blue-*` classes with
+`dark:` variants in ~73 files (~570 of them). Every visual change meant touching
+dozens of files, and drift was constant. With tokens, dark mode is automatic (the
+variables flip with `prefers-color-scheme`) and a retheme is a one-file change.
+
+**Consequence:** new UI must not hand-write `dark:` variants or raw palette classes.
+Known intentional exceptions: `FuelTooltip` (inverse surface, always dark),
+`/warehouse/statement` (print-only, light-only), `@react-pdf/renderer` styles.
+
+---
+
+## 11. Sessions are capped at 24 hours by an app-level cookie, not by Supabase
+
+Login sets an `httpOnly` `leo_session_start` cookie (24h `maxAge` + timestamp value).
+Middleware rejects any page navigation where the cookie is missing, malformed, or
+older than 24h: it deletes the Supabase auth cookies and redirects to
+`/login?expired=1`.
+
+**Why:** Supabase refresh tokens renew indefinitely — a session would effectively
+never expire. The business rule is "re-login daily." Supabase's own time-boxed
+sessions are a paid-tier server-side setting; the cookie marker achieves the rule
+in-app with no vendor dependency.
+
+**Consequence / limitation:** enforcement happens on page navigation only (middleware
+skips `/api`), so a still-valid Supabase session could call APIs directly past the
+24h mark until the next page load logs it out. Acceptable for this app's page-driven
+usage; revisit if API clients appear.

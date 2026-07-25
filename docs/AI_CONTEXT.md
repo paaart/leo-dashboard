@@ -1,7 +1,7 @@
 # Leo Dashboard — AI Context
 
 > The brain. Read this before touching code, whichever AI tool or human you are.
-> Last full audit: 2026-07-21 (docs created from scratch — statuses below verified
+> Last full audit: 2026-07-26 (statuses verified
 > against code on that date).
 
 Next.js 15 (App Router) full-stack app for **Leo Packers and Movers** — an internal
@@ -56,22 +56,23 @@ moving together.
 | How the whole app fits together (layers, request flow) | [architecture/01-system-architecture.md](architecture/01-system-architecture.md) |
 | Login, roles, who-can-see-what | [architecture/02-auth-and-access-control.md](architecture/02-auth-and-access-control.md) |
 | The three ways this app talks to the database | [architecture/03-data-access-patterns.md](architecture/03-data-access-patterns.md) |
-| Why `/dashboard/[module]` renders nothing, and how the UI actually switches | [architecture/04-dashboard-shell-and-routing.md](architecture/04-dashboard-shell-and-routing.md) |
+| The single-shell UI, lazy modules, and the server-rendered Home | [architecture/04-dashboard-shell-and-routing.md](architecture/04-dashboard-shell-and-routing.md) |
 | Every table, grouped by module | [database/01-schema-overview.md](database/01-schema-overview.md) |
 | Migration workflow + the migration-drift warning | [database/02-migrations-and-drift.md](database/02-migrations-and-drift.md) |
 | API conventions (auth, response shapes, errors) | [api/00-api-overview.md](api/00-api-overview.md) |
 | Per-module API contracts | `api/01`–`api/10` (see file map in the API overview) |
 | Frontend conventions + module layout | [frontend/00-frontend-overview.md](frontend/00-frontend-overview.md) |
-| Per-module UI contracts | `frontend/01`–`frontend/07` |
+| Per-module UI contracts | `frontend/01`–`frontend/08` |
 
 ---
 
-## The six modules
+## The seven modules
 
 Every feature belongs to one of these. Sidebar labels in parentheses.
 
 | Module | Access | Sidebar label | Where the logic lives |
 |---|---|---|---|
+| Home (landing page) | all users | "Home" | `components/Dashboard/HomeContent.tsx` — a **server component**; KPIs/alerts render into the HTML (see [frontend/08](frontend/08-home.md)) |
 | Domestic Calculator | all users | "Domestic Calculator" | `components/DomesticCalculator/`, reads Supabase directly |
 | International Calculator | all users | "International Calculator" | `components/InternationalCalculator/` + `api/international/**` |
 | Vehicle Tracker (fuel + vendor invoices) | all users | "Vehicle Tracker" | `components/FuelTracker/` + `api/fuel-*`, `api/vehicles/**`, `api/vehicle-expense*/**` |
@@ -101,9 +102,12 @@ Two things surprise people, both covered in the architecture docs:
 1. **Three data-access patterns coexist on purpose.** Direct browser→Supabase, Route
    Handler→Supabase-admin, and Route Handler→raw-`pg`. Which one a module uses is a
    real decision, not an accident — see [DECISIONS.md](DECISIONS.md).
-2. **The dashboard is one client shell, not real routes.** `/dashboard/[module]` is a
-   server page that validates the slug and renders `null`; the actual UI is
-   `DashboardShell` switching "sections" in React state. See
+2. **The dashboard is one client shell, not real routes — except Home.**
+   `/dashboard/[module]` is a server page that validates the slug and renders `null`
+   for the client-shell modules; the actual UI is `DashboardShell` switching
+   "sections" in React state, lazy-loading each module via `next/dynamic`. The one
+   exception: `/dashboard/home` server-renders `HomeContent` with its data already in
+   the HTML. See
    [architecture/04-dashboard-shell-and-routing.md](architecture/04-dashboard-shell-and-routing.md).
 
 ---
@@ -125,6 +129,11 @@ Two things surprise people, both covered in the architecture docs:
   are in `supabase/migrations/`; the warehouse and legacy calculator/loans tables were
   created directly in Supabase. See [database/02-migrations-and-drift.md](database/02-migrations-and-drift.md)
   before you assume the migrations folder is the whole schema.
+- **Styling goes through the design tokens.** Semantic tokens in
+  `src/app/globals.css` (`bg-surface`, `border-edge`, `text-fg`, accent/status tones)
+  flip with the OS color scheme; class constants live in `src/components/shared/ui.ts`.
+  Never hand-write `dark:` variants or raw `gray-*/blue-*` palette classes — see
+  [frontend/00](frontend/00-frontend-overview.md).
 - **Naming:** snake_case in Postgres, camelCase or snake_case in JSON (inconsistent —
   see each API doc), PascalCase React components.
 

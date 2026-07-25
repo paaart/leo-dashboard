@@ -1,29 +1,41 @@
 # Dashboard Shell and Routing
 
-> Status: Current. Verified against code 2026-07-21.
+> Status: Current. Verified against code 2026-07-26.
 > Files: `src/app/dashboard/layout.tsx`, `src/app/dashboard/[module]/page.tsx`,
-> `src/components/Dashboard/DashboardShell.tsx`, `src/components/Sidebar.tsx`.
+> `src/components/Dashboard/DashboardShell.tsx`, `src/components/Dashboard/HomeContent.tsx`,
+> `src/components/Sidebar.tsx`.
 
 The thing to understand: **the dashboard is one client-rendered shell, not a set of
-server routes.** Once you see that, the "empty" page files make sense.
+server routes** — with one deliberate exception, Home, which is server-rendered.
+Once you see that, the "empty" page files make sense.
 
 ---
 
-## 1. Why `[module]/page.tsx` renders nothing
+## 1. What `[module]/page.tsx` renders (mostly nothing — except Home)
 
 ```tsx
-// src/app/dashboard/[module]/page.tsx  (server component)
-const modules = ["domestic","international","fuel-tracker","warehouse","loans","users"];
+// src/app/dashboard/[module]/page.tsx  (server component; force-dynamic)
+const modules = ["home","domestic","international","fuel-tracker","warehouse","loans","users"];
 export default async function DashboardModulePage({ params }) {
   const { module } = await params;
   if (!modules.includes(module)) notFound();
-  return null;   // ← renders nothing on purpose
+
+  if (module === "home") {
+    const user = await getServerComponentAppUser();   // RSC auth (see arch/02)
+    if (!user) redirect("/login");
+    return <HomeContent user={user} />;               // ← data fetched server-side
+  }
+
+  return null;   // ← client-shell modules render nothing on purpose
 }
 ```
 
-Its only jobs are: **validate the slug** (404 on unknown modules) and **exist as a URL**
-so deep links and the browser back/forward buttons work. It renders `null` because the
-actual UI comes from the shell mounted by the layout.
+For the six interactive modules its jobs are: **validate the slug** (404 on unknown
+modules) and **exist as a URL** so deep links and back/forward work — the UI comes
+from the shell. For **`home`** it renders `HomeContent`, an async server component
+that queries the DB during the request (renewal alerts, warehouse summary, payment
+alerts, loans outstanding — in parallel), so the landing page's data arrives in the
+HTML with no client fetches. See [frontend/08](../frontend/08-home.md).
 
 ---
 
@@ -32,13 +44,14 @@ actual UI comes from the shell mounted by the layout.
 ```tsx
 // src/app/dashboard/layout.tsx
 <DashboardAuthProvider>
-  <DashboardShell />     {/* the real UI */}
-  {children}             {/* the page — which is null */}
+  <DashboardShell>{children}</DashboardShell>   {/* children = the page payload */}
 </DashboardAuthProvider>
 ```
 
 So `/dashboard`, `/dashboard/warehouse`, `/dashboard/loans` all render the **same**
-`DashboardShell`. The shell decides what to show.
+`DashboardShell`. The page's payload flows in as `children`: `null` for client-shell
+modules, the server-rendered Home for `/dashboard/home` — the shell places it inside
+its `<main>` when the section is `home`.
 
 ---
 
@@ -49,6 +62,7 @@ So `/dashboard`, `/dashboard/warehouse`, `/dashboard/loans` all render the **sam
 
 ```ts
 type Section =
+  | { main: "home" }
   | { main: "domestic" }
   | { main: "fuel" }
   | { main: "international"; sub: "calculator" | "history" }
@@ -63,7 +77,14 @@ type Section =
   warehouse submenu swaps the rendered component without navigating.
 
 `renderContent()` is a big switch on `(main, sub)` that returns the right module
-component (`<WarehousePayments/>`, `<LoanEntryForm/>`, etc.).
+component (`<WarehousePayments/>`, `<LoanEntryForm/>`, etc.). The `home` case returns
+`children` — the server-rendered payload from the page (§1, §2).
+
+**Modules are lazy-loaded.** Every module component in the shell is imported via
+`next/dynamic` with the `ContentLoadingState` skeleton as its loading fallback, so a
+page only downloads the JS for the module it renders (first-load JS for
+`/dashboard/[module]` is ~106 kB instead of the whole app). Static imports here would
+silently re-bundle everything — don't add one.
 
 **Consequence:** you can deep-link to a module (`/dashboard/warehouse`) but not to a
 sub-section. Refreshing on warehouse always lands on the default sub (`active`).
@@ -111,7 +132,8 @@ Not everything is in the shell:
 | `/login` | login + request-access (public) |
 | `/driver/fuel-entry` | public driver fuel submission (public) |
 | `/warehouse/statement` | standalone warehouse statement page (its own route, outside the shell) |
-| `/` | entry point → dashboard |
+| `/dashboard/home` | server-rendered Home inside the shell chrome (§1) |
+| `/` and `/dashboard` | redirect → `/dashboard/home` (login lands there too) |
 
 ---
 
@@ -121,7 +143,12 @@ Not everything is in the shell:
   a `Sidebar` button that sets it, and a branch in `renderContent()`. No new route file.
 - **New top-level module:** add the slug to the `modules` arrays (in both
   `[module]/page.tsx` and `DashboardShell`), extend the `Section`/`DashboardModule`
-  unions, add a `Sidebar` link, and a `renderContent()` branch. If it's admin-only, add
-  it to `isAdminSection`.
+  unions, add a `Sidebar` link, and a `renderContent()` branch whose component is
+  imported via `next/dynamic` (match the existing pattern — a static import re-bundles
+  every page). If it's admin-only, add it to `isAdminSection`.
+- **New server-rendered view (like Home):** render it from `[module]/page.tsx`, pass
+  it through as the shell's `children`, and add a `renderContent()` case returning
+  `children`. Auth comes from `getServerComponentAppUser()`; data comes from the
+  server-side lib functions ([architecture/03](03-data-access-patterns.md)).
 - **Standalone page (outside the shell):** create a normal route under `src/app/` (like
   `/warehouse/statement`). It won't get the shell chrome.

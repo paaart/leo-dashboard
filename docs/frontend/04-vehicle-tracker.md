@@ -1,6 +1,6 @@
 # Frontend — Vehicle Tracker
 
-> Status: Current. Verified 2026-07-21.
+> Status: Current. Verified 2026-07-26.
 > Component: `src/components/FuelTracker/` (entry: `FuelTrackerPage.tsx`).
 > Access: all users. Data: `fetch` to fuel / vehicles / vendor-invoice routes
 > ([api/04](../api/04-fuel-and-vehicles.md), [api/05](../api/05-fuel-dashboard-analytics.md),
@@ -43,6 +43,9 @@ components still exist (`VehicleExpenseTable`, `VehicleExpenseFormModal`,
   409 as a toast.
 - **Fuel Entries** — list + create/edit/delete via `/api/fuel-entries[/id]`. Flagged
   entries (bad odometer) show a warning via `FuelStatusBadge`/`FuelTooltip`.
+  `FuelTooltip` opens on hover/focus **and toggles on tap** (outside-tap or Escape
+  closes) so its content is reachable on touch devices; it renders on the
+  inverse-surface tokens (deliberately dark in both themes).
 - **Vendor Invoices** — list (with a status filter: all / unpaid / partially_paid / paid),
   create (`VendorInvoiceFormModal`), view (`VendorInvoiceViewModal`), edit, delete via
   `/api/vehicle-expense-invoices`. A summary dashboard uses
@@ -50,7 +53,9 @@ components still exist (`VehicleExpenseTable`, `VehicleExpenseFormModal`,
 - **Vendor Payments** — list, create (allocating one payment across invoices via
   `VendorPaymentBatchFormModal`), view, delete via `/api/vehicle-expense-payment-batches`.
 
-Shared table helpers: `TablePagination`, `SerialNumber`, `FuelEmptyState`.
+Shared table helpers: `TablePagination` (also used by Warehouse Active Pods),
+`SerialNumber`, `FuelEmptyState`, `VehicleSearchSelect` (searchable vehicle picker
+with a two-line listbox dropdown; used by the Performance filter and expense forms).
 
 ---
 

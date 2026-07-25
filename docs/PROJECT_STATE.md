@@ -5,9 +5,9 @@
 > **unverified** (inferred, or true-in-code but not exercised at runtime during this
 > pass — re-check before relying on it).
 
-Last verification pass: **2026-07-22** (initial docs creation. Routes read from
-`src/app/api/`, components from `src/components/`, schema from `supabase/migrations/`
-plus the type definitions in `src/lib/**/types.ts`).
+Last verification pass: **2026-07-26** (UI redesign + Home module pass: statuses below
+re-checked against code; the redesigned UI, Home page, session expiry, and lazy loading
+were additionally exercised live in the browser — light/dark, desktop/375px).
 
 ---
 
@@ -20,10 +20,21 @@ plus the type definitions in `src/lib/**/types.ts`).
   `src/middleware.ts` (session presence only); API routes gate themselves with
   `requireAuth`/`requireAdmin`. Not load-tested; correctness claims are from reading
   the handlers.
-- **Six modules render and are wired to data** — verified in code: Domestic Calculator,
-  International Calculator, Vehicle Tracker, Warehouse, Loans/Advances, User Management.
-  Each maps to a `DashboardShell` section (see
+- **Seven modules render and are wired to data** — verified in browser 2026-07-26:
+  Home, Domestic Calculator, International Calculator, Vehicle Tracker, Warehouse,
+  Loans/Advances, User Management. Home is a server component with data in the HTML;
+  the rest map to `DashboardShell` sections loaded lazily via `next/dynamic` (see
   [architecture/04](architecture/04-dashboard-shell-and-routing.md)).
+- **Design system** — verified in browser. All UI runs on semantic tokens in
+  `globals.css` + class constants in `shared/ui.ts`; light/dark flips with the OS
+  scheme with no hand-written `dark:` variants (intentional exceptions: the always-dark
+  `FuelTooltip`, the print-only `/warehouse/statement`, `@react-pdf/renderer` files).
+  Mobile conventions (scrollable tables, 90vh modals) applied across modules.
+- **24-hour session cap** — verified in browser. Login sets a `leo_session_start`
+  cookie; middleware forces re-login (with an "expired" notice) once it's missing or
+  older than 24h, clearing the Supabase cookies. Enforced on page navigation only —
+  API routes still accept a live Supabase session (see
+  [architecture/02](architecture/02-auth-and-access-control.md)).
 - **Warehouse ledger** — verified in code. Pods, immutable billing cycles, and a
   transaction ledger (charge/payment/adjustment) with GST on charges. Balances are
   derived from the ledger, not stored. Renewals create new cycles; rate changes are
@@ -46,7 +57,9 @@ plus the type definitions in `src/lib/**/types.ts`).
 - **Transport calculators** — verified in code. Domestic reads `transport_quotes` /
   `vehicle_quotes` / `transport_distances` directly from Supabase; International saves
   quotes through `/api/international/**` and renders a PDF via `@react-pdf/renderer`.
-  Those calculator lookup tables are now versioned in migrations and seeded locally.
+  The calculator lookup tables are **not** versioned in migrations — their data comes
+  from the ad-hoc upload scripts in `scripts/` (see
+  [database/02](database/02-migrations-and-drift.md)).
 
 ## What's legacy (present, but not the path forward)
 
@@ -71,15 +84,16 @@ plus the type definitions in `src/lib/**/types.ts`).
 
 ## Risks / known problems
 
-- **Schema migration drift — still real, but slightly better.**
-  The migrations folder now also includes the calculator lookup tables and seed data,
-  plus fuel, profiles, vehicle-expense, and the warehouse-alert-dismissals tables. The
-  **warehouse core tables**
-  (`warehouse_pods`, `warehouse_pod_cycles`, `warehouse_pod_transactions`), the
-  **loans tables** (`employees`, `employee_loans`, `companies`, `locations`), and the
-  warehouse enum types are still created directly in Supabase and are **not** in version
-  control. A fresh `supabase db reset` will NOT reproduce the full schema. See
-  [database/02](database/02-migrations-and-drift.md).
+- **Schema migration drift — still real.** The migrations folder covers fuel,
+  profiles, vehicle-expense/vendor-invoice, warehouse-alert-dismissals, and
+  vehicle-renewal tables. The **warehouse core tables** (`warehouse_pods`,
+  `warehouse_pod_cycles`, `warehouse_pod_transactions`), the **loans tables**
+  (`employees`, `employee_loans`, `companies`, `locations`), the **calculator lookup
+  tables** (`transport_quotes`, `vehicle_quotes`, `transport_distances`,
+  `international_quotes`), and the warehouse enum types are created directly in
+  Supabase and are **not** in version control (verified 2026-07-26: no calculator
+  table appears anywhere under `supabase/`). A fresh `supabase db reset` will NOT
+  reproduce the full schema. See [database/02](database/02-migrations-and-drift.md).
 - **RLS posture is uneven.** Modules that talk to Supabase directly from the browser
   (Domestic, Loans, parts of Warehouse client UI) rely on Row-Level Security to be
   safe, because they use the anon key. Whether every such table has correct RLS
