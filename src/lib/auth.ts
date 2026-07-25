@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createRouteClient } from "@/lib/supabase/route";
+import { createServerComponentClient } from "@/lib/supabase/server";
 
 export type AppRole = "user" | "admin";
 export type AppStatus = "pending" | "active" | "inactive" | "rejected";
@@ -38,17 +39,14 @@ export async function getCurrentSupabaseUser(request: NextRequest) {
   return data.user;
 }
 
-export async function getCurrentAppUser(
-  request: NextRequest
+async function appUserFromAuthUserId(
+  authUserId: string
 ): Promise<AppUser | null> {
-  const authUser = await getCurrentSupabaseUser(request);
-  if (!authUser) return null;
-
   const admin = createAdminClient();
   const { data, error } = await admin
     .from("profiles")
     .select("id, auth_user_id, email, username, full_name, role, status")
-    .eq("auth_user_id", authUser.id)
+    .eq("auth_user_id", authUserId)
     .maybeSingle<ProfileRow>();
 
   if (error || !data || data.status !== "active") return null;
@@ -62,6 +60,25 @@ export async function getCurrentAppUser(
     role: data.role,
     status: "active",
   };
+}
+
+export async function getCurrentAppUser(
+  request: NextRequest
+): Promise<AppUser | null> {
+  const authUser = await getCurrentSupabaseUser(request);
+  if (!authUser) return null;
+
+  return appUserFromAuthUserId(authUser.id);
+}
+
+/* For React Server Components (pages/layouts), where there is no NextRequest. */
+export async function getServerComponentAppUser(): Promise<AppUser | null> {
+  const supabase = await createServerComponentClient();
+  const { data, error } = await supabase.auth.getUser();
+
+  if (error || !data.user) return null;
+
+  return appUserFromAuthUserId(data.user.id);
 }
 
 function authError(message: string, status: number) {

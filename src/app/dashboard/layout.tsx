@@ -10,8 +10,7 @@ export default function DashboardLayout({
   return (
     <DashboardAuthProvider>
       <div className="min-h-screen bg-canvas text-fg">
-        <DashboardShell />
-        {children}
+        <DashboardShell>{children}</DashboardShell>
       </div>
     </DashboardAuthProvider>
   );

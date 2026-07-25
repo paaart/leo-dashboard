@@ -65,6 +65,18 @@ function SidebarNav({
   return (
     <nav className="space-y-1">
       <Link
+        href="/dashboard/home"
+        onClick={() => {
+          setSection({ main: "home" });
+          setOpen(null);
+          onAnyNavigate?.();
+        }}
+        className={mainLinkClass(isActive("home"))}
+      >
+        Home
+      </Link>
+
+      <Link
         href="/dashboard/domestic"
         onClick={() => {
           setSection({ main: "domestic" });

@@ -1,29 +1,80 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition, type ReactNode } from "react";
+import dynamic from "next/dynamic";
 import { useSelectedLayoutSegment } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
-
-import DomesticCalculator from "@/components/DomesticCalculator";
-import InternationalShipping from "@/components/InternationalCalculator/InternationalShipping";
-import HistoryView from "@/components/InternationalCalculator/History/HistoryList";
-import LoanEntryForm from "@/components/LoansAndAdvances/LoanEntryForm";
-import OutstandingLoansList from "@/components/LoansAndAdvances/OutstandingLoansList";
-import ManageEmployees from "@/components/LoansAndAdvances/ManageEmployees";
-
-import WarehouseAddClient from "@/components/Warehouse/WarehouseAddClient";
-import WarehouseActivePods from "@/components/Warehouse/WarehouseActivePods";
-import WarehouseRenewals from "@/components/Warehouse/Ledger/WarehouseRenewals";
-import WarehousePayments from "@/components/Warehouse/WarehousePayments";
-import WarehouseClosedPods from "@/components/Warehouse/WarehouseClosedPods";
-import WarehousePaymentAlerts from "@/components/Warehouse/WarehousePaymentAlerts";
-import FuelTrackerPage from "@/components/FuelTracker/FuelTrackerPage";
-import UserManagement from "@/components/UserManagement/UserManagement";
 import { useDashboardAuth } from "./DashboardAuthProvider";
 
+/*
+  Modules are lazy-loaded so each page only downloads the code it renders —
+  the shell used to import every module statically, which shipped the whole
+  app's JS on every page.
+*/
+const moduleLoading = () => <ContentLoadingState />;
+
+const DomesticCalculator = dynamic(
+  () => import("@/components/DomesticCalculator"),
+  { loading: moduleLoading }
+);
+const InternationalShipping = dynamic(
+  () =>
+    import("@/components/InternationalCalculator/InternationalShipping"),
+  { loading: moduleLoading }
+);
+const HistoryView = dynamic(
+  () => import("@/components/InternationalCalculator/History/HistoryList"),
+  { loading: moduleLoading }
+);
+const LoanEntryForm = dynamic(
+  () => import("@/components/LoansAndAdvances/LoanEntryForm"),
+  { loading: moduleLoading }
+);
+const OutstandingLoansList = dynamic(
+  () => import("@/components/LoansAndAdvances/OutstandingLoansList"),
+  { loading: moduleLoading }
+);
+const ManageEmployees = dynamic(
+  () => import("@/components/LoansAndAdvances/ManageEmployees"),
+  { loading: moduleLoading }
+);
+const WarehouseAddClient = dynamic(
+  () => import("@/components/Warehouse/WarehouseAddClient"),
+  { loading: moduleLoading }
+);
+const WarehouseActivePods = dynamic(
+  () => import("@/components/Warehouse/WarehouseActivePods"),
+  { loading: moduleLoading }
+);
+const WarehouseRenewals = dynamic(
+  () => import("@/components/Warehouse/Ledger/WarehouseRenewals"),
+  { loading: moduleLoading }
+);
+const WarehousePayments = dynamic(
+  () => import("@/components/Warehouse/WarehousePayments"),
+  { loading: moduleLoading }
+);
+const WarehouseClosedPods = dynamic(
+  () => import("@/components/Warehouse/WarehouseClosedPods"),
+  { loading: moduleLoading }
+);
+const WarehousePaymentAlerts = dynamic(
+  () => import("@/components/Warehouse/WarehousePaymentAlerts"),
+  { loading: moduleLoading }
+);
+const FuelTrackerPage = dynamic(
+  () => import("@/components/FuelTracker/FuelTrackerPage"),
+  { loading: moduleLoading }
+);
+const UserManagement = dynamic(
+  () => import("@/components/UserManagement/UserManagement"),
+  { loading: moduleLoading }
+);
+
 export type DashboardModule =
+  | "home"
   | "domestic"
   | "international"
   | "fuel-tracker"
@@ -32,6 +83,7 @@ export type DashboardModule =
   | "users";
 
 export type Section =
+  | { main: "home"; sub?: null }
   | { main: "domestic"; sub?: null }
   | { main: "fuel"; sub?: null }
   | { main: "international"; sub: "calculator" | "history" }
@@ -50,6 +102,8 @@ export type Section =
 
 function sectionFromModule(module: DashboardModule): Section {
   switch (module) {
+    case "home":
+      return { main: "home", sub: null };
     case "international":
       return { main: "international", sub: "calculator" };
     case "fuel-tracker":
@@ -68,6 +122,7 @@ function sectionFromModule(module: DashboardModule): Section {
 
 function moduleFromSegment(segment: string | null): DashboardModule {
   const modules: DashboardModule[] = [
+    "home",
     "domestic",
     "international",
     "fuel-tracker",
@@ -78,7 +133,7 @@ function moduleFromSegment(segment: string | null): DashboardModule {
 
   return modules.includes(segment as DashboardModule)
     ? (segment as DashboardModule)
-    : "domestic";
+    : "home";
 }
 
 function isAdminSection(section: Section) {
@@ -126,7 +181,11 @@ function ContentLoadingState() {
   );
 }
 
-export default function DashboardShell() {
+export default function DashboardShell({
+  children,
+}: {
+  children?: ReactNode;
+}) {
   const { user, loading: authLoading, ready } = useDashboardAuth();
   const activeModule = moduleFromSegment(useSelectedLayoutSegment());
   const [isPending, startTransition] = useTransition();
@@ -173,6 +232,11 @@ export default function DashboardShell() {
     }
 
     switch (main) {
+      // Home is server-rendered by app/dashboard/[module]/page.tsx and
+      // arrives as children with its data already in the HTML.
+      case "home":
+        return children;
+
       case "domestic":
         return <DomesticCalculator />;
 
