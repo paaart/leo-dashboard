@@ -10,6 +10,7 @@ import {
   PackageCheck,
 } from "lucide-react";
 import { MetricCard } from "@/components/shared/DashboardUI";
+import { alertDanger } from "@/components/shared/ui";
 import { getWarehouseDashboardSummary } from "@/lib/warehouse/pods";
 import { getErrorMessage } from "@/lib/errors";
 
@@ -24,7 +25,7 @@ function formatCurrency(value: number) {
 function LoadingValue({ width = "w-24" }: { width?: string }) {
   return (
     <span
-      className={`block h-7 ${width} animate-pulse rounded bg-gray-100 dark:bg-gray-800`}
+      className={`block h-7 ${width} animate-pulse rounded bg-surface-2`}
     />
   );
 }
@@ -73,7 +74,7 @@ export default function WarehouseSummaryCards() {
   return (
     <div className="space-y-3">
       {error ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">
+        <div className={`${alertDanger} font-medium`}>
           {error}
         </div>
       ) : null}

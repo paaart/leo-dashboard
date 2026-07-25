@@ -9,6 +9,16 @@ import {
   PageHeader,
   SectionCard,
 } from "@/components/shared/DashboardUI";
+import {
+  badgeClass,
+  buttonPrimary,
+  inputField,
+  selectField,
+  tableCellMuted,
+  tableHead,
+  tableHeadCell,
+  tableWrapper,
+} from "@/components/shared/ui";
 import LoanSummaryCards from "./LoanSummaryCards";
 
 type Option = { id: number; name: string; is_active?: boolean };
@@ -173,7 +183,7 @@ export default function ManageEmployees() {
 
   if (loading) {
     return (
-      <div className="min-h-full bg-gray-50 px-4 py-6 text-gray-950 dark:bg-gray-950 dark:text-gray-50 sm:px-6 lg:px-8">
+      <div className="min-h-full bg-canvas px-4 py-6 text-fg sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl space-y-6">
           <PageHeader
             eyebrow="Finance"
@@ -187,7 +197,7 @@ export default function ManageEmployees() {
   }
 
   return (
-    <div className="min-h-full bg-gray-50 px-4 py-6 text-gray-950 dark:bg-gray-950 dark:text-gray-50 sm:px-6 lg:px-8">
+    <div className="min-h-full bg-canvas px-4 py-6 text-fg sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
         <PageHeader
           eyebrow="Finance"
@@ -203,12 +213,12 @@ export default function ManageEmployees() {
         >
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-gray-800 dark:text-gray-200">
+              <label className="block text-sm font-medium text-fg">
                 Name
               </label>
               <input
                 type="text"
-                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50 dark:placeholder:text-gray-500"
+                className={`${inputField} h-10`}
                 placeholder="Employee name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -216,12 +226,12 @@ export default function ManageEmployees() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-gray-800 dark:text-gray-200">
+              <label className="block text-sm font-medium text-fg">
                 Employee Code
               </label>
               <input
                 type="text"
-                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50 dark:placeholder:text-gray-500"
+                className={`${inputField} h-10`}
                 placeholder="e.g. EMP015"
                 value={employeeCode}
                 onChange={(e) => setEmployeeCode(e.target.value.toUpperCase())}
@@ -229,11 +239,11 @@ export default function ManageEmployees() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-gray-800 dark:text-gray-200">
+              <label className="block text-sm font-medium text-fg">
                 Company
               </label>
               <select
-                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className={`${selectField} h-10`}
                 value={companyId}
                 onChange={(e) =>
                   setCompanyId(e.target.value ? Number(e.target.value) : "")
@@ -249,11 +259,11 @@ export default function ManageEmployees() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-gray-800 dark:text-gray-200">
+              <label className="block text-sm font-medium text-fg">
                 Location
               </label>
               <select
-                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className={`${selectField} h-10`}
                 value={locationId}
                 onChange={(e) =>
                   setLocationId(e.target.value ? Number(e.target.value) : "")
@@ -269,12 +279,12 @@ export default function ManageEmployees() {
             </div>
           </div>
 
-          <div className="mt-5 flex justify-end border-t border-gray-200 pt-5 dark:border-gray-800">
+          <div className="mt-5 flex justify-end border-t border-edge pt-5">
             <button
               type="button"
               onClick={handleAdd}
               disabled={loading || !name.trim() || !employeeCode.trim()}
-              className="inline-flex min-h-10 items-center justify-center rounded-md bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className={buttonPrimary}
             >
               Add Employee
             </button>
@@ -291,52 +301,52 @@ export default function ManageEmployees() {
               description="Add employees to start recording loans, advances, and repayments."
             />
           ) : (
-            <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
+            <div className={tableWrapper}>
               <table className="min-w-[920px] w-full text-sm">
-                <thead className="bg-gray-50 text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+                <thead className={tableHead}>
                   <tr>
-                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                    <th className={`${tableHeadCell} text-left`}>
                       Employee
                     </th>
-                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                    <th className={`${tableHeadCell} text-left`}>
                       Status
                     </th>
-                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                    <th className={`${tableHeadCell} text-left`}>
                       Company
                     </th>
-                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                    <th className={`${tableHeadCell} text-left`}>
                       Location
                     </th>
-                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                    <th className={`${tableHeadCell} text-left`}>
                       Created
                     </th>
-                    <th className="border-b border-gray-200 px-4 py-3 text-right font-semibold dark:border-gray-800">
+                    <th className={`${tableHeadCell} text-right`}>
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                <tbody className="divide-y divide-edge">
                   {employees.map((emp, idx) => (
                     <tr
                       key={emp.id}
-                      className="bg-white hover:bg-gray-50 dark:bg-gray-950 dark:hover:bg-gray-900"
+                      className="bg-surface transition-colors hover:bg-surface-2/60"
                     >
                       <td className="px-4 py-3">
-                        <p className="font-medium text-gray-950 dark:text-gray-50">
+                        <p className="font-medium text-fg">
                           {emp.name}
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                        <p className="text-xs text-fg-muted">
                           {emp.employee_code}
                         </p>
                       </td>
                       <td className="px-4 py-3">
-                        <span className="inline-flex rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-xs font-medium text-green-700 dark:border-green-900/60 dark:bg-green-950/40 dark:text-green-300">
+                        <span className={badgeClass("success")}>
                           Active
                         </span>
                       </td>
                       <td className="px-4 py-3">
                         <select
-                          className="h-9 w-full rounded-md border border-gray-300 bg-white px-2 text-sm text-gray-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                          className="h-9 w-full rounded-lg border border-edge bg-surface px-2 text-sm text-fg outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/25"
                           value={emp.company_id ?? ""}
                           onChange={(e) => {
                             const v = e.target.value
@@ -359,7 +369,7 @@ export default function ManageEmployees() {
                       </td>
                       <td className="px-4 py-3">
                         <select
-                          className="h-9 w-full rounded-md border border-gray-300 bg-white px-2 text-sm text-gray-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                          className="h-9 w-full rounded-lg border border-edge bg-surface px-2 text-sm text-fg outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/25"
                           value={emp.location_id ?? ""}
                           onChange={(e) => {
                             const v = e.target.value
@@ -380,7 +390,7 @@ export default function ManageEmployees() {
                           ))}
                         </select>
                       </td>
-                      <td className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                      <td className={tableCellMuted}>
                         {new Date(emp.created_at).toLocaleDateString("en-IN")}
                       </td>
                       <td className="px-4 py-3 text-right">
@@ -388,7 +398,7 @@ export default function ManageEmployees() {
                           type="button"
                           onClick={() => saveRow(emp)}
                           disabled={savingRowId === emp.id}
-                          className="inline-flex min-h-9 items-center justify-center rounded-md bg-blue-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                          className={buttonPrimary}
                         >
                           {savingRowId === emp.id ? "Saving..." : "Save"}
                         </button>

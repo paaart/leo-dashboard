@@ -1,3 +1,5 @@
+import { buttonSecondary } from "@/components/shared/ui";
+
 export const VEHICLE_TRACKER_PAGE_SIZE = 50;
 
 export function paginateItems<T>(
@@ -37,7 +39,7 @@ export function TablePagination({
   const end = Math.min(safePage * pageSize, totalItems);
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-2 rounded-xl border border-edge bg-surface px-4 py-3 text-sm text-fg-muted sm:flex-row sm:items-center sm:justify-between">
       <span>
         Showing {start}-{end} of {totalItems} {label}
       </span>
@@ -46,18 +48,18 @@ export function TablePagination({
           type="button"
           onClick={() => onPageChange(safePage - 1)}
           disabled={safePage <= 1}
-          className="min-h-9 rounded-md border border-gray-300 px-3 font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+          className={`${buttonSecondary} min-h-9`}
         >
           Previous
         </button>
-        <span className="min-w-24 text-center font-medium text-gray-800 dark:text-gray-200">
+        <span className="min-w-24 text-center font-medium text-fg">
           Page {safePage} of {totalPages}
         </span>
         <button
           type="button"
           onClick={() => onPageChange(safePage + 1)}
           disabled={safePage >= totalPages}
-          className="min-h-9 rounded-md border border-gray-300 px-3 font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+          className={`${buttonSecondary} min-h-9`}
         >
           Next
         </button>

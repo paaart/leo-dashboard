@@ -53,7 +53,7 @@ export default function WarehouseTxModal(props: BaseProps) {
   if (!open) return null;
 
   const input =
-    "w-full rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-white";
+    "w-full rounded-lg border border-edge bg-surface px-3 py-2 text-sm text-fg";
 
   const submit = async () => {
     const amt = Number(amount);
@@ -85,28 +85,28 @@ export default function WarehouseTxModal(props: BaseProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
-        className="absolute inset-0 bg-black/40"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={saving ? undefined : onClose}
       />
 
-      <div className="relative w-full max-w-lg rounded-xl bg-white dark:bg-[#1f2933] border border-gray-200 dark:border-gray-700 shadow-xl">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-          <div className="font-semibold text-gray-900 dark:text-white">
+      <div className="relative flex max-h-[90vh] w-full max-w-lg flex-col rounded-xl bg-surface border border-edge shadow-overlay">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-edge">
+          <div className="font-semibold text-fg">
             {title}
           </div>
           <button
             onClick={onClose}
             disabled={saving}
-            className="text-sm text-gray-600 dark:text-gray-300 hover:underline disabled:opacity-60"
+            className="text-sm text-fg-muted hover:underline disabled:opacity-60"
           >
             Close
           </button>
         </div>
 
-        <div className="p-4 space-y-3">
+        <div className="min-h-0 flex-1 overflow-y-auto p-4 space-y-3">
           {kind === "transaction" ? (
             <div>
-              <label className="text-xs text-gray-500 dark:text-gray-400">
+              <label className="text-xs text-fg-muted">
                 Type
               </label>
               <select
@@ -122,9 +122,9 @@ export default function WarehouseTxModal(props: BaseProps) {
             </div>
           ) : null}
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
-              <label className="text-xs text-gray-500 dark:text-gray-400">
+              <label className="text-xs text-fg-muted">
                 Date
               </label>
               <input
@@ -136,7 +136,7 @@ export default function WarehouseTxModal(props: BaseProps) {
             </div>
 
             <div>
-              <label className="text-xs text-gray-500 dark:text-gray-400">
+              <label className="text-xs text-fg-muted">
                 Amount (₹)
               </label>
               <input
@@ -151,7 +151,7 @@ export default function WarehouseTxModal(props: BaseProps) {
 
           {kind === "transaction" ? (
             <div>
-              <label className="text-xs text-gray-500 dark:text-gray-400">
+              <label className="text-xs text-fg-muted">
                 GST %
               </label>
               <input
@@ -165,7 +165,7 @@ export default function WarehouseTxModal(props: BaseProps) {
           ) : null}
 
           <div>
-            <label className="text-xs text-gray-500 dark:text-gray-400">
+            <label className="text-xs text-fg-muted">
               Title
             </label>
             <input
@@ -177,7 +177,7 @@ export default function WarehouseTxModal(props: BaseProps) {
           </div>
 
           <div>
-            <label className="text-xs text-gray-500 dark:text-gray-400">
+            <label className="text-xs text-fg-muted">
               Note (optional)
             </label>
             <input
@@ -189,11 +189,11 @@ export default function WarehouseTxModal(props: BaseProps) {
           </div>
         </div>
 
-        <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-2">
+        <div className="px-4 py-3 border-t border-edge flex justify-end gap-2">
           <button
             onClick={onClose}
             disabled={saving}
-            className="rounded bg-gray-200 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600 disabled:opacity-60"
+            className="rounded-lg border border-edge bg-surface px-4 py-2 text-sm font-medium text-fg transition-colors hover:bg-surface-2 disabled:opacity-60"
           >
             Cancel
           </button>
@@ -201,7 +201,7 @@ export default function WarehouseTxModal(props: BaseProps) {
           <button
             onClick={submit}
             disabled={!canSubmit || saving}
-            className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-fg hover:bg-accent-hover disabled:opacity-60"
           >
             {saving ? "Saving…" : "Save"}
           </button>

@@ -1,3 +1,4 @@
+import { modalOverlay } from "@/components/shared/ui";
 import { Copy, Plus, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { SERIAL_COLUMN_CLASS, serialNumber } from "./SerialNumber";
@@ -266,21 +267,21 @@ export function VendorInvoiceFormModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="max-h-[92vh] w-full max-w-6xl overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-950">
-        <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-3 dark:border-gray-800">
+    <div className={modalOverlay}>
+      <div className="max-h-[92vh] w-full max-w-6xl overflow-hidden rounded-xl border border-edge bg-surface shadow-overlay">
+        <div className="flex items-start justify-between gap-4 border-b border-edge px-5 py-3">
           <div>
-            <h2 className="text-lg font-semibold text-gray-950 dark:text-gray-50">
+            <h2 className="text-lg font-semibold text-fg">
               {isEdit ? "Edit Vendor Invoice" : "Add Vendor Invoice"}
             </h2>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-sm text-fg-muted">
               Enter one row per vehicle cost.
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+            className="rounded-md p-2 text-fg-muted hover:bg-surface-2 hover:text-fg"
             aria-label="Close vendor invoice dialog"
           >
             <X className="h-4 w-4" />
@@ -293,7 +294,7 @@ export function VendorInvoiceFormModal({
         >
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <label className="space-y-1">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-medium text-fg">
                 Vendor
               </span>
               <input
@@ -304,13 +305,13 @@ export function VendorInvoiceFormModal({
                     vendorName: event.target.value,
                   }))
                 }
-                className="h-9 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className="h-9 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                 placeholder="Vendor name"
               />
             </label>
 
             <label className="space-y-1">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-medium text-fg">
                 Invoice Number
               </span>
               <input
@@ -321,13 +322,13 @@ export function VendorInvoiceFormModal({
                     invoiceNumber: event.target.value,
                   }))
                 }
-                className="h-9 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className="h-9 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                 placeholder="Optional"
               />
             </label>
 
             <label className="space-y-1">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-medium text-fg">
                 Invoice Date
               </span>
               <input
@@ -339,12 +340,12 @@ export function VendorInvoiceFormModal({
                     invoiceDate: event.target.value,
                   }))
                 }
-                className="h-9 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className="h-9 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
               />
             </label>
 
             <label className="space-y-1">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-medium text-fg">
                 Due Date
               </span>
               <input
@@ -353,12 +354,12 @@ export function VendorInvoiceFormModal({
                 onChange={(event) =>
                   setForm((prev) => ({ ...prev, dueDate: event.target.value }))
                 }
-                className="h-9 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className="h-9 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
               />
             </label>
 
             <label className="space-y-1 sm:col-span-2 lg:col-span-4">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-medium text-fg">
                 Remarks
               </span>
               <textarea
@@ -367,21 +368,21 @@ export function VendorInvoiceFormModal({
                   setForm((prev) => ({ ...prev, remarks: event.target.value }))
                 }
                 rows={2}
-                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className="w-full rounded-lg border border-edge bg-surface px-3 py-2 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                 placeholder="Optional remarks"
               />
             </label>
           </div>
 
-          <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800">
-            <div className="flex items-center justify-between gap-3 border-b border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-gray-900">
-              <h3 className="text-sm font-semibold text-gray-950 dark:text-gray-50">
+          <div className="overflow-hidden rounded-lg border border-edge">
+            <div className="flex items-center justify-between gap-3 border-b border-edge bg-surface-2 px-3 py-2">
+              <h3 className="text-sm font-semibold text-fg">
                 Line Items
               </h3>
               <button
                 type="button"
                 onClick={addItem}
-                className="inline-flex min-h-9 items-center justify-center gap-2 rounded-md border border-gray-300 bg-white px-3 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200 dark:hover:bg-gray-800"
+                className="inline-flex min-h-9 items-center justify-center gap-2 rounded-lg border border-edge bg-surface px-3 text-sm font-medium text-fg hover:bg-surface-2"
               >
                 <Plus className="h-4 w-4" />
                 Add Row
@@ -390,7 +391,7 @@ export function VendorInvoiceFormModal({
 
             <div className="overflow-x-auto">
               <table className="min-w-250 w-full text-left text-sm">
-                <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
+                <thead className="border-b border-edge bg-surface-2 text-xs uppercase tracking-wide text-fg-muted">
                   <tr>
                     <th className={SERIAL_COLUMN_CLASS}>S.No</th>
                     <th className="px-3 py-2 font-semibold">Scope</th>
@@ -408,7 +409,7 @@ export function VendorInvoiceFormModal({
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                <tbody className="divide-y divide-edge">
                   {form.items.map((item, index) => (
                     <tr key={index} className="align-top">
                       <td className={SERIAL_COLUMN_CLASS}>
@@ -430,7 +431,7 @@ export function VendorInvoiceFormModal({
                                   : item.vehicleId,
                             });
                           }}
-                          className="h-9 w-28 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                          className="h-9 w-28 rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                         >
                           <option value="vehicle">Vehicle</option>
                           <option value="general">General</option>
@@ -446,7 +447,7 @@ export function VendorInvoiceFormModal({
                             }
                           />
                         ) : (
-                          <span className="inline-flex min-h-9 items-center text-sm text-gray-500 dark:text-gray-400">
+                          <span className="inline-flex min-h-9 items-center text-sm text-fg-muted">
                             General
                           </span>
                         )}
@@ -460,7 +461,7 @@ export function VendorInvoiceFormModal({
                               renewalType: null,
                             })
                           }
-                          className="h-9 w-40 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                          className="h-9 w-40 rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                         >
                           {expenseTypes.map((expenseType) => (
                             <option key={expenseType} value={expenseType}>
@@ -478,7 +479,7 @@ export function VendorInvoiceFormModal({
                           onChange={(event) =>
                             updateItem(index, { amount: event.target.value })
                           }
-                          className="h-9 w-32 rounded-md border border-gray-300 bg-white px-3 text-right text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                          className="h-9 w-32 rounded-lg border border-edge bg-surface px-3 text-right text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                           placeholder="0"
                         />
                       </td>
@@ -490,7 +491,7 @@ export function VendorInvoiceFormModal({
                               description: event.target.value,
                             })
                           }
-                          className="h-9 w-full min-w-64 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                          className="h-9 w-full min-w-64 rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                           placeholder="Optional details"
                         />
                       </td>
@@ -498,7 +499,7 @@ export function VendorInvoiceFormModal({
                         <button
                           type="button"
                           onClick={() => duplicateItem(index)}
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-edge text-fg hover:bg-surface-2"
                           title="Duplicate row"
                           aria-label={`Duplicate row ${index + 1}`}
                         >
@@ -510,7 +511,7 @@ export function VendorInvoiceFormModal({
                           type="button"
                           onClick={() => removeItem(index)}
                           disabled={form.items.length === 1}
-                          className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-red-200 text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/40"
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-danger/25 text-danger-soft-fg hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-50"
                           title="Delete row"
                           aria-label={`Delete row ${index + 1}`}
                         >
@@ -524,9 +525,9 @@ export function VendorInvoiceFormModal({
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 border-t border-gray-200 pt-4 dark:border-gray-800 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex flex-col gap-3 border-t border-edge pt-4 sm:flex-row sm:items-start sm:justify-between">
             {error ? (
-              <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">
+              <div className="rounded-lg border border-danger/25 bg-danger-soft px-3 py-2 text-sm text-danger-soft-fg">
                 {error}
               </div>
             ) : (
@@ -534,11 +535,11 @@ export function VendorInvoiceFormModal({
             )}
 
             <div className="flex flex-col gap-3 sm:items-end">
-              <div className="rounded-md border border-gray-200 px-4 py-2 text-right dark:border-gray-800">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              <div className="rounded-md border border-edge px-4 py-2 text-right">
+                <p className="text-xs font-semibold uppercase tracking-wide text-fg-muted">
                   Invoice Total
                 </p>
-                <p className="mt-1 text-xl font-semibold text-gray-950 dark:text-gray-50">
+                <p className="mt-1 text-xl font-semibold text-fg">
                   {formatCurrency(totalAmount)}
                 </p>
               </div>
@@ -548,14 +549,14 @@ export function VendorInvoiceFormModal({
                   type="button"
                   onClick={onClose}
                   disabled={loading}
-                  className="min-h-10 rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                  className="min-h-10 rounded-lg border border-edge px-4 text-sm font-medium text-fg hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="min-h-10 rounded-md bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="min-h-10 rounded-lg bg-accent px-4 text-sm font-semibold text-accent-fg hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {loading
                     ? "Saving..."

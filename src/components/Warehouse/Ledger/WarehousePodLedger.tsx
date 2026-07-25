@@ -115,7 +115,7 @@ export default function WarehousePodLedgerView({
   const isClosedView = !activeCycleId && !!latestCycle?.id;
 
   const cellInput =
-    "h-9 w-full rounded-md border border-gray-300 bg-white px-2 text-sm text-gray-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50";
+    "h-9 w-full rounded-lg border border-edge bg-surface px-2 text-sm text-fg outline-none transition focus:border-accent focus:ring-2 focus:ring-accent/25";
 
   const updateDraft = (id: string, patch: Partial<EditDraft>) => {
     setDrafts((prev) => ({ ...prev, [id]: { ...prev[id], ...patch } }));
@@ -361,7 +361,7 @@ export default function WarehousePodLedgerView({
 
   if (loading) {
     return (
-      <div className="min-h-full bg-gray-50 px-4 py-6 text-gray-950 dark:bg-gray-950 dark:text-gray-50 sm:px-6 lg:px-8">
+      <div className="min-h-full bg-canvas px-4 py-6 text-fg sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl space-y-6">
           <PageHeader
             eyebrow="Storage"
@@ -375,7 +375,7 @@ export default function WarehousePodLedgerView({
   }
 
   return (
-    <div className="min-h-full bg-gray-50 px-4 py-6 text-gray-950 dark:bg-gray-950 dark:text-gray-50 sm:px-6 lg:px-8">
+    <div className="min-h-full bg-canvas px-4 py-6 text-fg sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
       <PageHeader
         eyebrow="Storage"
@@ -386,14 +386,14 @@ export default function WarehousePodLedgerView({
         <button
           type="button"
           onClick={onBack}
-          className="inline-flex min-h-10 items-center justify-center rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+          className="inline-flex min-h-10 items-center justify-center rounded-lg border border-edge bg-surface px-4 text-sm font-medium text-fg shadow-card transition hover:bg-surface-2"
         >
           Back
         </button>
           <button
             type="button"
             onClick={() => void load()}
-            className="inline-flex min-h-10 items-center justify-center rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+            className="inline-flex min-h-10 items-center justify-center rounded-lg border border-edge bg-surface px-4 text-sm font-medium text-fg shadow-card transition hover:bg-surface-2"
           >
             Refresh
           </button>
@@ -401,7 +401,7 @@ export default function WarehousePodLedgerView({
           <button
             type="button"
             onClick={handleDownloadStatement}
-            className="inline-flex min-h-10 items-center justify-center rounded-md bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+            className="inline-flex min-h-10 items-center justify-center rounded-lg bg-accent px-4 text-sm font-semibold text-accent-fg transition hover:bg-accent-hover"
           >
             Download Statement
           </button>
@@ -424,7 +424,7 @@ export default function WarehousePodLedgerView({
       />
 
       {!activeCycle && (
-        <div className="rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800 dark:border-yellow-900/60 dark:bg-yellow-950/40 dark:text-yellow-300">
+        <div className="rounded-lg border border-warning/25 bg-warning-soft px-4 py-3 text-sm text-warning-soft-fg">
           This cycle is closed. Ledger is read-only. Payments can still be
           recorded.
         </div>
@@ -451,7 +451,7 @@ export default function WarehousePodLedgerView({
           onDeleteRow={deleteRow}
         />
       ) : (
-        <div className="rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800 dark:border-yellow-900/60 dark:bg-yellow-950/40 dark:text-yellow-300">
+        <div className="rounded-lg border border-warning/25 bg-warning-soft px-4 py-3 text-sm text-warning-soft-fg">
           No active cycle. The latest closed cycle is shown below in history
           view. Payments can still be recorded.
         </div>

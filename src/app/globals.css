@@ -1,28 +1,134 @@
 @import "tailwindcss";
 
+/*
+  Semantic design tokens. Light values on :root, dark values under the
+  media query — utilities like bg-surface / text-fg flip automatically
+  with the OS theme, so components rarely need dark: variants.
+*/
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  --canvas: #f7f7f8;
+  --surface: #ffffff;
+  --surface-2: #f4f4f5;
+  --edge: #e4e4e7;
+  --edge-strong: #d4d4d8;
+  --fg: #18181b;
+  --fg-muted: #52525b;
+  --fg-subtle: #a1a1aa;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-fg: #ffffff;
+  --accent-soft: #eff6ff;
+  --accent-soft-fg: #1d4ed8;
+
+  --success: #059669;
+  --success-soft: #ecfdf5;
+  --success-soft-fg: #047857;
+  --warning: #d97706;
+  --warning-soft: #fffbeb;
+  --warning-soft-fg: #b45309;
+  --danger: #dc2626;
+  --danger-hover: #b91c1c;
+  --danger-soft: #fef2f2;
+  --danger-soft-fg: #b91c1c;
+
+  --surface-inverse: #18181b;
+  --edge-inverse: #3f3f46;
+  --fg-inverse: #fafafa;
+  --fg-inverse-muted: #a1a1aa;
+
+  --elevation-card: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --elevation-overlay: 0 16px 40px -12px rgb(0 0 0 / 0.25);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --canvas: #09090b;
+    --surface: #101013;
+    --surface-2: #18181b;
+    --edge: #26262b;
+    --edge-strong: #34343a;
+    --fg: #f4f4f5;
+    --fg-muted: #a1a1aa;
+    --fg-subtle: #6b6b74;
+
+    --accent: #3b82f6;
+    --accent-hover: #60a5fa;
+    --accent-fg: #ffffff;
+    --accent-soft: rgb(59 130 246 / 0.14);
+    --accent-soft-fg: #93c5fd;
+
+    --success: #10b981;
+    --success-soft: rgb(16 185 129 / 0.13);
+    --success-soft-fg: #6ee7b7;
+    --warning: #f59e0b;
+    --warning-soft: rgb(245 158 11 / 0.13);
+    --warning-soft-fg: #fcd34d;
+    --danger: #ef4444;
+    --danger-hover: #f87171;
+    --danger-soft: rgb(239 68 68 / 0.13);
+    --danger-soft-fg: #fca5a5;
+
+    --surface-inverse: #26262b;
+    --edge-inverse: #45454d;
+    --fg-inverse: #f4f4f5;
+    --fg-inverse-muted: #a1a1aa;
+
+    --elevation-card: 0 1px 2px 0 rgb(0 0 0 / 0.4);
+    --elevation-overlay: 0 16px 40px -12px rgb(0 0 0 / 0.7);
   }
 }
 
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-edge: var(--edge);
+  --color-edge-strong: var(--edge-strong);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-subtle: var(--fg-subtle);
+
+  --color-surface-inverse: var(--surface-inverse);
+  --color-edge-inverse: var(--edge-inverse);
+  --color-fg-inverse: var(--fg-inverse);
+  --color-fg-inverse-muted: var(--fg-inverse-muted);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-fg: var(--accent-fg);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-soft-fg: var(--accent-soft-fg);
+
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-success-soft-fg: var(--success-soft-fg);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-soft-fg: var(--warning-soft-fg);
+  --color-danger: var(--danger);
+  --color-danger-hover: var(--danger-hover);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-soft-fg: var(--danger-soft-fg);
+
+  --shadow-card: var(--elevation-card);
+  --shadow-overlay: var(--elevation-overlay);
+
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--canvas);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--accent);
 }
 
 .no-number-spinner {

@@ -4,6 +4,16 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { supabase } from "@/lib/supabaseClient";
 import { getErrorMessage } from "@/lib/errors";
+import {
+  buttonGhost,
+  buttonPrimary,
+  fieldLabel,
+  inputField,
+  modalOverlay,
+  modalPanel,
+  modalTitle,
+  selectField,
+} from "@/components/shared/ui";
 
 export default function EditPodModal({
   podId,
@@ -71,11 +81,11 @@ export default function EditPodModal({
   };
 
   return (
-    <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl dark:bg-[#1f2933]">
+    <div className={`${modalOverlay} z-60`}>
+      <div className={`${modalPanel} max-h-[90vh] max-w-lg overflow-y-auto p-6`}>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Edit Client</h3>
-          <button onClick={onClose} className="text-sm underline">
+          <h3 className={modalTitle}>Edit Client</h3>
+          <button onClick={onClose} className={buttonGhost}>
             Close
           </button>
         </div>
@@ -83,37 +93,37 @@ export default function EditPodModal({
         <div className="grid gap-3">
           <Field label="Name *">
             <input
-              className="input"
+              className={inputField}
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
           </Field>
           <Field label="Contact *">
             <input
-              className="input"
+              className={inputField}
               value={contact}
               onChange={(e) => setContact(e.target.value)}
             />
           </Field>
           <Field label="Email">
             <input
-              className="input"
+              className={inputField}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
           </Field>
           <Field label="Location">
             <input
-              className="input"
+              className={inputField}
               value={location}
               onChange={(e) => setLocation(e.target.value)}
             />
           </Field>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Field label="Rate *">
               <input
-                className="input"
+                className={inputField}
                 type="number"
                 value={rate}
                 onChange={(e) => setRate(e.target.value)}
@@ -121,7 +131,7 @@ export default function EditPodModal({
             </Field>
             <Field label="Duration months *">
               <input
-                className="input"
+                className={inputField}
                 type="number"
                 min={1}
                 value={durationMonths}
@@ -132,7 +142,7 @@ export default function EditPodModal({
 
           <Field label="Payment type">
             <select
-              className="input"
+              className={selectField}
               value={billingInterval}
               onChange={(e) =>
                 setBillingInterval(e.target.value as "monthly" | "yearly")
@@ -145,7 +155,7 @@ export default function EditPodModal({
 
           <Field label="Mode of payment">
             <input
-              className="input"
+              className={inputField}
               value={modeOfPayment}
               onChange={(e) => setModeOfPayment(e.target.value)}
             />
@@ -154,26 +164,11 @@ export default function EditPodModal({
           <button
             onClick={save}
             disabled={loading}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition disabled:opacity-60"
+            className={buttonPrimary}
           >
             {loading ? "Saving..." : "Save"}
           </button>
         </div>
-
-        <style jsx global>{`
-          .input {
-            width: 100%;
-            padding: 0.5rem;
-            border: 1px solid rgb(209 213 219);
-            border-radius: 0.375rem;
-            background: white;
-          }
-          .dark .input {
-            background: rgb(31 41 55);
-            border-color: rgb(55 65 81);
-            color: white;
-          }
-        `}</style>
       </div>
     </div>
   );
@@ -188,7 +183,7 @@ function Field({
 }) {
   return (
     <label className="block">
-      <div className="block mb-1 font-medium">{label}</div>
+      <div className={fieldLabel}>{label}</div>
       {children}
     </label>
   );

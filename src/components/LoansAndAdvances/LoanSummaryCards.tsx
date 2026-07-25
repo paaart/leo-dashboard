@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { IndianRupee, ReceiptText, TrendingDown, Users } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { MetricCard } from "@/components/shared/DashboardUI";
+import { alertDanger } from "@/components/shared/ui";
 
 type OutstandingLoan = {
   total_outstanding?: number;
@@ -90,7 +91,7 @@ export default function LoanSummaryCards() {
 
   const value = (amount: number) =>
     loading ? (
-      <span className="block h-7 w-28 animate-pulse rounded bg-gray-100 dark:bg-gray-800" />
+      <span className="block h-7 w-28 animate-pulse rounded bg-surface-2" />
     ) : (
       formatCurrency(amount)
     );
@@ -98,7 +99,7 @@ export default function LoanSummaryCards() {
   return (
     <div className="space-y-3">
       {error ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">
+        <div className={`${alertDanger} font-medium`}>
           {error}
         </div>
       ) : null}
@@ -113,7 +114,7 @@ export default function LoanSummaryCards() {
           label="Active Employees with Balance"
           value={
             loading ? (
-              <span className="block h-7 w-16 animate-pulse rounded bg-gray-100 dark:bg-gray-800" />
+              <span className="block h-7 w-16 animate-pulse rounded bg-surface-2" />
             ) : (
               summary.activeEmployeesWithBalance
             )

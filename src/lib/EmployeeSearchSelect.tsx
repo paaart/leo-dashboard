@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from "react";
+import { ChevronDown } from "lucide-react";
+import { inputField } from "@/components/shared/ui";
 
 type Employee = {
   id: string;
@@ -56,14 +58,14 @@ export function EmployeeSearchSelect({
 
   return (
     <div ref={containerRef} className="relative">
-      <label className="block text-sm font-medium text-gray-800 dark:text-gray-200">
+      <label className="block text-sm font-medium text-fg">
         Employee
       </label>
 
       <div className="relative mt-1.5">
         <input
           type="text"
-          className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 pr-8 text-sm text-gray-950 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50 dark:placeholder:text-gray-500"
+          className={`${inputField} h-10 pr-8`}
           placeholder="Type to search employee..."
           value={displayValue}
           onClick={() => {
@@ -77,15 +79,15 @@ export function EmployeeSearchSelect({
           }}
         />
         {/* dropdown arrow */}
-        <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500">
-          ▼
+        <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-fg-muted">
+          <ChevronDown className="h-4 w-4" />
         </span>
       </div>
 
       {open && (
-        <div className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-md border border-gray-200 bg-white text-sm shadow-lg dark:border-gray-800 dark:bg-gray-950">
+        <div className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-edge bg-surface text-sm shadow-overlay">
           {filteredEmployees.length === 0 ? (
-            <div className="px-3 py-2 text-gray-500 dark:text-gray-400">
+            <div className="px-3 py-2 text-fg-muted">
               No employees found
             </div>
           ) : (
@@ -93,7 +95,7 @@ export function EmployeeSearchSelect({
               <button
                 type="button"
                 key={emp.id}
-                className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-900"
+                className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-fg-muted transition-colors hover:bg-surface-2"
                 onClick={() => {
                   onChange(emp.id);
                   setOpen(false);
@@ -101,7 +103,7 @@ export function EmployeeSearchSelect({
                 }}
               >
                 <span>{emp.name}</span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
+                <span className="text-xs text-fg-muted">
                   {emp.employee_code}
                 </span>
               </button>

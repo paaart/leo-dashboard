@@ -78,15 +78,15 @@ function FilePicker({
 }) {
   return (
     <label className="block space-y-2">
-      <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+      <span className="text-sm font-semibold text-fg">
         {label}
       </span>
-      <div className="flex min-h-12 items-center gap-3 rounded-lg border border-dashed border-gray-300 bg-gray-50 px-3 py-3 dark:border-gray-700 dark:bg-gray-900">
-        <ImagePlus className="h-5 w-5 shrink-0 text-gray-500 dark:text-gray-400" />
-        <span className="min-w-0 flex-1 truncate text-sm text-gray-600 dark:text-gray-300">
+      <div className="flex min-h-12 items-center gap-3 rounded-lg border border-dashed border-edge-strong bg-surface-2 px-3 py-3">
+        <ImagePlus className="h-5 w-5 shrink-0 text-fg-muted" />
+        <span className="min-w-0 flex-1 truncate text-sm text-fg-muted">
           {file ? file.name : "PNG, JPEG, or WebP image"}
         </span>
-        <span className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200">
+        <span className="rounded-md border border-edge bg-surface px-3 py-1.5 text-xs font-semibold text-fg">
           Choose
         </span>
       </div>
@@ -232,39 +232,39 @@ export default function DriverFuelEntryPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-50 px-4 py-6 text-gray-950 dark:bg-gray-950 dark:text-gray-50">
+    <main className="min-h-screen bg-canvas px-4 py-6 text-fg">
       <div className="mx-auto max-w-xl">
         <div className="mb-5 text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-gray-200 bg-white text-blue-600 shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:text-blue-400">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full border border-edge bg-surface text-accent shadow-card">
             <Truck className="h-6 w-6" />
           </div>
           <h1 className="text-2xl font-semibold tracking-tight">
             Fuel Entry Submission
           </h1>
-          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-2 text-sm text-fg-muted">
             Submit fuel details and upload bill or meter photos if available.
           </p>
         </div>
 
         <form
           onSubmit={handleSubmit}
-          className="space-y-5 rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900"
+          className="space-y-5 rounded-xl border border-edge bg-surface p-5 shadow-card"
         >
           {success ? (
-            <div className="flex gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300">
+            <div className="flex gap-3 rounded-lg border border-success/25 bg-success-soft p-3 text-sm text-success-soft-fg">
               <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
               <span>Fuel entry submitted successfully</span>
             </div>
           ) : null}
 
           {error ? (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">
+            <div className="rounded-lg border border-danger/25 bg-danger-soft p-3 text-sm text-danger-soft-fg">
               {error}
             </div>
           ) : null}
 
           <label className="block space-y-2">
-            <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+            <span className="text-sm font-semibold text-fg">
               Vehicle
             </span>
             <select
@@ -273,7 +273,7 @@ export default function DriverFuelEntryPage() {
               onChange={(event) =>
                 setForm((prev) => ({ ...prev, vehicleId: event.target.value }))
               }
-              className="min-h-12 w-full rounded-lg border border-gray-300 bg-white px-3 text-base text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-60 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-50"
+              className="min-h-12 w-full rounded-lg border border-edge bg-surface px-3 text-base text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25 disabled:opacity-60"
             >
               <option value="">
                 {vehiclesLoading ? "Loading vehicles..." : "Select vehicle"}
@@ -285,12 +285,12 @@ export default function DriverFuelEntryPage() {
               ))}
             </select>
             {selectedVehicle ? (
-              <span className="text-xs text-gray-500 dark:text-gray-400">
+              <span className="text-xs text-fg-muted">
                 Selected: {selectedVehicle.vehicleNo}
               </span>
             ) : null}
             {fieldErrors.vehicleId ? (
-              <span className="text-xs text-red-600 dark:text-red-400">
+              <span className="text-xs text-danger">
                 {fieldErrors.vehicleId}
               </span>
             ) : null}
@@ -298,7 +298,7 @@ export default function DriverFuelEntryPage() {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block space-y-2">
-              <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-semibold text-fg">
                 Fuel Date
               </span>
               <input
@@ -308,17 +308,17 @@ export default function DriverFuelEntryPage() {
                 onChange={(event) =>
                   setForm((prev) => ({ ...prev, fuelDate: event.target.value }))
                 }
-                className="min-h-12 w-full rounded-lg border border-gray-300 bg-white px-3 text-base text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-60 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-50"
+                className="min-h-12 w-full rounded-lg border border-edge bg-surface px-3 text-base text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25 disabled:opacity-60"
               />
               {fieldErrors.fuelDate ? (
-                <span className="text-xs text-red-600 dark:text-red-400">
+                <span className="text-xs text-danger">
                   {fieldErrors.fuelDate}
                 </span>
               ) : null}
             </label>
 
             <label className="block space-y-2">
-              <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-semibold text-fg">
                 Fuel Amount
               </span>
               <input
@@ -334,11 +334,11 @@ export default function DriverFuelEntryPage() {
                     fuelAmount: event.target.value,
                   }))
                 }
-                className="min-h-12 w-full rounded-lg border border-gray-300 bg-white px-3 text-base text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-60 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-50"
+                className="min-h-12 w-full rounded-lg border border-edge bg-surface px-3 text-base text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25 disabled:opacity-60"
                 placeholder="4500"
               />
               {fieldErrors.fuelAmount ? (
-                <span className="text-xs text-red-600 dark:text-red-400">
+                <span className="text-xs text-danger">
                   {fieldErrors.fuelAmount}
                 </span>
               ) : null}
@@ -347,7 +347,7 @@ export default function DriverFuelEntryPage() {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block space-y-2">
-              <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-semibold text-fg">
                 Fuel Liters
               </span>
               <input
@@ -363,18 +363,18 @@ export default function DriverFuelEntryPage() {
                     fuelLiters: event.target.value,
                   }))
                 }
-                className="min-h-12 w-full rounded-lg border border-gray-300 bg-white px-3 text-base text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-60 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-50"
+                className="min-h-12 w-full rounded-lg border border-edge bg-surface px-3 text-base text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25 disabled:opacity-60"
                 placeholder="50"
               />
               {fieldErrors.fuelLiters ? (
-                <span className="text-xs text-red-600 dark:text-red-400">
+                <span className="text-xs text-danger">
                   {fieldErrors.fuelLiters}
                 </span>
               ) : null}
             </label>
 
             <label className="block space-y-2">
-              <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-semibold text-fg">
                 Odometer Reading
               </span>
               <input
@@ -390,11 +390,11 @@ export default function DriverFuelEntryPage() {
                     odometerReading: event.target.value,
                   }))
                 }
-                className="min-h-12 w-full rounded-lg border border-gray-300 bg-white px-3 text-base text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-60 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-50"
+                className="min-h-12 w-full rounded-lg border border-edge bg-surface px-3 text-base text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25 disabled:opacity-60"
                 placeholder="100200"
               />
               {fieldErrors.odometerReading ? (
-                <span className="text-xs text-red-600 dark:text-red-400">
+                <span className="text-xs text-danger">
                   {fieldErrors.odometerReading}
                 </span>
               ) : null}
@@ -415,13 +415,13 @@ export default function DriverFuelEntryPage() {
               onChange={setMeterFile}
             />
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-xs text-fg-muted">
             Upload bill and meter photos if available.
           </p>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block space-y-2">
-              <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-semibold text-fg">
                 Driver Name
               </span>
               <input
@@ -433,18 +433,18 @@ export default function DriverFuelEntryPage() {
                     driverName: event.target.value,
                   }))
                 }
-                className="min-h-12 w-full rounded-lg border border-gray-300 bg-white px-3 text-base text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-60 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-50"
+                className="min-h-12 w-full rounded-lg border border-edge bg-surface px-3 text-base text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25 disabled:opacity-60"
                 placeholder="Driver name"
               />
               {fieldErrors.driverName ? (
-                <span className="text-xs text-red-600 dark:text-red-400">
+                <span className="text-xs text-danger">
                   {fieldErrors.driverName}
                 </span>
               ) : null}
             </label>
 
             <label className="block space-y-2">
-              <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-semibold text-fg">
                 Driver Mobile Number
               </span>
               <input
@@ -458,11 +458,11 @@ export default function DriverFuelEntryPage() {
                     driverMobile: event.target.value.replace(/\D/g, ""),
                   }))
                 }
-                className="min-h-12 w-full rounded-lg border border-gray-300 bg-white px-3 text-base text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-60 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-50"
+                className="min-h-12 w-full rounded-lg border border-edge bg-surface px-3 text-base text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25 disabled:opacity-60"
                 placeholder="9876543210"
               />
               {fieldErrors.driverMobile ? (
-                <span className="text-xs text-red-600 dark:text-red-400">
+                <span className="text-xs text-danger">
                   {fieldErrors.driverMobile}
                 </span>
               ) : null}
@@ -470,7 +470,7 @@ export default function DriverFuelEntryPage() {
           </div>
 
           <label className="block space-y-2">
-            <span className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+            <span className="text-sm font-semibold text-fg">
               Remarks
             </span>
             <textarea
@@ -479,7 +479,7 @@ export default function DriverFuelEntryPage() {
               onChange={(event) =>
                 setForm((prev) => ({ ...prev, remarks: event.target.value }))
               }
-              className="min-h-24 w-full rounded-lg border border-gray-300 bg-white px-3 py-3 text-base text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:opacity-60 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-50"
+              className="min-h-24 w-full rounded-lg border border-edge bg-surface px-3 py-3 text-base text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25 disabled:opacity-60"
               placeholder="Optional"
             />
           </label>
@@ -487,7 +487,7 @@ export default function DriverFuelEntryPage() {
           <button
             type="submit"
             disabled={submitting || vehiclesLoading}
-            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 text-base font-semibold text-white shadow-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 text-base font-semibold text-accent-fg shadow-card hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
           >
             {submitting ? (
               <>

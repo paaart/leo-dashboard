@@ -4,6 +4,15 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { getErrorMessage } from "@/lib/errors";
 import { updateWarehouseClient } from "@/lib/warehouse/ledger";
+import {
+  buttonPrimary,
+  buttonSecondary,
+  fieldLabel,
+  inputField,
+  modalOverlay,
+  modalPanel,
+  modalTitle,
+} from "@/components/shared/ui";
 
 type EditClientModalProps = {
   open: boolean;
@@ -38,8 +47,7 @@ export default function EditClientModal({
 
   if (!open) return null;
 
-  const inputClass =
-    "w-full rounded border border-gray-300 bg-white p-2 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white";
+  const inputClass = inputField;
 
   const save = async () => {
     const trimmedName = name.trim();
@@ -80,18 +88,18 @@ export default function EditClientModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl dark:bg-[#1f2933]">
+    <div className={modalOverlay}>
+      <div className={`${modalPanel} max-h-[90vh] max-w-lg overflow-y-auto p-6`}>
         <div className="mb-4">
-          <h3 className="text-lg font-semibold">Edit Client Details</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-300">
+          <h3 className={modalTitle}>Edit Client Details</h3>
+          <p className="text-sm text-fg-muted">
             Update name, email and contact
           </p>
         </div>
 
         <div className="space-y-3">
           <div>
-            <label className="mb-1 block font-medium">Name</label>
+            <label className={fieldLabel}>Name</label>
             <input
               className={inputClass}
               value={name}
@@ -101,7 +109,7 @@ export default function EditClientModal({
           </div>
 
           <div>
-            <label className="mb-1 block font-medium">Email</label>
+            <label className={fieldLabel}>Email</label>
             <input
               className={inputClass}
               type="email"
@@ -112,7 +120,7 @@ export default function EditClientModal({
           </div>
 
           <div>
-            <label className="mb-1 block font-medium">Contact</label>
+            <label className={fieldLabel}>Contact</label>
             <input
               className={inputClass}
               value={contact}
@@ -126,7 +134,7 @@ export default function EditClientModal({
           <button
             onClick={onClose}
             disabled={saving}
-            className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-70 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+            className={buttonSecondary}
           >
             Cancel
           </button>
@@ -134,7 +142,7 @@ export default function EditClientModal({
           <button
             onClick={save}
             disabled={saving}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-70"
+            className={buttonPrimary}
           >
             {saving ? "Saving..." : "Save"}
           </button>

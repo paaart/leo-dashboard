@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useSelectedLayoutSegment } from "next/navigation";
+import { Loader2 } from "lucide-react";
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
 
@@ -92,30 +93,30 @@ function ContentLoadingState() {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl space-y-6">
-        <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="h-3 w-24 animate-pulse rounded bg-blue-100 dark:bg-blue-950" />
-          <div className="mt-3 h-7 w-64 max-w-full animate-pulse rounded bg-gray-100 dark:bg-gray-800" />
-          <div className="mt-3 h-4 w-full max-w-xl animate-pulse rounded bg-gray-100 dark:bg-gray-800" />
+        <div className="rounded-xl border border-edge bg-surface p-5 shadow-card">
+          <div className="h-3 w-24 animate-pulse rounded bg-accent-soft" />
+          <div className="mt-3 h-7 w-64 max-w-full animate-pulse rounded bg-surface-2" />
+          <div className="mt-3 h-4 w-full max-w-xl animate-pulse rounded bg-surface-2" />
         </div>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {Array.from({ length: 4 }).map((_, index) => (
             <div
               key={index}
-              className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-950"
+              className="rounded-xl border border-edge bg-surface p-4 shadow-card"
             >
-              <div className="h-4 w-24 animate-pulse rounded bg-gray-100 dark:bg-gray-800" />
-              <div className="mt-3 h-7 w-32 animate-pulse rounded bg-gray-100 dark:bg-gray-800" />
-              <div className="mt-4 h-3 w-36 animate-pulse rounded bg-gray-100 dark:bg-gray-800" />
+              <div className="h-4 w-24 animate-pulse rounded bg-surface-2" />
+              <div className="mt-3 h-7 w-32 animate-pulse rounded bg-surface-2" />
+              <div className="mt-4 h-3 w-36 animate-pulse rounded bg-surface-2" />
             </div>
           ))}
         </div>
-        <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950">
-          <div className="h-5 w-40 animate-pulse rounded bg-gray-100 dark:bg-gray-800" />
+        <div className="rounded-xl border border-edge bg-surface p-5 shadow-card">
+          <div className="h-5 w-40 animate-pulse rounded bg-surface-2" />
           <div className="mt-5 space-y-3">
             {Array.from({ length: 5 }).map((_, index) => (
               <div
                 key={index}
-                className="h-10 animate-pulse rounded bg-gray-100 dark:bg-gray-800"
+                className="h-10 animate-pulse rounded bg-surface-2"
               />
             ))}
           </div>
@@ -161,7 +162,7 @@ export default function DashboardShell() {
     if (user.role !== "admin" && isAdminSection(section)) {
       return (
         <div className="p-6">
-          <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">
+          <div className="rounded-xl border border-danger/25 bg-danger-soft p-6 text-danger-soft-fg">
             <h1 className="text-lg font-semibold">Access denied</h1>
             <p className="mt-1 text-sm">
               Your account does not have access to this section.
@@ -220,8 +221,11 @@ export default function DashboardShell() {
 
   if (!ready || !user || (authLoading && !user)) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 text-sm text-gray-600 dark:bg-gray-950 dark:text-gray-300">
-        Checking access...
+      <div className="flex min-h-screen items-center justify-center bg-canvas">
+        <div className="flex items-center gap-3 rounded-xl border border-edge bg-surface px-5 py-3.5 text-sm font-medium text-fg-muted shadow-card">
+          <Loader2 className="h-4 w-4 animate-spin text-accent" />
+          Checking access…
+        </div>
       </div>
     );
   }

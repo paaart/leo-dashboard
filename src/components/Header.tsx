@@ -20,6 +20,7 @@ export default function Header({
 }) {
   const router = useRouter();
   const displayName = user.username || user.fullName || user.email || "User";
+  const initials = displayName.slice(0, 2).toUpperCase();
 
   const handleLogout = async () => {
     try {
@@ -35,15 +36,15 @@ export default function Header({
   };
 
   return (
-    <header className="sticky top-0 z-40 flex w-full items-center justify-between bg-white px-6 py-4 shadow dark:bg-gray-900">
-      <div className="flex items-center gap-4">
+    <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between gap-4 border-b border-edge bg-surface/90 px-4 backdrop-blur sm:px-6">
+      <div className="flex min-w-0 items-center gap-3">
         <button
           type="button"
           onClick={onMenuClick}
-          className="inline-flex items-center justify-center rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-800 md:hidden"
+          className="inline-flex shrink-0 items-center justify-center rounded-md p-2 text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg md:hidden"
           aria-label="Open sidebar"
         >
-          <Menu className="h-6 w-6" />
+          <Menu className="h-5 w-5" />
         </button>
 
         <Image
@@ -52,21 +53,27 @@ export default function Header({
           width={150}
           height={40}
           priority
-          className="h-15 w-auto object-contain"
+          className="h-9 w-auto shrink-0 object-contain"
         />
       </div>
 
-      <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-        <div className="flex flex-col items-start leading-tight">
-          <span className="font-medium">Welcome, {displayName}</span>
-
-          <span className="text-xs capitalize text-gray-500 dark:text-gray-400">
-            {user.role}
+      <div className="flex min-w-0 shrink-0 items-center gap-3">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent-soft text-xs font-semibold text-accent-soft-fg">
+            {initials}
           </span>
+          <div className="hidden min-w-0 flex-col leading-tight sm:flex">
+            <span className="max-w-36 truncate text-sm font-medium text-fg">
+              {displayName}
+            </span>
+            <span className="text-xs capitalize text-fg-subtle">
+              {user.role}
+            </span>
+          </div>
         </div>
         <button
           onClick={handleLogout}
-          className="rounded bg-red-600 px-3 py-1 text-xs text-white hover:bg-red-700"
+          className="shrink-0 rounded-lg border border-edge px-3 py-1.5 text-xs font-medium text-fg-muted transition-colors hover:border-danger/40 hover:bg-danger-soft hover:text-danger-soft-fg"
         >
           Logout
         </button>

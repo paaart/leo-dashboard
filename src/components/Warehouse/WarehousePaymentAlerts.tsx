@@ -75,7 +75,7 @@ export default function WarehousePaymentAlerts() {
 
   if (loading) {
     return (
-      <div className="min-h-full bg-gray-50 px-4 py-6 text-gray-950 dark:bg-gray-950 dark:text-gray-50 sm:px-6 lg:px-8">
+      <div className="min-h-full bg-canvas px-4 py-6 text-fg sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl space-y-6">
           <PageHeader
             eyebrow="Storage"
@@ -89,7 +89,7 @@ export default function WarehousePaymentAlerts() {
   }
 
   return (
-    <div className="min-h-full bg-gray-50 px-4 py-6 text-gray-950 dark:bg-gray-950 dark:text-gray-50 sm:px-6 lg:px-8">
+    <div className="min-h-full bg-canvas px-4 py-6 text-fg sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
         <PageHeader
           eyebrow="Storage"
@@ -105,7 +105,7 @@ export default function WarehousePaymentAlerts() {
               type="button"
               onClick={() => void load()}
               disabled={loading}
-              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-edge bg-surface px-4 text-sm font-medium text-fg shadow-card transition hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <RefreshCw className="h-4 w-4" />
               Refresh
@@ -118,38 +118,38 @@ export default function WarehousePaymentAlerts() {
               description="No payments are due in the next 5 days."
             />
           ) : (
-            <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
+            <div className="overflow-x-auto rounded-xl border border-edge bg-surface shadow-card">
               <table className="min-w-270 w-full text-sm">
-                <thead className="bg-gray-50 text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+                <thead className="bg-surface-2 text-fg-muted">
                   <tr>
-                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                    <th className="border-b border-edge px-4 py-3 text-left font-semibold">
                       Sl No
                     </th>
-                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                    <th className="border-b border-edge px-4 py-3 text-left font-semibold">
                       Client
                     </th>
-                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                    <th className="border-b border-edge px-4 py-3 text-left font-semibold">
                       Company
                     </th>
-                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                    <th className="border-b border-edge px-4 py-3 text-left font-semibold">
                       Location
                     </th>
-                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                    <th className="border-b border-edge px-4 py-3 text-left font-semibold">
                       POD Number
                     </th>
-                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                    <th className="border-b border-edge px-4 py-3 text-left font-semibold">
                       Next Payment Date
                     </th>
-                    <th className="border-b border-gray-200 px-4 py-3 text-right font-semibold dark:border-gray-800">
+                    <th className="border-b border-edge px-4 py-3 text-right font-semibold">
                       Total Due
                     </th>
-                    <th className="border-b border-gray-200 px-4 py-3  font-semibold dark:border-gray-800">
+                    <th className="border-b border-edge px-4 py-3  font-semibold">
                       Actions
                     </th>
                   </tr>
                 </thead>
 
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                <tbody className="divide-y divide-edge">
                   {rows.map((row, idx) => {
                     const dismissKey = `${row.pod_id}:${row.next_payment_date}`;
                     const dismissing = dismissingKey === dismissKey;
@@ -157,32 +157,32 @@ export default function WarehousePaymentAlerts() {
                     return (
                       <tr
                         key={dismissKey}
-                        className="bg-white hover:bg-gray-50 dark:bg-gray-950 dark:hover:bg-gray-900"
+                        className="bg-surface transition-colors hover:bg-surface-2/60"
                       >
-                        <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                        <td className="px-4 py-3 text-fg-muted">
                           {idx + 1}
                         </td>
                         <td className="px-4 py-3">
-                          <div className="font-medium text-gray-950 dark:text-gray-50">
+                          <div className="font-medium text-fg">
                             {row.name}
                           </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                          <div className="text-xs text-fg-muted">
                             {row.contact}
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                        <td className="px-4 py-3 text-fg-muted">
                           {row.company_name ?? "-"}
                         </td>
-                        <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                        <td className="px-4 py-3 text-fg-muted">
                           {row.location_name ?? "-"}
                         </td>
-                        <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">
+                        <td className="px-4 py-3 font-medium text-fg">
                           {row.client_id ?? row.pod_id.slice(0, 8)}
                         </td>
-                        <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                        <td className="px-4 py-3 text-fg-muted">
                           {fmtDate(row.next_payment_date)}
                         </td>
-                        <td className="px-4 py-3 text-right font-semibold tabular-nums text-blue-700 dark:text-blue-300">
+                        <td className="px-4 py-3 text-right font-semibold tabular-nums text-accent">
                           {formatCurrency(Number(row.total_due))}
                         </td>
                         <td className="px-4 py-3">
@@ -191,7 +191,7 @@ export default function WarehousePaymentAlerts() {
                               type="button"
                               onClick={() => void dismissAlert(row)}
                               disabled={dismissing}
-                              className="inline-flex min-h-9 items-center justify-center gap-2 rounded-md border border-gray-300 px-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                              className="inline-flex min-h-9 items-center justify-center gap-2 rounded-lg border border-edge bg-surface px-3 text-sm font-medium text-fg shadow-card transition hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-60"
                             >
                               <EyeOff className="h-4 w-4" />
                               {dismissing

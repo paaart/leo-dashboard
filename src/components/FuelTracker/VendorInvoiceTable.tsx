@@ -19,14 +19,14 @@ function formatStatus(status: VehicleExpenseInvoice["status"]) {
 
 function statusClass(status: VehicleExpenseInvoice["status"]) {
   if (status === "paid") {
-    return "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300";
+    return "border-success/25 bg-success-soft text-success-soft-fg";
   }
 
   if (status === "partially_paid") {
-    return "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300";
+    return "border-accent/25 bg-accent-soft text-accent-soft-fg";
   }
 
-  return "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300";
+  return "border-warning/25 bg-warning-soft text-warning-soft-fg";
 }
 
 function canChangeInvoice(invoice: VehicleExpenseInvoice) {
@@ -74,12 +74,12 @@ export function VendorInvoiceTable({
 }) {
   if (loading) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950">
+      <div className="rounded-xl border border-edge bg-surface p-4 shadow-card">
         <div className="space-y-3">
           {Array.from({ length: 6 }).map((_, index) => (
             <div
               key={index}
-              className="h-12 animate-pulse rounded-md bg-gray-100 dark:bg-gray-800"
+              className="h-12 animate-pulse rounded-md bg-surface-2"
             />
           ))}
         </div>
@@ -89,7 +89,7 @@ export function VendorInvoiceTable({
 
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">
+      <div className="rounded-lg border border-danger/25 bg-danger-soft p-4 text-sm text-danger-soft-fg">
         {error}
       </div>
     );
@@ -104,7 +104,7 @@ export function VendorInvoiceTable({
           <button
             type="button"
             onClick={onAdd}
-            className="inline-flex min-h-10 items-center gap-2 rounded-md bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700"
+            className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-accent-fg hover:bg-accent-hover"
           >
             <Plus className="h-4 w-4" />
             Add Invoice
@@ -115,10 +115,10 @@ export function VendorInvoiceTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
+    <div className="overflow-hidden rounded-xl border border-edge bg-surface shadow-card">
       <div className="overflow-x-auto">
         <table className="min-w-230 w-full text-left text-sm">
-          <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
+          <thead className="border-b border-edge bg-surface-2 text-xs uppercase tracking-wide text-fg-muted">
             <tr>
               <th className={SERIAL_COLUMN_CLASS}>S.No</th>
               <th className="px-4 py-3 font-semibold">Invoice Date</th>
@@ -135,14 +135,14 @@ export function VendorInvoiceTable({
               <th className="px-4 py-3 font-semibold">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+          <tbody className="divide-y divide-edge">
             {invoices.map((invoice, index) => {
               const editable = canChangeInvoice(invoice);
 
               return (
                 <tr
                   key={invoice.id}
-                  className="text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900/70"
+                  className="text-fg-muted hover:bg-surface-2/60"
                 >
                   <td className={SERIAL_COLUMN_CLASS}>
                     {serialNumber(index, currentPage, pageSize)}
@@ -150,7 +150,7 @@ export function VendorInvoiceTable({
                   <td className="whitespace-nowrap px-4 py-3">
                     {invoice.invoice_date}
                   </td>
-                  <td className="max-w-44 px-4 py-3 font-semibold text-gray-950 dark:text-gray-50">
+                  <td className="max-w-44 px-4 py-3 font-semibold text-fg">
                     <FuelTooltip
                       content={invoiceDetails(invoice)}
                       className="truncate"
@@ -197,7 +197,7 @@ export function VendorInvoiceTable({
                       <button
                         type="button"
                         onClick={() => onView(invoice)}
-                        className="inline-flex min-h-9 items-center gap-2 rounded-md border border-gray-300 px-3 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                        className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-edge px-3 text-sm font-medium text-fg hover:bg-surface-2"
                       >
                         <Eye className="h-4 w-4" />
                         View
@@ -211,7 +211,7 @@ export function VendorInvoiceTable({
                             ? "Edit invoice"
                             : "Invoices with payments cannot be edited."
                         }
-                        className="inline-flex min-h-9 items-center gap-2 rounded-md border border-gray-300 px-3 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                        className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-edge px-3 text-sm font-medium text-fg hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <Pencil className="h-4 w-4" />
                         Edit
@@ -225,7 +225,7 @@ export function VendorInvoiceTable({
                             ? "Delete invoice"
                             : "Invoice cannot be deleted because it has already been allocated to a payment batch."
                         }
-                        className="inline-flex min-h-9 items-center gap-2 rounded-md border border-red-200 px-3 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/40"
+                        className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-danger/25 px-3 text-sm font-medium text-danger-soft-fg hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <Trash2 className="h-4 w-4" />
                         Delete

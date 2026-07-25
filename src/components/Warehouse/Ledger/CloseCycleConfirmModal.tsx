@@ -1,5 +1,12 @@
 "use client";
 
+import {
+  buttonDanger,
+  buttonSecondary,
+  modalOverlay,
+  modalPanel,
+} from "@/components/shared/ui";
+
 type CloseCycleConfirmModalProps = {
   open: boolean;
   closing: boolean;
@@ -18,20 +25,20 @@ export default function CloseCycleConfirmModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl dark:bg-[#1f2933]">
+    <div className={modalOverlay}>
+      <div className={`${modalPanel} max-h-[90vh] max-w-md overflow-y-auto p-6`}>
         <div className="mb-4">
-          <h3 className="text-lg font-semibold text-red-600 dark:text-red-400">
+          <h3 className="text-lg font-semibold text-danger">
             Close Cycle?
           </h3>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+          <p className="mt-2 text-sm text-fg-muted">
             You are about to close the active cycle for{" "}
             <span className="font-medium">{clientName}</span>.
           </p>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+          <p className="mt-2 text-sm text-fg-muted">
             After closing:
           </p>
-          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-600 dark:text-gray-300">
+          <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-fg-muted">
             <li>The current ledger becomes read-only</li>
             <li>No more edits can be made to that cycle</li>
             <li>You will need to renew to start a new active cycle</li>
@@ -42,7 +49,7 @@ export default function CloseCycleConfirmModal({
           <button
             onClick={onClose}
             disabled={closing}
-            className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-70 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+            className={buttonSecondary}
           >
             Cancel
           </button>
@@ -50,7 +57,7 @@ export default function CloseCycleConfirmModal({
           <button
             onClick={() => void onConfirm()}
             disabled={closing}
-            className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-70"
+            className={buttonDanger}
           >
             {closing ? "Closing..." : "Yes, Close Cycle"}
           </button>

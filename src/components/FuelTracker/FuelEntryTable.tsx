@@ -38,10 +38,10 @@ function proofDetails(entry: FuelEntry) {
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="space-y-0.5">
-      <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-fg-inverse-muted">
         {label}
       </p>
-      <p className="break-words text-xs text-white">{value}</p>
+      <p className="break-words text-xs text-fg-inverse">{value}</p>
     </div>
   );
 }
@@ -100,12 +100,12 @@ export function FuelEntryTable({
 }) {
   if (loading) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950">
+      <div className="rounded-xl border border-edge bg-surface p-4 shadow-card">
         <div className="space-y-3">
           {Array.from({ length: 6 }).map((_, index) => (
             <div
               key={index}
-              className="h-12 animate-pulse rounded-md bg-gray-100 dark:bg-gray-800"
+              className="h-12 animate-pulse rounded-md bg-surface-2"
             />
           ))}
         </div>
@@ -115,7 +115,7 @@ export function FuelEntryTable({
 
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">
+      <div className="rounded-lg border border-danger/25 bg-danger-soft p-4 text-sm text-danger-soft-fg">
         {error}
       </div>
     );
@@ -130,7 +130,7 @@ export function FuelEntryTable({
           <button
             type="button"
             onClick={onAdd}
-            className="inline-flex min-h-10 items-center gap-2 rounded-md bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700"
+            className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-accent-fg hover:bg-accent-hover"
           >
             <Plus className="h-4 w-4" />
             Add Fuel Entry
@@ -141,10 +141,10 @@ export function FuelEntryTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
+    <div className="overflow-hidden rounded-xl border border-edge bg-surface shadow-card">
       <div className="overflow-x-auto">
         <table className="min-w-240 w-full text-left text-sm">
-          <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
+          <thead className="border-b border-edge bg-surface-2 text-xs uppercase tracking-wide text-fg-muted">
             <tr>
               <th className={SERIAL_COLUMN_CLASS}>S.No</th>
               <th className="w-30 px-4 py-3 font-semibold">Date</th>
@@ -162,14 +162,14 @@ export function FuelEntryTable({
               <th className="px-4 py-3 font-semibold">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+          <tbody className="divide-y divide-edge">
             {entries.map((entry, index) => {
               const vehicle = vehiclesById.get(entry.vehicle_id);
 
               return (
                 <tr
                   key={entry.id}
-                  className="text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900/70"
+                  className="text-fg-muted hover:bg-surface-2/60"
                 >
                   <td className={SERIAL_COLUMN_CLASS}>
                     {serialNumber(index, currentPage, pageSize)}
@@ -177,7 +177,7 @@ export function FuelEntryTable({
                   <td className="whitespace-nowrap px-4 py-3">
                     {entry.fuel_date}
                   </td>
-                  <td className="max-w-44 px-4 py-3 font-semibold text-gray-950 dark:text-gray-50">
+                  <td className="max-w-44 px-4 py-3 font-semibold text-fg">
                     <span className="block truncate">
                       {vehicle?.vehicle_no ?? "Unknown vehicle"}
                     </span>
@@ -202,7 +202,7 @@ export function FuelEntryTable({
                         <button
                           type="button"
                           onClick={() => onViewProof(entry.bill_image_path!)}
-                          className="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-gray-300 px-2.5 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                          className="inline-flex min-h-8 items-center gap-1.5 rounded-lg border border-edge px-2.5 text-xs font-medium text-fg hover:bg-surface-2"
                         >
                           <ExternalLink className="h-3.5 w-3.5" />
                           Bill
@@ -212,14 +212,14 @@ export function FuelEntryTable({
                         <button
                           type="button"
                           onClick={() => onViewProof(entry.meter_image_path!)}
-                          className="inline-flex min-h-8 items-center gap-1.5 rounded-md border border-gray-300 px-2.5 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                          className="inline-flex min-h-8 items-center gap-1.5 rounded-lg border border-edge px-2.5 text-xs font-medium text-fg hover:bg-surface-2"
                         >
                           <ExternalLink className="h-3.5 w-3.5" />
                           Meter
                         </button>
                       ) : null}
                       {!entry.bill_image_path && !entry.meter_image_path ? (
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                        <span className="text-xs text-fg-muted">
                           No Proof
                         </span>
                       ) : null}
@@ -227,7 +227,7 @@ export function FuelEntryTable({
                   </td>
                   <td className="px-4 py-3">
                     <FuelTooltip content={<FuelEntryDetails entry={entry} />}>
-                      <span className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 px-2.5 py-1 text-xs font-medium text-gray-600 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 dark:border-gray-700 dark:text-gray-300 dark:hover:border-blue-900/60 dark:hover:bg-blue-950/40 dark:hover:text-blue-300">
+                      <span className="inline-flex items-center gap-1.5 rounded-md border border-edge px-2.5 py-1 text-xs font-medium text-fg-muted transition hover:border-accent/25 hover:bg-accent-soft hover:text-accent-soft-fg">
                         <Info className="h-3.5 w-3.5" />
                         Details
                       </span>
@@ -238,7 +238,7 @@ export function FuelEntryTable({
                       <button
                         type="button"
                         onClick={() => onEdit(entry)}
-                        className="inline-flex min-h-9 items-center gap-2 rounded-md border border-gray-300 px-3 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                        className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-edge px-3 text-sm font-medium text-fg hover:bg-surface-2"
                       >
                         <Pencil className="h-4 w-4" />
                         Edit
@@ -246,7 +246,7 @@ export function FuelEntryTable({
                       <button
                         type="button"
                         onClick={() => onDelete(entry)}
-                        className="inline-flex min-h-9 items-center gap-2 rounded-md border border-red-200 px-3 text-sm font-medium text-red-700 hover:bg-red-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/40"
+                        className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-danger/25 px-3 text-sm font-medium text-danger-soft-fg hover:bg-danger-soft"
                       >
                         <Trash2 className="h-4 w-4" />
                         Delete

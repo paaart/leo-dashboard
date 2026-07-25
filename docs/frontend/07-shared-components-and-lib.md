@@ -22,6 +22,25 @@ Compose these instead of re-styling headers/cards. All are theme-aware (light/da
 
 If you need a card, header, metric tile, or loading/empty state, reach for these first.
 
+## Design-system class constants — `src/components/shared/ui.ts`
+
+Canonical className strings built on the semantic tokens in `src/app/globals.css`
+(tokens flip with the OS color scheme — never add `dark:` variants or raw palette
+classes alongside them):
+
+| Group | Exports |
+|---|---|
+| Buttons | `buttonPrimary`, `buttonSecondary`, `buttonGhost`, `buttonDanger`, `buttonDangerSoft`, `iconButton` |
+| Form fields | `inputField`, `selectField`, `fieldLabel`, `fieldHint`, `fieldError` |
+| Surfaces | `card`, `cardPadded` |
+| Modals | `modalOverlay`, `modalOverlayScroll`, `modalPanel`, `modalHeader`, `modalTitle`, `modalBody`, `modalFooter` |
+| Tables | `tableWrapper`, `tableBase`, `tableHead`, `tableHeadCell`, `tableRow`, `tableCell`, `tableCellMuted` |
+| Badges/alerts | `badgeClass(tone)` (`neutral`/`accent`/`success`/`warning`/`danger`), `alertDanger`, `alertWarning`, `alertSuccess`, `alertInfo` |
+
+Compose extras onto them (`` `${buttonPrimary} w-full` ``). Modal panels should carry
+`max-h-[90vh]` with a scrolling body; tables keep `min-w-*` so the `tableWrapper`
+scrolls horizontally on phones instead of crushing columns.
+
 ---
 
 ## Chrome

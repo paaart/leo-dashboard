@@ -2,6 +2,11 @@
 import React from "react";
 import { Calculator, IndianRupee, Percent } from "lucide-react";
 import { MetricCard, SectionCard } from "@/components/shared/DashboardUI";
+import {
+  tableHead,
+  tableHeadCell,
+  tableWrapper,
+} from "@/components/shared/ui";
 
 const margins = ["10%", "20%", "25%", "30%"];
 
@@ -83,30 +88,30 @@ export default function ResultsTable({ calculatedValues }: Props) {
         </div>
       ) : null}
 
-      <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
+      <div className={tableWrapper}>
         <table className="min-w-[760px] w-full text-sm">
-          <thead className="bg-gray-50 text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+          <thead className={tableHead}>
             <tr>
-              <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+              <th className={`${tableHeadCell} text-left`}>
                 Item
               </th>
               {margins.map((m) => (
                 <th
                   key={m}
-                  className="border-b border-gray-200 px-4 py-3 text-right font-semibold dark:border-gray-800"
+                  className={`${tableHeadCell} text-right`}
                 >
                   {m}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+          <tbody className="divide-y divide-edge">
             {Object.entries(sectionMap).map(([sectionKey, rows]) => (
               <React.Fragment key={sectionKey}>
-                <tr className="bg-blue-50 dark:bg-blue-950/40">
+                <tr className="bg-accent-soft">
                   <td
                     colSpan={margins.length + 1}
-                    className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-300"
+                    className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-accent-soft-fg"
                   >
                     {sectionLabels[sectionKey]}
                   </td>
@@ -114,15 +119,15 @@ export default function ResultsTable({ calculatedValues }: Props) {
                 {rows.map((key) => (
                   <tr
                     key={key}
-                    className="bg-white hover:bg-gray-50 dark:bg-gray-950 dark:hover:bg-gray-900"
+                    className="bg-surface transition-colors hover:bg-surface-2/60"
                   >
-                    <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                    <td className="px-4 py-3 text-fg-muted">
                       {rowLabels[key]}
                     </td>
                     {margins.map((m) => (
                       <td
                         key={m}
-                        className="px-4 py-3 text-right font-medium tabular-nums text-gray-950 dark:text-gray-50"
+                        className="px-4 py-3 text-right font-medium tabular-nums text-fg"
                       >
                         {calculatedValues[m][key]}
                       </td>

@@ -8,6 +8,11 @@ import { supabase } from "@/lib/supabaseClient";
 import { CreatePodBody, createWarehousePod } from "@/lib/warehouse/pods";
 import type { BillingInterval, InsuranceProvider } from "@/lib/warehouse/types";
 import { PageHeader, SectionCard } from "@/components/shared/DashboardUI";
+import {
+  buttonPrimary,
+  fieldLabel,
+  inputField,
+} from "@/components/shared/ui";
 
 type Option = { id: number; name: string; is_active?: boolean };
 
@@ -51,8 +56,7 @@ export default function WarehouseAddClient() {
   const [oldOutstanding, setOldOutstanding] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const inputClass =
-    "h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition placeholder:text-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50 dark:placeholder:text-gray-500";
+  const inputClass = inputField;
 
   useEffect(() => {
     if (!useCustomBillingStart) setBillingStartDate(startDate);
@@ -202,7 +206,7 @@ export default function WarehouseAddClient() {
   };
 
   return (
-    <div className="min-h-full bg-gray-50 px-4 py-6 text-gray-950 dark:bg-gray-950 dark:text-gray-50 sm:px-6 lg:px-8">
+    <div className="min-h-full bg-canvas px-4 py-6 text-fg sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
         <PageHeader
           eyebrow="Storage"
@@ -216,7 +220,7 @@ export default function WarehouseAddClient() {
         >
           <div className="space-y-6">
             <div>
-              <h3 className="text-sm font-semibold text-gray-950 dark:text-gray-50">
+              <h3 className="text-sm font-semibold text-fg">
                 Client Details
               </h3>
               <div className="mt-3 grid gap-4 md:grid-cols-3">
@@ -250,7 +254,7 @@ export default function WarehouseAddClient() {
             </div>
 
             <div>
-              <h3 className="text-sm font-semibold text-gray-950 dark:text-gray-50">
+              <h3 className="text-sm font-semibold text-fg">
                 Storage / POD Details
               </h3>
               <div className="mt-3 grid gap-4 md:grid-cols-2">
@@ -293,7 +297,7 @@ export default function WarehouseAddClient() {
             </div>
 
             <div>
-              <h3 className="text-sm font-semibold text-gray-950 dark:text-gray-50">
+              <h3 className="text-sm font-semibold text-fg">
                 Billing Details
               </h3>
               <div className="mt-3 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -372,12 +376,12 @@ export default function WarehouseAddClient() {
               </div>
             </div>
 
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div className="rounded-xl border border-edge bg-surface-2 p-4">
               <div className="mb-3">
-                <div className="text-sm font-semibold text-gray-950 dark:text-gray-50">
+                <div className="text-sm font-semibold text-fg">
                   Billing Dates
                 </div>
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                <p className="mt-1 text-xs text-fg-muted">
                   Storage start is for records. Billing start controls when
                   auto-charges begin.
                 </p>
@@ -393,12 +397,12 @@ export default function WarehouseAddClient() {
                   />
                 </Field>
 
-                <div className="flex items-center justify-between gap-3 rounded-md border border-gray-200 bg-white px-3 py-2 dark:border-gray-700 dark:bg-gray-950">
+                <div className="flex items-center justify-between gap-3 rounded-lg border border-edge bg-surface px-3 py-2">
                   <div>
-                    <div className="text-sm font-medium text-gray-950 dark:text-gray-50">
+                    <div className="text-sm font-medium text-fg">
                       Separate billing start date
                     </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                    <div className="text-xs text-fg-muted">
                       Migration only
                     </div>
                   </div>
@@ -409,8 +413,8 @@ export default function WarehouseAddClient() {
                     className={[
                       "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition",
                       useCustomBillingStart
-                        ? "bg-blue-600"
-                        : "bg-gray-300 dark:bg-gray-700",
+                        ? "bg-accent"
+                        : "bg-edge-strong",
                     ].join(" ")}
                     aria-pressed={useCustomBillingStart}
                   >
@@ -441,7 +445,7 @@ export default function WarehouseAddClient() {
             </div>
 
             <div>
-              <h3 className="text-sm font-semibold text-gray-950 dark:text-gray-50">
+              <h3 className="text-sm font-semibold text-fg">
                 GST / Tax & Insurance Details
               </h3>
               <div className="mt-3 grid gap-4 md:grid-cols-3">
@@ -489,7 +493,7 @@ export default function WarehouseAddClient() {
             </div>
 
             <div>
-              <h3 className="text-sm font-semibold text-gray-950 dark:text-gray-50">
+              <h3 className="text-sm font-semibold text-fg">
                 Opening Balance / Remarks
               </h3>
               <div className="mt-3 max-w-xl">
@@ -502,7 +506,7 @@ export default function WarehouseAddClient() {
                     onChange={signedNumericOnly(setOldOutstanding)}
                     placeholder="Use negative for advance, e.g. -5000"
                   />
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  <p className="mt-1 text-xs text-fg-muted">
                     Positive means customer owes money. Negative means customer
                     has advance balance.
                   </p>
@@ -510,15 +514,15 @@ export default function WarehouseAddClient() {
               </div>
             </div>
 
-            <div className="flex flex-col gap-3 border-t border-gray-200 pt-5 dark:border-gray-800 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="flex flex-col gap-3 border-t border-edge pt-5 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-fg-muted">
                 Required fields are name, contact, rate, and location.
               </p>
               <button
                 type="button"
                 onClick={handleSubmit}
                 disabled={loading}
-                className="inline-flex min-h-10 items-center justify-center rounded-md bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className={buttonPrimary}
               >
                 {loading ? "Saving..." : "Create Client"}
               </button>
@@ -533,7 +537,7 @@ export default function WarehouseAddClient() {
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="block">
-      <div className="mb-1.5 block text-sm font-medium text-gray-800 dark:text-gray-200">
+      <div className={fieldLabel}>
         {label}
       </div>
       {children}

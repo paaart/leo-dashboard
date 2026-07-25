@@ -1,5 +1,5 @@
 export const SERIAL_COLUMN_CLASS =
-  "w-16 px-3 py-3 text-center font-medium text-gray-500 dark:text-gray-400";
+  "w-16 px-3 py-3 text-center font-medium text-fg-muted";
 
 export function serialNumber(
   index: number,

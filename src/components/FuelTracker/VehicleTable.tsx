@@ -40,12 +40,12 @@ export function VehicleTable({
 }) {
   if (loading) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950">
+      <div className="rounded-xl border border-edge bg-surface p-4 shadow-card">
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, index) => (
             <div
               key={index}
-              className="h-12 animate-pulse rounded-md bg-gray-100 dark:bg-gray-800"
+              className="h-12 animate-pulse rounded-md bg-surface-2"
             />
           ))}
         </div>
@@ -55,7 +55,7 @@ export function VehicleTable({
 
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">
+      <div className="rounded-lg border border-danger/25 bg-danger-soft p-4 text-sm text-danger-soft-fg">
         {error}
       </div>
     );
@@ -70,7 +70,7 @@ export function VehicleTable({
           <button
             type="button"
             onClick={onAdd}
-            className="inline-flex min-h-10 items-center gap-2 rounded-md bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700"
+            className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-accent-fg hover:bg-accent-hover"
           >
             <Plus className="h-4 w-4" />
             Add Vehicle
@@ -81,10 +81,10 @@ export function VehicleTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
+    <div className="overflow-hidden rounded-xl border border-edge bg-surface shadow-card">
       <div className="overflow-x-auto">
         <table className="min-w-160 w-full text-left text-sm">
-          <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
+          <thead className="border-b border-edge bg-surface-2 text-xs uppercase tracking-wide text-fg-muted">
             <tr>
               <th className={SERIAL_COLUMN_CLASS}>S.No</th>
               <th className="px-4 py-3 font-semibold">Vehicle Number</th>
@@ -95,16 +95,16 @@ export function VehicleTable({
               <th className="px-4 py-3 font-semibold">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+          <tbody className="divide-y divide-edge">
             {vehicles.map((vehicle, index) => (
               <tr
                 key={vehicle.id}
-                className="text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900/70"
+                className="text-fg-muted hover:bg-surface-2/60"
               >
                 <td className={SERIAL_COLUMN_CLASS}>
                   {serialNumber(index, currentPage, pageSize)}
                 </td>
-                <td className="max-w-44 px-4 py-3 font-semibold text-gray-950 dark:text-gray-50">
+                <td className="max-w-44 px-4 py-3 font-semibold text-fg">
                   <FuelTooltip
                     content={vehicleDetails(vehicle)}
                     className="truncate"
@@ -118,7 +118,7 @@ export function VehicleTable({
                   <button
                     type="button"
                     onClick={() => onViewRenewals(vehicle)}
-                    className="inline-flex min-h-9 items-center gap-2 rounded-md border border-gray-300 px-3 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                    className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-edge px-3 text-sm font-medium text-fg hover:bg-surface-2"
                   >
                     View Renewals
                   </button>
@@ -134,7 +134,7 @@ export function VehicleTable({
                   <button
                     type="button"
                     onClick={() => onEdit(vehicle)}
-                    className="inline-flex min-h-9 items-center gap-2 rounded-md border border-gray-300 px-3 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                    className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-edge px-3 text-sm font-medium text-fg hover:bg-surface-2"
                   >
                     <Pencil className="h-4 w-4" />
                     Edit

@@ -1,3 +1,4 @@
+import { modalOverlay } from "@/components/shared/ui";
 import { X } from "lucide-react";
 import { SERIAL_COLUMN_CLASS, serialNumber } from "./SerialNumber";
 import type { VehicleExpensePaymentBatch } from "@/lib/fuel-tracker/types";
@@ -26,21 +27,21 @@ export function VendorPaymentBatchViewModal({
   if (!batch) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="max-h-[88vh] w-full max-w-5xl overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-950">
-        <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 dark:border-gray-800">
+    <div className={modalOverlay}>
+      <div className="max-h-[88vh] w-full max-w-5xl overflow-hidden rounded-xl border border-edge bg-surface shadow-overlay">
+        <div className="flex items-start justify-between gap-4 border-b border-edge px-5 py-4">
           <div>
-            <h2 className="text-lg font-semibold text-gray-950 dark:text-gray-50">
+            <h2 className="text-lg font-semibold text-fg">
               Vendor Payment Details
             </h2>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-sm text-fg-muted">
               {batch.vendor_name} - {formatCurrency(batch.total_amount)}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+            className="rounded-md p-2 text-fg-muted hover:bg-surface-2 hover:text-fg"
             aria-label="Close payment batch details"
           >
             <X className="h-4 w-4" />
@@ -50,65 +51,65 @@ export function VendorPaymentBatchViewModal({
         <div className="max-h-[calc(88vh-80px)] space-y-5 overflow-y-auto p-5">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              <p className="text-xs font-semibold uppercase tracking-wide text-fg-muted">
                 Payment Date
               </p>
-              <p className="mt-1 text-gray-700 dark:text-gray-200">
+              <p className="mt-1 text-fg-muted">
                 {batch.payment_date}
               </p>
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              <p className="text-xs font-semibold uppercase tracking-wide text-fg-muted">
                 Vendor
               </p>
-              <p className="mt-1 font-semibold text-gray-950 dark:text-gray-50">
+              <p className="mt-1 font-semibold text-fg">
                 {batch.vendor_name}
               </p>
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              <p className="text-xs font-semibold uppercase tracking-wide text-fg-muted">
                 Total Paid
               </p>
-              <p className="mt-1 font-semibold text-gray-950 dark:text-gray-50">
+              <p className="mt-1 font-semibold text-fg">
                 {formatCurrency(batch.total_amount)}
               </p>
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              <p className="text-xs font-semibold uppercase tracking-wide text-fg-muted">
                 Mode
               </p>
-              <p className="mt-1 text-gray-700 dark:text-gray-200">
+              <p className="mt-1 text-fg-muted">
                 {batch.payment_mode ?? "-"}
               </p>
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              <p className="text-xs font-semibold uppercase tracking-wide text-fg-muted">
                 Reference
               </p>
-              <p className="mt-1 text-gray-700 dark:text-gray-200">
+              <p className="mt-1 text-fg-muted">
                 {batch.reference_number ?? "-"}
               </p>
             </div>
           </div>
 
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            <p className="text-xs font-semibold uppercase tracking-wide text-fg-muted">
               Remarks
             </p>
-            <p className="mt-1 text-sm text-gray-700 dark:text-gray-200">
+            <p className="mt-1 text-sm text-fg-muted">
               {batch.remarks ?? "-"}
             </p>
           </div>
 
-          <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800">
-            <div className="border-b border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
-              <h3 className="text-sm font-semibold text-gray-950 dark:text-gray-50">
+          <div className="overflow-hidden rounded-lg border border-edge">
+            <div className="border-b border-edge bg-surface-2 px-4 py-3">
+              <h3 className="text-sm font-semibold text-fg">
                 Invoice Allocations
               </h3>
             </div>
             <div className="overflow-x-auto">
               <table className="min-w-280 w-full text-left text-sm">
-                <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
+                <thead className="border-b border-edge bg-surface-2 text-xs uppercase tracking-wide text-fg-muted">
                   <tr>
                     <th className={SERIAL_COLUMN_CLASS}>S.No</th>
                     <th className="px-4 py-3 font-semibold">Invoice</th>
@@ -128,16 +129,16 @@ export function VendorPaymentBatchViewModal({
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                <tbody className="divide-y divide-edge">
                   {batch.allocations.map((allocation, index) => (
                     <tr
                       key={allocation.id}
-                      className="text-gray-700 dark:text-gray-200"
+                      className="text-fg-muted"
                     >
                       <td className={SERIAL_COLUMN_CLASS}>
                         {serialNumber(index)}
                       </td>
-                      <td className="px-4 py-3 font-semibold text-gray-950 dark:text-gray-50">
+                      <td className="px-4 py-3 font-semibold text-fg">
                         {allocation.invoice_number ?? allocation.invoice_id}
                       </td>
                       <td className="px-4 py-3">

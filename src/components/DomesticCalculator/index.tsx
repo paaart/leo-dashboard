@@ -13,6 +13,7 @@ import {
   PageHeader,
   SectionCard,
 } from "@/components/shared/DashboardUI";
+import { alertDanger, buttonPrimary, card } from "@/components/shared/ui";
 
 const DomesticCalculator = () => {
   const [source, setSource] = useState("");
@@ -147,7 +148,7 @@ const DomesticCalculator = () => {
 
   if (loading) {
     return (
-      <div className="min-h-full bg-gray-50 px-4 py-6 text-gray-950 dark:bg-gray-950 dark:text-gray-50 sm:px-6 lg:px-8">
+      <div className="min-h-full bg-canvas px-4 py-6 text-fg sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl space-y-6">
           <PageHeader
             eyebrow="Operations"
@@ -161,7 +162,7 @@ const DomesticCalculator = () => {
   }
 
   return (
-    <div className="min-h-full bg-gray-50 px-4 py-6 text-gray-950 dark:bg-gray-950 dark:text-gray-50 sm:px-6 lg:px-8">
+    <div className="min-h-full bg-canvas px-4 py-6 text-fg sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
         <PageHeader
           eyebrow="Operations"
@@ -170,7 +171,7 @@ const DomesticCalculator = () => {
         />
 
         {error ? (
-          <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">
+          <div className={`${alertDanger} font-medium`}>
             {error}
           </div>
         ) : null}
@@ -181,7 +182,7 @@ const DomesticCalculator = () => {
         >
           <div className="space-y-5">
             <div>
-              <p className="mb-3 text-sm font-medium text-gray-800 dark:text-gray-200">
+              <p className="mb-3 text-sm font-medium text-fg">
                 Calculation Options
               </p>
               <RateTypeToggle
@@ -219,8 +220,8 @@ const DomesticCalculator = () => {
               )}
             </div>
 
-            <div className="flex flex-col gap-3 border-t border-gray-200 pt-5 dark:border-gray-800 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+            <div className="flex flex-col gap-3 border-t border-edge pt-5 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-fg-muted">
                 Rates are indicative and should be reviewed before final
                 customer confirmation.
               </p>
@@ -233,7 +234,7 @@ const DomesticCalculator = () => {
                   (houseRate && !cft) ||
                   (carRate && !carSize)
                 }
-                className="inline-flex min-h-10 items-center justify-center rounded-md bg-blue-600 px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className={buttonPrimary}
               >
                 Calculate Quote
               </button>
@@ -259,7 +260,7 @@ const DomesticCalculator = () => {
           />
         ) : null}
 
-        <div className="rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-500 shadow-sm dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400">
+        <div className={`${card} p-4 text-sm text-fg-muted`}>
           The above rates are indicative rates including our margins. Before
           giving final rates, consider additional services like handyman, lift
           availability, extra packing for fragile items, storage, etc.

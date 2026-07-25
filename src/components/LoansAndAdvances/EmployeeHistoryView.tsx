@@ -10,6 +10,13 @@ import {
   PageHeader,
   SectionCard,
 } from "@/components/shared/DashboardUI";
+import {
+  buttonDangerSoft,
+  buttonSecondary,
+  tableHead,
+  tableHeadCell,
+  tableWrapper,
+} from "@/components/shared/ui";
 
 type Props = {
   employee: {
@@ -136,11 +143,11 @@ export default function EmployeeHistoryView({ employee, onBack }: Props) {
 
   const typeBadgeClass = (type: Transaction["type"]) =>
     type === "repayment"
-      ? "border-green-200 bg-green-50 text-green-700 dark:border-green-900/60 dark:bg-green-950/40 dark:text-green-300"
-      : "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300";
+      ? "border-success/25 bg-success-soft text-success-soft-fg"
+      : "border-accent/25 bg-accent-soft text-accent-soft-fg";
 
   return (
-    <div className="min-h-full bg-gray-50 px-4 py-6 text-gray-950 dark:bg-gray-950 dark:text-gray-50 sm:px-6 lg:px-8">
+    <div className="min-h-full bg-canvas px-4 py-6 text-fg sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
         <PageHeader
           eyebrow="Finance"
@@ -150,7 +157,7 @@ export default function EmployeeHistoryView({ employee, onBack }: Props) {
             <button
               type="button"
               onClick={onBack}
-              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+              className={buttonSecondary}
             >
               <ArrowLeft className="h-4 w-4" />
               Back
@@ -164,15 +171,15 @@ export default function EmployeeHistoryView({ employee, onBack }: Props) {
         >
           <div className="flex flex-wrap items-center gap-2">
             {metaLoading ? (
-              <span className="inline-flex rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
+              <span className="inline-flex rounded-full border border-edge bg-surface-2 px-3 py-1 text-sm text-fg-muted">
                 Loading details...
               </span>
             ) : (
               <>
-                <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-medium text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                <span className="inline-flex items-center rounded-full border border-edge bg-surface-2 px-3 py-1 text-xs font-medium text-fg-muted">
                   Company: {companyName}
                 </span>
-                <span className="inline-flex items-center rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-medium text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                <span className="inline-flex items-center rounded-full border border-edge bg-surface-2 px-3 py-1 text-xs font-medium text-fg-muted">
                   Location: {locationName}
                 </span>
               </>
@@ -193,37 +200,37 @@ export default function EmployeeHistoryView({ employee, onBack }: Props) {
             />
           ) : (
             <>
-              <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
+              <div className={tableWrapper}>
                 <table className="min-w-[780px] w-full text-sm">
-                  <thead className="bg-gray-50 text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+                  <thead className={tableHead}>
                     <tr>
-                      <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                      <th className={`${tableHeadCell} text-left`}>
                         Date
                       </th>
-                      <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                      <th className={`${tableHeadCell} text-left`}>
                         Employee
                       </th>
-                      <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                      <th className={`${tableHeadCell} text-left`}>
                         Type
                       </th>
-                      <th className="border-b border-gray-200 px-4 py-3 text-right font-semibold dark:border-gray-800">
+                      <th className={`${tableHeadCell} text-right`}>
                         Amount
                       </th>
-                      <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                      <th className={`${tableHeadCell} text-left`}>
                         Remarks
                       </th>
-                      <th className="border-b border-gray-200 px-4 py-3 text-right font-semibold dark:border-gray-800">
+                      <th className={`${tableHeadCell} text-right`}>
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                  <tbody className="divide-y divide-edge">
                     {transactions.map((txn) => (
                       <tr
                         key={txn.id}
-                        className="bg-white hover:bg-gray-50 dark:bg-gray-950 dark:hover:bg-gray-900"
+                        className="bg-surface transition-colors hover:bg-surface-2/60"
                       >
-                        <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                        <td className="px-4 py-3 text-fg-muted">
                           {new Date(txn.payment_date).toLocaleDateString(
                             "en-IN",
                             {
@@ -234,10 +241,10 @@ export default function EmployeeHistoryView({ employee, onBack }: Props) {
                           )}
                         </td>
                         <td className="px-4 py-3">
-                          <p className="font-medium text-gray-950 dark:text-gray-50">
+                          <p className="font-medium text-fg">
                             {employee.name}
                           </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                          <p className="text-xs text-fg-muted">
                             {employee.employee_code}
                           </p>
                         </td>
@@ -254,14 +261,14 @@ export default function EmployeeHistoryView({ employee, onBack }: Props) {
                           <span
                             className={`font-semibold tabular-nums ${
                               txn.amount > 0
-                                ? "text-blue-700 dark:text-blue-300"
-                                : "text-green-700 dark:text-green-300"
+                                ? "text-accent"
+                                : "text-success"
                             }`}
                           >
                             {formatCurrency(txn.amount)}
                           </span>
                         </td>
-                        <td className="max-w-xs px-4 py-3 text-gray-500 dark:text-gray-400">
+                        <td className="max-w-xs px-4 py-3 text-fg-muted">
                           <span className="line-clamp-2">
                             {txn.remarks || "-"}
                           </span>
@@ -271,7 +278,7 @@ export default function EmployeeHistoryView({ employee, onBack }: Props) {
                             type="button"
                             onClick={() => handleDelete(txn.id)}
                             disabled={deletingId === txn.id}
-                            className="inline-flex min-h-9 items-center justify-center gap-2 rounded-md border border-red-200 px-3 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/40"
+                            className={buttonDangerSoft}
                             title="Delete"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -289,18 +296,18 @@ export default function EmployeeHistoryView({ employee, onBack }: Props) {
                   type="button"
                   disabled={page === 0}
                   onClick={() => setPage((p) => p - 1)}
-                  className="inline-flex min-h-10 items-center justify-center rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                  className={buttonSecondary}
                 >
                   Previous
                 </button>
-                <span className="text-center text-sm text-gray-500 dark:text-gray-400">
+                <span className="text-center text-sm text-fg-muted">
                   Page {page + 1}
                 </span>
                 <button
                   type="button"
                   disabled={transactions.length < pageSize}
                   onClick={() => setPage((p) => p + 1)}
-                  className="inline-flex min-h-10 items-center justify-center rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                  className={buttonSecondary}
                 >
                   Next
                 </button>

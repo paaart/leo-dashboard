@@ -1,3 +1,4 @@
+import { modalOverlayScroll } from "@/components/shared/ui";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
@@ -212,14 +213,14 @@ export function VehicleFormModal({
     "Last Renewal Date is the date payment was actually made. Next Renewal Date is the date used for alerts and urgency.";
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 p-4">
-      <div className="mx-auto my-4 flex w-full max-w-xl max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-950">
-        <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 dark:border-gray-800">
+    <div className={modalOverlayScroll}>
+      <div className="mx-auto my-4 flex w-full max-w-xl max-h-[calc(100dvh-2rem)] flex-col overflow-hidden rounded-xl border border-edge bg-surface shadow-overlay">
+        <div className="flex items-start justify-between gap-4 border-b border-edge px-5 py-4">
           <div>
-            <h2 className="text-lg font-semibold text-gray-950 dark:text-gray-50">
+            <h2 className="text-lg font-semibold text-fg">
               {isEdit ? "Edit Vehicle" : "Add Vehicle"}
             </h2>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-sm text-fg-muted">
               {isEdit
                 ? "Update vehicle details used across tracker views."
                 : "Register a vehicle before adding fuel entries or expenses."}
@@ -228,7 +229,7 @@ export function VehicleFormModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+            className="rounded-md p-2 text-fg-muted hover:bg-surface-2 hover:text-fg"
             aria-label="Close add vehicle dialog"
           >
             <X className="h-4 w-4" />
@@ -241,7 +242,7 @@ export function VehicleFormModal({
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="space-y-1.5">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-medium text-fg">
                 Vehicle Number
               </span>
               <input
@@ -252,16 +253,16 @@ export function VehicleFormModal({
                     vehicleNo: event.target.value,
                   }))
                 }
-                className="no-number-spinner h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className="no-number-spinner h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                 placeholder="KA01AB1234"
               />
-              <span className="text-xs text-gray-500 dark:text-gray-400">
+              <span className="text-xs text-fg-muted">
                 Must be unique.
               </span>
             </label>
 
             <label className="space-y-1.5">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-medium text-fg">
                 Vehicle Type
               </span>
               <input
@@ -272,7 +273,7 @@ export function VehicleFormModal({
                     vehicleType: event.target.value,
                   }))
                 }
-                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                 placeholder="Truck"
               />
             </label>
@@ -280,7 +281,7 @@ export function VehicleFormModal({
 
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="space-y-1.5">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-medium text-fg">
                 Leo Company
               </span>
               <input
@@ -291,16 +292,16 @@ export function VehicleFormModal({
                     company: event.target.value,
                   }))
                 }
-                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                 placeholder="LEO PACKERS AND MOVERS"
               />
-              <span className="text-xs text-gray-500 dark:text-gray-400">
+              <span className="text-xs text-fg-muted">
                 Company/entity this vehicle belongs to.
               </span>
             </label>
 
             <label className="space-y-1.5">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-medium text-fg">
                 Starting Odometer
               </span>
               <input
@@ -314,11 +315,11 @@ export function VehicleFormModal({
                     startingOdometer: event.target.value,
                   }))
                 }
-                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                 placeholder="100000"
               />
               {isEdit && hasFuelEntries ? (
-                <span className="text-xs text-amber-700 dark:text-amber-300">
+                <span className="text-xs text-warning">
                   Changing starting odometer may affect baseline mileage
                   interpretation for this vehicle.
                 </span>
@@ -327,7 +328,7 @@ export function VehicleFormModal({
           </div>
 
           <label className="block space-y-1.5">
-            <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+            <span className="text-sm font-medium text-fg">
               Status
             </span>
             <select
@@ -338,21 +339,21 @@ export function VehicleFormModal({
                   status: event.target.value as VehicleStatus,
                 }))
               }
-              className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+              className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
             >
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
             </select>
           </label>
 
-          <div className="space-y-3 rounded-lg border border-gray-200 p-4 dark:border-gray-800">
+          <div className="space-y-3 rounded-lg border border-edge p-4">
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-semibold text-gray-950 dark:text-gray-50">
+                <h3 className="text-sm font-semibold text-fg">
                   Renewal Details
                 </h3>
                 <FuelTooltip content={renewalHelpText}>
-                  <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-gray-400/70 text-[10px] font-semibold text-gray-500 dark:border-gray-600 dark:text-gray-400">
+                  <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-edge-strong text-[10px] font-semibold text-fg-muted">
                     i
                   </span>
                 </FuelTooltip>
@@ -361,10 +362,10 @@ export function VehicleFormModal({
 
             <div className="grid gap-4 lg:grid-cols-3">
               <div className="space-y-2">
-                <span className="text-base font-medium text-gray-800 dark:text-gray-200">
+                <span className="text-base font-medium text-fg">
                   National Permit
                 </span>
-                <span className="block text-sm text-gray-500 dark:text-gray-400">
+                <span className="block text-sm text-fg-muted">
                   Last Renewal Date
                 </span>
                 <input
@@ -379,9 +380,9 @@ export function VehicleFormModal({
                     )
                   }
                   title="Date on which payment was actually made."
-                  className="no-number-spinner h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                  className="no-number-spinner h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                 />
-                <span className="block text-sm text-gray-500 dark:text-gray-400">
+                <span className="block text-sm text-fg-muted">
                   Next Renewal Date
                 </span>
                 <input
@@ -395,9 +396,9 @@ export function VehicleFormModal({
                     )
                   }
                   title="Next expected renewal. Alerts are generated from this date."
-                  className="no-number-spinner h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                  className="no-number-spinner h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                 />
-                <span className="block text-sm text-gray-500 dark:text-gray-400">
+                <span className="block text-sm text-fg-muted">
                   Last Renewal Amount
                 </span>
                 <input
@@ -411,10 +412,10 @@ export function VehicleFormModal({
                       nationalPermitRenewalAmount: event.target.value,
                   }))
                   }
-                  className="no-number-spinner h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                  className="no-number-spinner h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                   placeholder="Amount"
                 />
-                <span className="block text-sm text-gray-500 dark:text-gray-400">
+                <span className="block text-sm text-fg-muted">
                   Vendor / Authority
                 </span>
                 <input
@@ -425,16 +426,16 @@ export function VehicleFormModal({
                       nationalPermitRenewalVendor: event.target.value,
                   }))
                   }
-                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                  className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                   placeholder="Name"
                 />
               </div>
 
               <div className="space-y-2">
-                <span className="text-base font-medium text-gray-800 dark:text-gray-200">
+                <span className="text-base font-medium text-fg">
                   Insurance
                 </span>
-                <span className="block text-sm text-gray-500 dark:text-gray-400">
+                <span className="block text-sm text-fg-muted">
                   Last Renewal Date
                 </span>
                 <input
@@ -449,9 +450,9 @@ export function VehicleFormModal({
                     )
                   }
                   title="Date on which payment was actually made."
-                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                  className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                 />
-                <span className="block text-sm text-gray-500 dark:text-gray-400">
+                <span className="block text-sm text-fg-muted">
                   Next Renewal Date
                 </span>
                 <input
@@ -465,9 +466,9 @@ export function VehicleFormModal({
                     )
                   }
                   title="Next expected renewal. Alerts are generated from this date."
-                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                  className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                 />
-                <span className="block text-sm text-gray-500 dark:text-gray-400">
+                <span className="block text-sm text-fg-muted">
                   Last Renewal Amount
                 </span>
                 <input
@@ -481,10 +482,10 @@ export function VehicleFormModal({
                       insuranceRenewalAmount: event.target.value,
                   }))
                   }
-                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                  className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                   placeholder="Amount"
                 />
-                <span className="block text-sm text-gray-500 dark:text-gray-400">
+                <span className="block text-sm text-fg-muted">
                   Vendor / Authority
                 </span>
                 <input
@@ -495,16 +496,16 @@ export function VehicleFormModal({
                       insuranceRenewalVendor: event.target.value,
                   }))
                   }
-                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                  className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                   placeholder="Name"
                 />
               </div>
 
               <div className="space-y-2">
-                <span className="text-base font-medium text-gray-800 dark:text-gray-200">
+                <span className="text-base font-medium text-fg">
                   Road Tax
                 </span>
-                <span className="block text-sm text-gray-500 dark:text-gray-400">
+                <span className="block text-sm text-fg-muted">
                   Last Renewal Date
                 </span>
                 <input
@@ -519,9 +520,9 @@ export function VehicleFormModal({
                     )
                   }
                   title="Date on which payment was actually made."
-                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                  className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                 />
-                <span className="block text-sm text-gray-500 dark:text-gray-400">
+                <span className="block text-sm text-fg-muted">
                   Next Renewal Date
                 </span>
                 <input
@@ -535,9 +536,9 @@ export function VehicleFormModal({
                     )
                   }
                   title="Next expected renewal. Alerts are generated from this date."
-                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                  className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                 />
-                <span className="block text-sm text-gray-500 dark:text-gray-400">
+                <span className="block text-sm text-fg-muted">
                   Last Renewal Amount
                 </span>
                 <input
@@ -551,10 +552,10 @@ export function VehicleFormModal({
                       roadTaxRenewalAmount: event.target.value,
                   }))
                   }
-                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                  className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                   placeholder="Amount"
                 />
-                <span className="block text-sm text-gray-500 dark:text-gray-400">
+                <span className="block text-sm text-fg-muted">
                   Vendor / Authority
                 </span>
                 <input
@@ -565,7 +566,7 @@ export function VehicleFormModal({
                       roadTaxRenewalVendor: event.target.value,
                   }))
                   }
-                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                  className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                   placeholder="Name"
                 />
               </div>
@@ -573,24 +574,24 @@ export function VehicleFormModal({
           </div>
 
           {error ? (
-            <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">
+            <div className="rounded-lg border border-danger/25 bg-danger-soft px-3 py-2 text-sm text-danger-soft-fg">
               {error}
             </div>
           ) : null}
 
-          <div className="flex flex-col-reverse gap-3 border-t border-gray-200 pt-4 dark:border-gray-800 sm:flex-row sm:justify-end">
+          <div className="flex flex-col-reverse gap-3 border-t border-edge pt-4 sm:flex-row sm:justify-end">
             <button
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="min-h-10 rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+              className="min-h-10 rounded-lg border border-edge px-4 text-sm font-medium text-fg hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="min-h-10 rounded-md bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="min-h-10 rounded-lg bg-accent px-4 text-sm font-semibold text-accent-fg hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? "Saving..." : isEdit ? "Save Changes" : "Add Vehicle"}
             </button>

@@ -1,3 +1,4 @@
+import { modalOverlay } from "@/components/shared/ui";
 import { X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
@@ -129,14 +130,14 @@ export function VehicleExpenseFormModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="max-h-[92vh] w-full max-w-3xl overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-950">
-        <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 dark:border-gray-800">
+    <div className={modalOverlay}>
+      <div className="max-h-[92vh] w-full max-w-3xl overflow-hidden rounded-xl border border-edge bg-surface shadow-overlay">
+        <div className="flex items-start justify-between gap-4 border-b border-edge px-5 py-4">
           <div>
-            <h2 className="text-lg font-semibold text-gray-950 dark:text-gray-50">
+            <h2 className="text-lg font-semibold text-fg">
               {isEdit ? "Edit Expense" : "Add Expense"}
             </h2>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-sm text-fg-muted">
               {isEdit
                 ? "Correct pending non-fuel expense details."
                 : "Record non-fuel vehicle expenses for operating cost tracking."}
@@ -145,7 +146,7 @@ export function VehicleExpenseFormModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+            className="rounded-md p-2 text-fg-muted hover:bg-surface-2 hover:text-fg"
             aria-label="Close add expense dialog"
           >
             <X className="h-4 w-4" />
@@ -158,7 +159,7 @@ export function VehicleExpenseFormModal({
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="space-y-1.5 sm:col-span-2">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-medium text-fg">
                 Expense Scope
               </span>
               <select
@@ -170,7 +171,7 @@ export function VehicleExpenseFormModal({
                       event.target.value === "general" ? "general" : "vehicle",
                   }))
                 }
-                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
               >
                 <option value="vehicle">Vehicle Expense</option>
                 <option value="general">General Expense</option>
@@ -178,7 +179,7 @@ export function VehicleExpenseFormModal({
             </label>
 
             <label className="space-y-1.5">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-medium text-fg">
                 Date
               </span>
               <input
@@ -190,13 +191,13 @@ export function VehicleExpenseFormModal({
                     expenseDate: event.target.value,
                   }))
                 }
-                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
               />
             </label>
 
             {form.expenseScope === "vehicle" ? (
               <label className="space-y-1.5">
-                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                <span className="text-sm font-medium text-fg">
                   Vehicle
                 </span>
                 <select
@@ -207,7 +208,7 @@ export function VehicleExpenseFormModal({
                       vehicleId: event.target.value,
                     }))
                   }
-                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                  className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                 >
                   <option value="">Select vehicle</option>
                   {vehicles.map((vehicle) => (
@@ -220,7 +221,7 @@ export function VehicleExpenseFormModal({
             ) : null}
 
             <label className="space-y-1.5">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-medium text-fg">
                 Expense Type
               </span>
               <select
@@ -231,7 +232,7 @@ export function VehicleExpenseFormModal({
                     expenseType: event.target.value,
                   }))
                 }
-                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
               >
                 {expenseTypes.map((expenseType) => (
                   <option key={expenseType} value={expenseType}>
@@ -242,7 +243,7 @@ export function VehicleExpenseFormModal({
             </label>
 
             <label className="space-y-1.5">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-medium text-fg">
                 Amount
               </span>
               <input
@@ -256,13 +257,13 @@ export function VehicleExpenseFormModal({
                     amount: event.target.value,
                   }))
                 }
-                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                 placeholder="2500"
               />
             </label>
 
             <label className="space-y-1.5 sm:col-span-2">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-medium text-fg">
                 Description
               </span>
               <input
@@ -273,13 +274,13 @@ export function VehicleExpenseFormModal({
                     description: event.target.value,
                   }))
                 }
-                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                 placeholder="Optional details"
               />
             </label>
 
             <label className="space-y-1.5">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-medium text-fg">
                 Vendor
               </span>
               <input
@@ -287,13 +288,13 @@ export function VehicleExpenseFormModal({
                 onChange={(event) =>
                   setForm((prev) => ({ ...prev, vendor: event.target.value }))
                 }
-                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                 placeholder="Vendor name"
               />
             </label>
 
             <label className="space-y-1.5">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-medium text-fg">
                 Invoice Reference
               </span>
               <input
@@ -304,13 +305,13 @@ export function VehicleExpenseFormModal({
                     invoiceReference: event.target.value,
                   }))
                 }
-                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                 placeholder="Invoice number"
               />
             </label>
 
             <label className="space-y-1.5">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-medium text-fg">
                 City
               </span>
               <input
@@ -318,13 +319,13 @@ export function VehicleExpenseFormModal({
                 onChange={(event) =>
                   setForm((prev) => ({ ...prev, city: event.target.value }))
                 }
-                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                 placeholder="City"
               />
             </label>
 
             <label className="space-y-1.5">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-medium text-fg">
                 Mode Of Payment
               </span>
               <input
@@ -335,13 +336,13 @@ export function VehicleExpenseFormModal({
                     paymentMode: event.target.value,
                   }))
                 }
-                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                 placeholder="Cash, UPI, bank transfer"
               />
             </label>
 
             <label className="space-y-1.5">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-medium text-fg">
                 Company
               </span>
               <input
@@ -349,13 +350,13 @@ export function VehicleExpenseFormModal({
                 onChange={(event) =>
                   setForm((prev) => ({ ...prev, company: event.target.value }))
                 }
-                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                 placeholder="Company"
               />
             </label>
 
             <label className="space-y-1.5">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-medium text-fg">
                 Status
               </span>
               <select
@@ -363,7 +364,7 @@ export function VehicleExpenseFormModal({
                 onChange={(event) =>
                   setForm((prev) => ({ ...prev, status: event.target.value }))
                 }
-                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
               >
                 <option value="pending">Pending</option>
               </select>
@@ -371,24 +372,24 @@ export function VehicleExpenseFormModal({
           </div>
 
           {error ? (
-            <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">
+            <div className="rounded-lg border border-danger/25 bg-danger-soft px-3 py-2 text-sm text-danger-soft-fg">
               {error}
             </div>
           ) : null}
 
-          <div className="flex flex-col-reverse gap-3 border-t border-gray-200 pt-4 dark:border-gray-800 sm:flex-row sm:justify-end">
+          <div className="flex flex-col-reverse gap-3 border-t border-edge pt-4 sm:flex-row sm:justify-end">
             <button
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="min-h-10 rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+              className="min-h-10 rounded-lg border border-edge px-4 text-sm font-medium text-fg hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="min-h-10 rounded-md bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="min-h-10 rounded-lg bg-accent px-4 text-sm font-semibold text-accent-fg hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? "Saving..." : isEdit ? "Save Changes" : "Create Expense"}
             </button>

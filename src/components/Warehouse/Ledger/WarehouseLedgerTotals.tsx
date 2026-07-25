@@ -2,10 +2,10 @@
 
 function toneClass(tone: "blue" | "green" | "red") {
   return tone === "blue"
-    ? "text-blue-700 dark:text-blue-300"
+    ? "text-accent"
     : tone === "green"
-    ? "text-green-700 dark:text-green-300"
-    : "text-red-700 dark:text-red-300";
+    ? "text-success"
+    : "text-danger";
 }
 
 function Stat({
@@ -20,8 +20,8 @@ function Stat({
   sub?: string;
 }) {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-950">
-      <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400">
+    <div className="rounded-xl border border-edge bg-surface p-4 shadow-card">
+      <div className="text-xs uppercase tracking-wide text-fg-muted">
         {title}
       </div>
 
@@ -30,7 +30,7 @@ function Stat({
       </div>
 
       {sub && (
-        <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+        <div className="mt-1 text-xs text-fg-muted">
           {sub}
         </div>
       )}

@@ -9,10 +9,10 @@ import { fmtDate, fmtINR } from "@/lib/warehouse/ledgerMath";
 function LabelValue({ label, value }: { label: string; value: string }) {
   return (
     <div className="min-w-35">
-      <div className="text-[11px] uppercase tracking-wide text-gray-500 dark:text-gray-400">
+      <div className="text-[11px] uppercase tracking-wide text-fg-muted">
         {label}
       </div>
-      <div className="mt-1 text-sm font-medium text-gray-900 dark:text-white">
+      <div className="mt-1 text-sm font-medium text-fg">
         {value || "—"}
       </div>
     </div>
@@ -45,15 +45,15 @@ export default function WarehouseLedgerSummaryCard({
   isClosedView: boolean;
 }) {
   return (
-    <section className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-950">
-      <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-700">
+    <section className="overflow-hidden rounded-xl border border-edge bg-surface shadow-card">
+      <div className="border-b border-edge px-5 py-4">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <div className="space-y-3">
             <div>
-              <div className="text-xl font-semibold text-gray-900 dark:text-white">
+              <div className="text-xl font-semibold text-fg">
                 {pod.name}
               </div>
-              <div className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+              <div className="mt-1 text-sm text-fg-muted">
                 Client ID: {pod.client_id ?? "—"}
               </div>
             </div>
@@ -66,7 +66,7 @@ export default function WarehouseLedgerSummaryCard({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-x-8 gap-y-3 xl:min-w-90">
+          <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:gap-x-8 xl:min-w-90">
             <LabelValue
               label="Status"
               value={
@@ -99,7 +99,7 @@ export default function WarehouseLedgerSummaryCard({
         </div>
       </div>
 
-      <div className="border-b border-gray-200 px-5 py-4 dark:border-gray-700">
+      <div className="border-b border-edge px-5 py-4">
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-6">
           <LabelValue label="Rate" value={fmtINR(Number(pod.rate))} />
           <LabelValue
@@ -128,7 +128,7 @@ export default function WarehouseLedgerSummaryCard({
       <div className="flex flex-wrap gap-2 px-5 py-4">
         <button
           onClick={onRecordPayment}
-          className="inline-flex min-h-10 items-center justify-center rounded-md bg-green-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-green-700"
+          className="inline-flex min-h-10 items-center justify-center rounded-lg bg-success px-4 text-sm font-semibold text-white transition hover:opacity-90"
         >
           Record Payment
         </button>
@@ -137,14 +137,14 @@ export default function WarehouseLedgerSummaryCard({
           <>
             <button
               onClick={onAddTransaction}
-              className="inline-flex min-h-10 items-center justify-center rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+              className="inline-flex min-h-10 items-center justify-center rounded-lg border border-edge bg-surface px-4 text-sm font-medium text-fg shadow-card transition hover:bg-surface-2"
             >
               Add Transaction
             </button>
 
             <button
               onClick={onRateChange}
-              className="inline-flex min-h-10 items-center justify-center rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+              className="inline-flex min-h-10 items-center justify-center rounded-lg border border-edge bg-surface px-4 text-sm font-medium text-fg shadow-card transition hover:bg-surface-2"
             >
               Change Rate / Items
             </button>
@@ -152,13 +152,13 @@ export default function WarehouseLedgerSummaryCard({
             <button
               onClick={onCloseCycle}
               disabled={closingCycle}
-              className="inline-flex min-h-10 items-center justify-center rounded-md border border-red-200 px-4 text-sm font-medium text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/40"
+              className="inline-flex min-h-10 items-center justify-center rounded-lg border border-danger/30 bg-danger-soft px-4 text-sm font-medium text-danger-soft-fg transition hover:border-danger/50 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {closingCycle ? "Closing..." : "Close Cycle"}
             </button>
             <button
               onClick={onRenewCycle}
-              className="inline-flex min-h-10 items-center justify-center rounded-md bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700"
+              className="inline-flex min-h-10 items-center justify-center rounded-lg bg-accent px-4 text-sm font-semibold text-accent-fg transition hover:bg-accent-hover"
             >
               Renew Cycle
             </button>
@@ -167,7 +167,7 @@ export default function WarehouseLedgerSummaryCard({
 
         <button
           onClick={onEditClient}
-          className="inline-flex min-h-10 items-center justify-center rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+          className="inline-flex min-h-10 items-center justify-center rounded-lg border border-edge bg-surface px-4 text-sm font-medium text-fg shadow-card transition hover:bg-surface-2"
         >
           Edit Client
         </button>

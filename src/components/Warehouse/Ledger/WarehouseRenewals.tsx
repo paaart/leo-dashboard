@@ -45,7 +45,7 @@ export default function WarehouseRenewals() {
 
   if (loading) {
     return (
-      <div className="min-h-full bg-gray-50 px-4 py-6 text-gray-950 dark:bg-gray-950 dark:text-gray-50 sm:px-6 lg:px-8">
+      <div className="min-h-full bg-canvas px-4 py-6 text-fg sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl space-y-6">
           <PageHeader
             eyebrow="Storage"
@@ -59,7 +59,7 @@ export default function WarehouseRenewals() {
   }
 
   return (
-    <div className="min-h-full bg-gray-50 px-4 py-6 text-gray-950 dark:bg-gray-950 dark:text-gray-50 sm:px-6 lg:px-8">
+    <div className="min-h-full bg-canvas px-4 py-6 text-fg sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
         <PageHeader
           eyebrow="Storage"
@@ -74,7 +74,7 @@ export default function WarehouseRenewals() {
             <button
               type="button"
               onClick={() => void load()}
-              className="inline-flex min-h-10 items-center justify-center rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+              className="inline-flex min-h-10 items-center justify-center rounded-lg border border-edge bg-surface px-4 text-sm font-medium text-fg shadow-card transition hover:bg-surface-2"
             >
               Refresh
             </button>
@@ -86,61 +86,61 @@ export default function WarehouseRenewals() {
               description="Warehouse renewals due this month will appear here."
             />
           ) : (
-            <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
+            <div className="overflow-x-auto rounded-xl border border-edge bg-surface shadow-card">
               <table className="min-w-245 w-full text-sm">
-                <thead className="bg-gray-50 text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+                <thead className="bg-surface-2 text-fg-muted">
                   <tr>
-                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                    <th className="border-b border-edge px-4 py-3 text-left font-semibold">
                       Client
                     </th>
-                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                    <th className="border-b border-edge px-4 py-3 text-left font-semibold">
                       Contact
                     </th>
-                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                    <th className="border-b border-edge px-4 py-3 text-left font-semibold">
                       Location
                     </th>
-                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                    <th className="border-b border-edge px-4 py-3 text-left font-semibold">
                       End Date
                     </th>
-                    <th className="border-b border-gray-200 px-4 py-3 text-right font-semibold dark:border-gray-800">
+                    <th className="border-b border-edge px-4 py-3 text-right font-semibold">
                       Monthly Rate
                     </th>
-                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                    <th className="border-b border-edge px-4 py-3 text-left font-semibold">
                       Insurance
                     </th>
                   </tr>
                 </thead>
 
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                <tbody className="divide-y divide-edge">
                   {rows.map((r) => (
                     <tr
                       key={r.pod_id}
-                      className="cursor-pointer bg-white hover:bg-gray-50 dark:bg-gray-950 dark:hover:bg-gray-900"
+                      className="cursor-pointer bg-surface transition-colors hover:bg-surface-2/60"
                       onClick={() => setSelected(r)}
                     >
                       <td className="px-4 py-3">
-                        <div className="font-medium text-gray-950 dark:text-gray-50">
+                        <div className="font-medium text-fg">
                           {r.name}
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                        <div className="text-xs text-fg-muted">
                           {r.client_id}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                      <td className="px-4 py-3 text-fg-muted">
                         {r.contact}
                       </td>
-                      <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                      <td className="px-4 py-3 text-fg-muted">
                         {r.location_name ?? "-"}
                       </td>
-                      <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                      <td className="px-4 py-3 text-fg-muted">
                         {new Date(r.end_date).toLocaleDateString("en-IN")}
                       </td>
-                      <td className="px-4 py-3 text-right font-semibold tabular-nums text-blue-700 dark:text-blue-300">
+                      <td className="px-4 py-3 text-right font-semibold tabular-nums text-accent">
                         {formatCurrency(Number(r.rate))}
                       </td>
                       <td className="px-4 py-3">
                         {r.insurance_provider === "leo" ? (
-                          <span className="inline-flex rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300">
+                          <span className="inline-flex rounded-full border border-accent/25 bg-accent-soft px-2.5 py-1 text-xs font-medium text-accent-soft-fg">
                             Leo (
                             {formatCurrency(Number(r.insurance_value ?? 0))})
                           </span>

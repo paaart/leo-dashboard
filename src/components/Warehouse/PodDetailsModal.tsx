@@ -12,6 +12,15 @@ import {
 } from "@/lib/warehouse/queries";
 import EditPodModal from "./EditPodModal";
 import { getErrorMessage } from "@/lib/errors";
+import {
+  buttonPrimary,
+  buttonSecondary,
+  fieldLabel,
+  inputField,
+  modalOverlay,
+  modalPanel,
+  modalTitle,
+} from "@/components/shared/ui";
 
 export default function PodDetailsModal({
   pod,
@@ -110,15 +119,15 @@ export default function PodDetailsModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-3xl rounded-lg bg-white p-6 shadow-xl dark:bg-[#1f2933]">
-        <div className="flex items-start justify-between gap-3">
+    <div className={modalOverlay}>
+      <div className={`${modalPanel} max-h-[90vh] max-w-3xl overflow-y-auto p-6`}>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h3 className="text-lg font-semibold">{pod.name}</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-300">
+            <h3 className={modalTitle}>{pod.name}</h3>
+            <p className="text-sm text-fg-muted">
               {pod.contact} • {pod.email ?? "—"} • {pod.location_name ?? "—"}
             </p>
-            <p className="text-xs text-gray-400">
+            <p className="text-xs text-fg-subtle">
               Next due: {pod.next_charge_date} • Rate: {money(Number(pod.rate))}
             </p>
           </div>
@@ -126,13 +135,13 @@ export default function PodDetailsModal({
           <div className="flex gap-2">
             <button
               onClick={() => setEditOpen(true)}
-              className="rounded-md border px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
+              className={buttonSecondary}
             >
               Edit
             </button>
             <button
               onClick={onClose}
-              className="rounded-md border px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
+              className={buttonSecondary}
             >
               Close
             </button>
@@ -142,19 +151,19 @@ export default function PodDetailsModal({
         {/* Payment entry */}
         <div className="mt-4 grid gap-3 md:grid-cols-3">
           <div>
-            <label className="block mb-1 text-sm font-medium">
+            <label className={fieldLabel}>
               Amount paid
             </label>
             <input
-              className="w-full p-2 border rounded bg-white dark:bg-gray-800"
+              className={inputField}
               value={payAmount}
               onChange={(e) => setPayAmount(e.target.value)}
             />
           </div>
           <div>
-            <label className="block mb-1 text-sm font-medium">Date</label>
+            <label className={fieldLabel}>Date</label>
             <input
-              className="w-full p-2 border rounded bg-white dark:bg-gray-800"
+              className={inputField}
               type="date"
               value={payDate}
               onChange={(e) => setPayDate(e.target.value)}
@@ -163,17 +172,17 @@ export default function PodDetailsModal({
           <div className="flex items-end">
             <button
               onClick={addPayment}
-              className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              className={`${buttonPrimary} w-full`}
             >
               Add Payment
             </button>
           </div>
           <div className="md:col-span-3">
-            <label className="block mb-1 text-sm font-medium">
+            <label className={fieldLabel}>
               Note (optional)
             </label>
             <input
-              className="w-full p-2 border rounded bg-white dark:bg-gray-800"
+              className={inputField}
               value={payNote}
               onChange={(e) => setPayNote(e.target.value)}
             />
@@ -181,16 +190,16 @@ export default function PodDetailsModal({
         </div>
 
         <div className="mt-6">
-          <h4 className="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-2">
+          <h4 className="text-sm font-semibold text-fg-muted mb-2">
             Transaction history
           </h4>
 
           {loading ? (
-            <p className="text-gray-600 dark:text-gray-300">Loading...</p>
+            <p className="text-fg-muted">Loading...</p>
           ) : tx.length === 0 ? (
-            <p className="text-gray-600 dark:text-gray-300">No transactions.</p>
+            <p className="text-fg-muted">No transactions.</p>
           ) : (
-            <ul className="divide-y divide-gray-200 dark:divide-gray-700 max-h-90 overflow-auto pr-2">
+            <ul className="divide-y divide-edge max-h-90 overflow-auto pr-2">
               {tx.map((t) => (
                 <li
                   key={t.id}
@@ -198,7 +207,7 @@ export default function PodDetailsModal({
                 >
                   <div className="min-w-0">
                     <p className="font-medium capitalize">{t.type}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                    <p className="text-sm text-fg-muted">
                       {new Date(t.tx_date).toLocaleDateString("en-IN", {
                         year: "numeric",
                         month: "short",
@@ -206,7 +215,7 @@ export default function PodDetailsModal({
                       })}
                     </p>
                     {t.note && (
-                      <p className="text-sm text-gray-500 dark:text-gray-400 wrap-break-word">
+                      <p className="text-sm text-fg-muted wrap-break-word">
                         {t.note}
                       </p>
                     )}
@@ -217,8 +226,8 @@ export default function PodDetailsModal({
                       <p
                         className={`font-semibold ${
                           t.type === "payment"
-                            ? "text-green-600 dark:text-green-400"
-                            : "text-blue-600 dark:text-blue-400"
+                            ? "text-success"
+                            : "text-accent"
                         }`}
                       >
                         {t.type === "payment" ? "-" : "+"}
@@ -229,7 +238,7 @@ export default function PodDetailsModal({
                     <button
                       onClick={() => deleteTxn(t.id)}
                       disabled={deletingId === t.id}
-                      className="shrink-0 inline-flex items-center rounded-md border px-2 py-1 text-xs font-medium hover:bg-red-50 dark:hover:bg-red-900/20 border-red-200 text-red-600 disabled:opacity-50"
+                      className="shrink-0 inline-flex items-center rounded-lg border border-danger/30 bg-danger-soft px-2 py-1 text-xs font-medium text-danger-soft-fg transition-colors hover:border-danger/50 disabled:opacity-50"
                       title="Delete"
                     >
                       <Trash2 className="h-4 w-4 mr-1" />

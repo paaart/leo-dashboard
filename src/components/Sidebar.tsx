@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { ChevronDown, ChevronRight, X } from "lucide-react";
 import type { Section } from "@/components/Dashboard/DashboardShell";
 
 type SidebarProps = {
@@ -11,6 +12,35 @@ type SidebarProps = {
   onMobileClose: () => void;
   role: "user" | "admin";
 };
+
+const mainLinkClass = (active: boolean) =>
+  `block w-full rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+    active
+      ? "bg-accent-soft font-medium text-accent-soft-fg"
+      : "text-fg-muted hover:bg-surface-2 hover:text-fg"
+  }`;
+
+const groupLinkClass = (active: boolean) =>
+  `flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+    active
+      ? "bg-accent-soft font-medium text-accent-soft-fg"
+      : "text-fg-muted hover:bg-surface-2 hover:text-fg"
+  }`;
+
+const subLinkClass = (active: boolean) =>
+  `block w-full rounded-md px-3 py-1.5 text-left text-sm transition-colors ${
+    active
+      ? "font-medium text-fg"
+      : "text-fg-muted hover:bg-surface-2 hover:text-fg"
+  }`;
+
+function GroupChevron({ open }: { open: boolean }) {
+  return open ? (
+    <ChevronDown className="h-4 w-4 opacity-70" />
+  ) : (
+    <ChevronRight className="h-4 w-4 opacity-70" />
+  );
+}
 
 function SidebarNav({
   section,
@@ -32,15 +62,8 @@ function SidebarNav({
   const isActive = (main: Section["main"]) => section.main === main;
   const isAdmin = role === "admin";
 
-  const mainLinkClass = (active: boolean) =>
-    `block w-full rounded-md px-3 py-2 text-left transition-colors ${
-      active
-        ? "bg-gray-300 font-semibold dark:bg-gray-700"
-        : "hover:bg-gray-200 dark:hover:bg-gray-700"
-    }`;
-
   return (
-    <nav className="space-y-2">
+    <nav className="space-y-1">
       <Link
         href="/dashboard/domestic"
         onClick={() => {
@@ -62,28 +85,20 @@ function SidebarNav({
               prev === "international" ? null : "international"
             );
           }}
-          className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left transition-colors ${
-            isActive("international")
-              ? "bg-gray-300 font-semibold dark:bg-gray-700"
-              : "hover:bg-gray-200 dark:hover:bg-gray-700"
-          }`}
+          className={groupLinkClass(isActive("international"))}
         >
           <span>International Calculator</span>
-          <span>{open === "international" ? "▾" : "▸"}</span>
+          <GroupChevron open={open === "international"} />
         </Link>
 
         {open === "international" && section.main === "international" && (
-          <div className="ml-4 mt-1 space-y-1">
+          <div className="ml-3 mt-1 space-y-0.5 border-l border-edge pl-3">
             <button
               onClick={() => {
                 setSection({ main: "international", sub: "calculator" });
                 onAnyNavigate?.();
               }}
-              className={`block w-full rounded px-3 py-1 text-left ${
-                section.sub === "calculator"
-                  ? "bg-gray-200 dark:bg-gray-600"
-                  : "hover:bg-gray-100 dark:hover:bg-gray-700"
-              }`}
+              className={subLinkClass(section.sub === "calculator")}
             >
               Calculator
             </button>
@@ -92,11 +107,7 @@ function SidebarNav({
                 setSection({ main: "international", sub: "history" });
                 onAnyNavigate?.();
               }}
-              className={`block w-full rounded px-3 py-1 text-left ${
-                section.sub === "history"
-                  ? "bg-gray-200 dark:bg-gray-600"
-                  : "hover:bg-gray-100 dark:hover:bg-gray-700"
-              }`}
+              className={subLinkClass(section.sub === "history")}
             >
               History
             </button>
@@ -138,28 +149,20 @@ function SidebarNav({
               setSection({ main: "warehouse", sub: "active" });
               setOpen((prev) => (prev === "warehouse" ? null : "warehouse"));
             }}
-            className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left transition-colors ${
-              isActive("warehouse")
-                ? "bg-gray-300 font-semibold dark:bg-gray-700"
-                : "hover:bg-gray-200 dark:hover:bg-gray-700"
-            }`}
+            className={groupLinkClass(isActive("warehouse"))}
           >
             <span>Warehouse</span>
-            <span>{open === "warehouse" ? "▾" : "▸"}</span>
+            <GroupChevron open={open === "warehouse"} />
           </Link>
 
           {open === "warehouse" && section.main === "warehouse" && (
-            <div className="ml-4 mt-1 space-y-1">
+            <div className="ml-3 mt-1 space-y-0.5 border-l border-edge pl-3">
               <button
                 onClick={() => {
                   setSection({ main: "warehouse", sub: "add" });
                   onAnyNavigate?.();
                 }}
-                className={`block w-full rounded px-3 py-1 text-left ${
-                  section.sub === "add"
-                    ? "bg-gray-200 dark:bg-gray-600"
-                    : "hover:bg-gray-100 dark:hover:bg-gray-700"
-                }`}
+                className={subLinkClass(section.sub === "add")}
               >
                 Add Client
               </button>
@@ -168,11 +171,7 @@ function SidebarNav({
                   setSection({ main: "warehouse", sub: "active" });
                   onAnyNavigate?.();
                 }}
-                className={`block w-full rounded px-3 py-1 text-left ${
-                  section.sub === "active"
-                    ? "bg-gray-200 dark:bg-gray-600"
-                    : "hover:bg-gray-100 dark:hover:bg-gray-700"
-                }`}
+                className={subLinkClass(section.sub === "active")}
               >
                 Active Pods
               </button>
@@ -181,11 +180,7 @@ function SidebarNav({
                   setSection({ main: "warehouse", sub: "renewals" });
                   onAnyNavigate?.();
                 }}
-                className={`block w-full rounded px-3 py-1 text-left ${
-                  section.sub === "renewals"
-                    ? "bg-gray-200 dark:bg-gray-600"
-                    : "hover:bg-gray-100 dark:hover:bg-gray-700"
-                }`}
+                className={subLinkClass(section.sub === "renewals")}
               >
                 Renewals
               </button>
@@ -194,11 +189,7 @@ function SidebarNav({
                   setSection({ main: "warehouse", sub: "payments" });
                   onAnyNavigate?.();
                 }}
-                className={`block w-full rounded px-3 py-1 text-left ${
-                  section.sub === "payments"
-                    ? "bg-gray-200 dark:bg-gray-600"
-                    : "hover:bg-gray-100 dark:hover:bg-gray-700"
-                }`}
+                className={subLinkClass(section.sub === "payments")}
               >
                 Payments
               </button>
@@ -207,11 +198,7 @@ function SidebarNav({
                   setSection({ main: "warehouse", sub: "closed" });
                   onAnyNavigate?.();
                 }}
-                className={`block w-full rounded px-3 py-1 text-left ${
-                  section.sub === "closed"
-                    ? "bg-gray-200 dark:bg-gray-600"
-                    : "hover:bg-gray-100 dark:hover:bg-gray-700"
-                }`}
+                className={subLinkClass(section.sub === "closed")}
               >
                 Closed Pods
               </button>
@@ -220,11 +207,7 @@ function SidebarNav({
                   setSection({ main: "warehouse", sub: "payment-alerts" });
                   onAnyNavigate?.();
                 }}
-                className={`block w-full rounded px-3 py-1 text-left ${
-                  section.sub === "payment-alerts"
-                    ? "bg-gray-200 dark:bg-gray-600"
-                    : "hover:bg-gray-100 dark:hover:bg-gray-700"
-                }`}
+                className={subLinkClass(section.sub === "payment-alerts")}
               >
                 Payment Alerts
               </button>
@@ -241,28 +224,20 @@ function SidebarNav({
               setSection({ main: "loans", sub: "create" });
               setOpen((prev) => (prev === "loans" ? null : "loans"));
             }}
-            className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left transition-colors ${
-              isActive("loans")
-                ? "bg-gray-300 font-semibold dark:bg-gray-700"
-                : "hover:bg-gray-200 dark:hover:bg-gray-700"
-            }`}
+            className={groupLinkClass(isActive("loans"))}
           >
             <span>Loans / Advances</span>
-            <span>{open === "loans" ? "▾" : "▸"}</span>
+            <GroupChevron open={open === "loans"} />
           </Link>
 
           {open === "loans" && section.main === "loans" && (
-            <div className="ml-4 mt-1 space-y-1">
+            <div className="ml-3 mt-1 space-y-0.5 border-l border-edge pl-3">
               <button
                 onClick={() => {
                   setSection({ main: "loans", sub: "create" });
                   onAnyNavigate?.();
                 }}
-                className={`block w-full rounded px-3 py-1 text-left ${
-                  section.sub === "create"
-                    ? "bg-gray-200 dark:bg-gray-600"
-                    : "hover:bg-gray-100 dark:hover:bg-gray-700"
-                }`}
+                className={subLinkClass(section.sub === "create")}
               >
                 Create Loan / Payback
               </button>
@@ -271,11 +246,7 @@ function SidebarNav({
                   setSection({ main: "loans", sub: "view" });
                   onAnyNavigate?.();
                 }}
-                className={`block w-full rounded px-3 py-1 text-left ${
-                  section.sub === "view"
-                    ? "bg-gray-200 dark:bg-gray-600"
-                    : "hover:bg-gray-100 dark:hover:bg-gray-700"
-                }`}
+                className={subLinkClass(section.sub === "view")}
               >
                 View Outstanding
               </button>
@@ -284,11 +255,7 @@ function SidebarNav({
                   setSection({ main: "loans", sub: "employees" });
                   onAnyNavigate?.();
                 }}
-                className={`block w-full rounded px-3 py-1 text-left ${
-                  section.sub === "employees"
-                    ? "bg-gray-200 dark:bg-gray-600"
-                    : "hover:bg-gray-100 dark:hover:bg-gray-700"
-                }`}
+                className={subLinkClass(section.sub === "employees")}
               >
                 Manage Employees
               </button>
@@ -336,20 +303,20 @@ export default function Sidebar({
       {mobileOpen && (
         <>
           <div
-            className="fixed inset-0 z-40 bg-black/40 md:hidden"
+            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
             onClick={onMobileClose}
           />
 
-          <aside className="fixed left-0 top-0 z-50 h-full w-64 bg-gray-100 p-6 text-gray-900 dark:bg-gray-800 dark:text-white md:hidden">
-            <div className="mb-4 flex items-center justify-between">
-              <span className="font-semibold">Menu</span>
+          <aside className="fixed left-0 top-0 z-50 h-full w-64 border-r border-edge bg-surface p-4 text-fg md:hidden">
+            <div className="mb-4 flex items-center justify-between px-2">
+              <span className="text-sm font-semibold">Menu</span>
               <button
                 type="button"
                 onClick={onMobileClose}
-                className="rounded px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700"
+                className="rounded-md p-1.5 text-fg-muted transition-colors hover:bg-surface-2 hover:text-fg"
                 aria-label="Close sidebar"
               >
-                ✕
+                <X className="h-4 w-4" />
               </button>
             </div>
 
@@ -365,7 +332,7 @@ export default function Sidebar({
         </>
       )}
 
-      <aside className="sticky top-20 hidden h-[calc(100vh-5rem)] w-64 bg-gray-100 p-6 text-gray-900 dark:bg-gray-800 dark:text-white md:block">
+      <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-64 overflow-y-auto border-r border-edge bg-surface p-4 text-fg md:block">
         <SidebarNav
           section={section}
           setSection={setSection}

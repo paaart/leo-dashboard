@@ -44,7 +44,7 @@ export default function WarehouseRateChangeModal({
   const effectiveAddExtra = isIncrease ? addExtraChargeNow : false;
 
   const inputClass =
-    "w-full p-2 border rounded bg-white dark:bg-gray-800 text-gray-900 dark:text-white";
+    "w-full p-2 border border-edge rounded-lg bg-surface text-fg";
 
   if (!open) return null;
 
@@ -84,16 +84,16 @@ export default function WarehouseRateChangeModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl dark:bg-[#1f2933]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-edge bg-surface p-6 shadow-overlay">
         <div className="mb-3">
           <h3 className="text-lg font-semibold">Change Monthly Rate</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-300">
+          <p className="text-sm text-fg-muted">
             Old rate:{" "}
             <span className="font-semibold">₹{Number(oldRate).toFixed(0)}</span>
           </p>
 
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-xs text-fg-muted">
             Rule: increases can add a one-time partial charge now. Decreases
             apply from next cycle (no refund).
           </p>
@@ -101,7 +101,7 @@ export default function WarehouseRateChangeModal({
 
         <div className="space-y-3">
           <div>
-            <label className="block mb-1 font-medium">
+            <label className="mb-1.5 block text-sm font-medium text-fg">
               New monthly rate (₹)
             </label>
             <input
@@ -113,7 +113,7 @@ export default function WarehouseRateChangeModal({
           </div>
 
           <div>
-            <label className="block mb-1 font-medium">Effective date</label>
+            <label className="mb-1.5 block text-sm font-medium text-fg">Effective date</label>
             <input
               className={inputClass}
               type="date"
@@ -122,8 +122,8 @@ export default function WarehouseRateChangeModal({
             />
           </div>
 
-          <div className="rounded border border-gray-200 dark:border-gray-700 p-3">
-            <div className="flex items-center justify-between">
+          <div className="rounded-lg border border-edge p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="font-medium">
                 Extra charge now (only for increases)
               </div>
@@ -139,7 +139,7 @@ export default function WarehouseRateChangeModal({
               </label>
             </div>
 
-            <div className="mt-2 grid grid-cols-2 gap-2">
+            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
               <div>
                 <label className="block mb-1 text-sm">Extra days</label>
                 <input
@@ -166,7 +166,7 @@ export default function WarehouseRateChangeModal({
             </div>
 
             {!isIncrease ? (
-              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+              <p className="mt-2 text-xs text-fg-muted">
                 Since this is a decrease, we won’t charge anything now. New rate
                 will apply to future auto-charges.
               </p>
@@ -174,7 +174,7 @@ export default function WarehouseRateChangeModal({
           </div>
 
           <div>
-            <label className="block mb-1 font-medium">Note (optional)</label>
+            <label className="mb-1.5 block text-sm font-medium text-fg">Note (optional)</label>
             <input
               className={inputClass}
               value={note}
@@ -188,14 +188,14 @@ export default function WarehouseRateChangeModal({
           <button
             onClick={onClose}
             disabled={saving}
-            className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+            className="rounded-lg border border-edge bg-surface px-4 py-2 text-sm font-medium text-fg transition-colors hover:bg-surface-2"
           >
             Cancel
           </button>
           <button
             onClick={save}
             disabled={saving}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-70"
+            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-fg hover:bg-accent-hover disabled:opacity-70"
           >
             {saving ? "Saving..." : "Apply"}
           </button>

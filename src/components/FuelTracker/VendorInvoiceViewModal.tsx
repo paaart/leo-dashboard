@@ -1,3 +1,4 @@
+import { modalOverlay } from "@/components/shared/ui";
 import { Plus, Trash2, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { SERIAL_COLUMN_CLASS, serialNumber } from "./SerialNumber";
@@ -33,14 +34,14 @@ function formatStatus(status: VehicleExpenseInvoice["status"]) {
 
 function statusClass(status: VehicleExpenseInvoice["status"]) {
   if (status === "paid") {
-    return "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300";
+    return "border-success/25 bg-success-soft text-success-soft-fg";
   }
 
   if (status === "partially_paid") {
-    return "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300";
+    return "border-accent/25 bg-accent-soft text-accent-soft-fg";
   }
 
-  return "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300";
+  return "border-warning/25 bg-warning-soft text-warning-soft-fg";
 }
 
 export function VendorInvoiceViewModal({
@@ -125,21 +126,21 @@ export function VendorInvoiceViewModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="max-h-[92vh] w-full max-w-5xl overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-950">
-        <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 dark:border-gray-800">
+    <div className={modalOverlay}>
+      <div className="max-h-[92vh] w-full max-w-5xl overflow-hidden rounded-xl border border-edge bg-surface shadow-overlay">
+        <div className="flex items-start justify-between gap-4 border-b border-edge px-5 py-4">
           <div>
-            <h2 className="text-lg font-semibold text-gray-950 dark:text-gray-50">
+            <h2 className="text-lg font-semibold text-fg">
               Vendor Invoice Details
             </h2>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-sm text-fg-muted">
               {invoice.vendor_name} - {invoice.invoice_number ?? "No invoice number"}
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+            className="rounded-md p-2 text-fg-muted hover:bg-surface-2 hover:text-fg"
             aria-label="Close invoice details dialog"
           >
             <X className="h-4 w-4" />
@@ -149,39 +150,39 @@ export function VendorInvoiceViewModal({
         <div className="max-h-[calc(92vh-80px)] space-y-5 overflow-y-auto px-5 py-5">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              <p className="text-xs font-semibold uppercase tracking-wide text-fg-muted">
                 Vendor
               </p>
-              <p className="mt-1 font-semibold text-gray-950 dark:text-gray-50">
+              <p className="mt-1 font-semibold text-fg">
                 {invoice.vendor_name}
               </p>
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              <p className="text-xs font-semibold uppercase tracking-wide text-fg-muted">
                 Invoice Number
               </p>
-              <p className="mt-1 text-gray-700 dark:text-gray-200">
+              <p className="mt-1 text-fg-muted">
                 {invoice.invoice_number ?? "-"}
               </p>
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              <p className="text-xs font-semibold uppercase tracking-wide text-fg-muted">
                 Invoice Date
               </p>
-              <p className="mt-1 text-gray-700 dark:text-gray-200">
+              <p className="mt-1 text-fg-muted">
                 {invoice.invoice_date}
               </p>
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              <p className="text-xs font-semibold uppercase tracking-wide text-fg-muted">
                 Due Date
               </p>
-              <p className="mt-1 text-gray-700 dark:text-gray-200">
+              <p className="mt-1 text-fg-muted">
                 {invoice.due_date ?? "-"}
               </p>
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              <p className="text-xs font-semibold uppercase tracking-wide text-fg-muted">
                 Status
               </p>
               <span
@@ -193,49 +194,49 @@ export function VendorInvoiceViewModal({
               </span>
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              <p className="text-xs font-semibold uppercase tracking-wide text-fg-muted">
                 Total Amount
               </p>
-              <p className="mt-1 font-semibold text-gray-950 dark:text-gray-50">
+              <p className="mt-1 font-semibold text-fg">
                 {formatCurrency(invoice.total_amount)}
               </p>
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              <p className="text-xs font-semibold uppercase tracking-wide text-fg-muted">
                 Total Paid
               </p>
-              <p className="mt-1 text-gray-700 dark:text-gray-200">
+              <p className="mt-1 text-fg-muted">
                 {formatCurrency(invoice.paid_amount)}
               </p>
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              <p className="text-xs font-semibold uppercase tracking-wide text-fg-muted">
                 Balance
               </p>
-              <p className="mt-1 text-gray-700 dark:text-gray-200">
+              <p className="mt-1 text-fg-muted">
                 {formatCurrency(invoice.balance_amount)}
               </p>
             </div>
           </div>
 
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+            <p className="text-xs font-semibold uppercase tracking-wide text-fg-muted">
               Remarks
             </p>
-            <p className="mt-1 text-sm text-gray-700 dark:text-gray-200">
+            <p className="mt-1 text-sm text-fg-muted">
               {invoice.remarks ?? "-"}
             </p>
           </div>
 
-          <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800">
-            <div className="border-b border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
-              <h3 className="text-sm font-semibold text-gray-950 dark:text-gray-50">
+          <div className="overflow-hidden rounded-lg border border-edge">
+            <div className="border-b border-edge bg-surface-2 px-4 py-3">
+              <h3 className="text-sm font-semibold text-fg">
                 Line Items
               </h3>
             </div>
             <div className="overflow-x-auto">
               <table className="min-w-230 w-full text-left text-sm">
-                <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
+                <thead className="border-b border-edge bg-surface-2 text-xs uppercase tracking-wide text-fg-muted">
                   <tr>
                     <th className={SERIAL_COLUMN_CLASS}>S.No</th>
                     <th className="px-4 py-3 font-semibold">Scope</th>
@@ -247,11 +248,11 @@ export function VendorInvoiceViewModal({
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                <tbody className="divide-y divide-edge">
                   {invoice.items.map((item, index) => (
                     <tr
                       key={item.id}
-                      className="text-gray-700 dark:text-gray-200"
+                      className="text-fg-muted"
                     >
                       <td className={SERIAL_COLUMN_CLASS}>
                         {serialNumber(index)}
@@ -261,7 +262,7 @@ export function VendorInvoiceViewModal({
                           ? "Vehicle"
                           : "General"}
                       </td>
-                      <td className="px-4 py-3 font-semibold text-gray-950 dark:text-gray-50">
+                      <td className="px-4 py-3 font-semibold text-fg">
                         {item.vehicles.length > 0
                           ? item.vehicles
                               .map((vehicle) => vehicle.vehicle_no)
@@ -282,13 +283,13 @@ export function VendorInvoiceViewModal({
             </div>
           </div>
 
-          <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-800">
+          <div className="rounded-lg border border-edge p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-gray-950 dark:text-gray-50">
+                <h3 className="text-sm font-semibold text-fg">
                   Payments
                 </h3>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                <p className="mt-1 text-sm text-fg-muted">
                   Payment history for this vendor invoice.
                 </p>
               </div>
@@ -306,7 +307,7 @@ export function VendorInvoiceViewModal({
                   setPaymentModalOpen(true);
                 }}
                 disabled={invoice.balance_amount <= 0 || loading}
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-accent-fg hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <Plus className="h-4 w-4" />
                 Record Payment
@@ -315,31 +316,31 @@ export function VendorInvoiceViewModal({
 
             <div className="mt-4 grid gap-4 sm:grid-cols-4">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                <p className="text-xs font-semibold uppercase tracking-wide text-fg-muted">
                   Invoice Total
                 </p>
-                <p className="mt-1 text-gray-700 dark:text-gray-200">
+                <p className="mt-1 text-fg-muted">
                   {formatCurrency(invoice.total_amount)}
                 </p>
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                <p className="text-xs font-semibold uppercase tracking-wide text-fg-muted">
                   Total Paid
                 </p>
-                <p className="mt-1 text-gray-700 dark:text-gray-200">
+                <p className="mt-1 text-fg-muted">
                   {formatCurrency(invoice.paid_amount)}
                 </p>
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                <p className="text-xs font-semibold uppercase tracking-wide text-fg-muted">
                   Outstanding Balance
                 </p>
-                <p className="mt-1 text-gray-700 dark:text-gray-200">
+                <p className="mt-1 text-fg-muted">
                   {formatCurrency(invoice.balance_amount)}
                 </p>
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                <p className="text-xs font-semibold uppercase tracking-wide text-fg-muted">
                   Status
                 </p>
                 <span
@@ -352,10 +353,10 @@ export function VendorInvoiceViewModal({
               </div>
             </div>
 
-            <div className="mt-4 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800">
+            <div className="mt-4 overflow-hidden rounded-lg border border-edge">
               <div className="overflow-x-auto">
                 <table className="min-w-230 w-full text-left text-sm">
-                  <thead className="border-b border-gray-200 bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
+                  <thead className="border-b border-edge bg-surface-2 text-xs uppercase tracking-wide text-fg-muted">
                     <tr>
                       <th className={SERIAL_COLUMN_CLASS}>S.No</th>
                       <th className="px-4 py-3 font-semibold">
@@ -375,12 +376,12 @@ export function VendorInvoiceViewModal({
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                  <tbody className="divide-y divide-edge">
                     {sortedPayments.length === 0 ? (
                       <tr>
                         <td
                           colSpan={8}
-                          className="px-4 py-6 text-center text-sm text-gray-500 dark:text-gray-400"
+                          className="px-4 py-6 text-center text-sm text-fg-muted"
                         >
                           No payments recorded.
                         </td>
@@ -389,7 +390,7 @@ export function VendorInvoiceViewModal({
                       sortedPayments.map((payment, index) => (
                         <tr
                           key={payment.id}
-                          className="text-gray-700 dark:text-gray-200"
+                          className="text-fg-muted"
                         >
                           <td className={SERIAL_COLUMN_CLASS}>
                             {serialNumber(index)}
@@ -417,7 +418,7 @@ export function VendorInvoiceViewModal({
                               type="button"
                               onClick={() => onDeletePayment(invoice, payment)}
                               disabled={loading}
-                              className="inline-flex min-h-9 items-center gap-2 rounded-md border border-red-200 px-3 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/40"
+                              className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-danger/25 px-3 text-sm font-medium text-danger-soft-fg hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               <Trash2 className="h-4 w-4" />
                               Delete Batch
@@ -435,31 +436,34 @@ export function VendorInvoiceViewModal({
       </div>
 
       {paymentModalOpen ? (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-2xl rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-950">
-            <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 dark:border-gray-800">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-xl border border-edge bg-surface shadow-overlay">
+            <div className="flex items-start justify-between gap-4 border-b border-edge px-5 py-4">
               <div>
-                <h3 className="text-lg font-semibold text-gray-950 dark:text-gray-50">
+                <h3 className="text-lg font-semibold text-fg">
                   Record Payment
                 </h3>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                <p className="mt-1 text-sm text-fg-muted">
                   Outstanding balance: {formatCurrency(invoice.balance_amount)}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setPaymentModalOpen(false)}
-                className="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+                className="rounded-md p-2 text-fg-muted hover:bg-surface-2 hover:text-fg"
                 aria-label="Close payment dialog"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmitPayment} className="space-y-4 p-5">
+            <form
+              onSubmit={handleSubmitPayment}
+              className="max-h-[calc(90vh-80px)] space-y-4 overflow-y-auto p-5"
+            >
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="space-y-1.5">
-                  <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                  <span className="text-sm font-medium text-fg">
                     Payment Date
                   </span>
                   <input
@@ -471,12 +475,12 @@ export function VendorInvoiceViewModal({
                         paymentDate: event.target.value,
                       }))
                     }
-                    className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                    className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                   />
                 </label>
 
                 <label className="space-y-1.5">
-                  <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                  <span className="text-sm font-medium text-fg">
                     Amount
                   </span>
                   <input
@@ -490,13 +494,13 @@ export function VendorInvoiceViewModal({
                         amount: event.target.value,
                       }))
                     }
-                    className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                    className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                     placeholder="2500"
                   />
                 </label>
 
                 <label className="space-y-1.5">
-                  <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                  <span className="text-sm font-medium text-fg">
                     Payment Mode
                   </span>
                   <input
@@ -507,13 +511,13 @@ export function VendorInvoiceViewModal({
                         paymentMode: event.target.value,
                       }))
                     }
-                    className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                    className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                     placeholder="Cash, UPI, bank transfer"
                   />
                 </label>
 
                 <label className="space-y-1.5">
-                  <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                  <span className="text-sm font-medium text-fg">
                     Reference Number
                   </span>
                   <input
@@ -524,13 +528,13 @@ export function VendorInvoiceViewModal({
                         referenceNumber: event.target.value,
                       }))
                     }
-                    className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                    className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                     placeholder="Optional"
                   />
                 </label>
 
                 <label className="space-y-1.5 sm:col-span-2">
-                  <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                  <span className="text-sm font-medium text-fg">
                     Remarks
                   </span>
                   <textarea
@@ -542,31 +546,31 @@ export function VendorInvoiceViewModal({
                       }))
                     }
                     rows={3}
-                    className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                    className="w-full rounded-lg border border-edge bg-surface px-3 py-2 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                     placeholder="Optional remarks"
                   />
                 </label>
               </div>
 
               {paymentError ? (
-                <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">
+                <div className="rounded-lg border border-danger/25 bg-danger-soft px-3 py-2 text-sm text-danger-soft-fg">
                   {paymentError}
                 </div>
               ) : null}
 
-              <div className="flex flex-col-reverse gap-3 border-t border-gray-200 pt-4 dark:border-gray-800 sm:flex-row sm:justify-end">
+              <div className="flex flex-col-reverse gap-3 border-t border-edge pt-4 sm:flex-row sm:justify-end">
                 <button
                   type="button"
                   onClick={() => setPaymentModalOpen(false)}
                   disabled={loading}
-                  className="min-h-10 rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                  className="min-h-10 rounded-lg border border-edge px-4 text-sm font-medium text-fg hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="min-h-10 rounded-md bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="min-h-10 rounded-lg bg-accent px-4 text-sm font-semibold text-accent-fg hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {loading ? "Saving..." : "Save Payment"}
                 </button>

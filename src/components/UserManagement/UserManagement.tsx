@@ -1,6 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import {
+  alertDanger,
+  alertSuccess,
+  buttonSecondary,
+  card,
+} from "@/components/shared/ui";
 
 type Role = "user" | "admin";
 type Status = "pending" | "active" | "inactive" | "rejected";
@@ -23,14 +29,10 @@ type UsersResponse =
 const statuses: Status[] = ["pending", "active", "inactive", "rejected"];
 
 const statusStyles: Record<Status, string> = {
-  pending:
-    "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300",
-  active:
-    "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300",
-  inactive:
-    "border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300",
-  rejected:
-    "border-red-200 bg-red-50 text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300",
+  pending: "border-warning/25 bg-warning-soft text-warning-soft-fg",
+  active: "border-success/25 bg-success-soft text-success-soft-fg",
+  inactive: "border-edge bg-surface-2 text-fg-muted",
+  rejected: "border-danger/25 bg-danger-soft text-danger-soft-fg",
 };
 
 function formatDate(value: string) {
@@ -127,11 +129,11 @@ export default function UserManagement() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 text-gray-900 dark:bg-gray-950 dark:text-gray-100 sm:p-6">
+    <div className="min-h-screen bg-canvas p-4 text-fg sm:p-6">
       <div className="mx-auto max-w-7xl space-y-6">
         <div>
           <h1 className="text-2xl font-semibold">User Management</h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          <p className="mt-1 text-sm text-fg-muted">
             Review account requests, approve users, and manage dashboard access.
           </p>
         </div>
@@ -142,13 +144,13 @@ export default function UserManagement() {
               key={status}
               type="button"
               onClick={() => setStatusFilter(status)}
-              className={`rounded-lg border p-4 text-left transition ${
+              className={`rounded-xl border p-4 text-left shadow-card transition ${
                 statusFilter === status
-                  ? "border-blue-500 bg-blue-50 dark:border-blue-500 dark:bg-blue-950/40"
-                  : "border-gray-200 bg-white hover:border-gray-300 dark:border-gray-800 dark:bg-gray-900 dark:hover:border-gray-700"
+                  ? "border-accent bg-accent-soft"
+                  : "border-edge bg-surface hover:border-edge-strong"
               }`}
             >
-              <div className="text-sm capitalize text-gray-500 dark:text-gray-400">
+              <div className="text-sm capitalize text-fg-muted">
                 {status}
               </div>
               <div className="mt-2 text-2xl font-semibold">
@@ -158,23 +160,23 @@ export default function UserManagement() {
           ))}
         </div>
 
-        <div className="rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-          <div className="flex flex-col gap-3 border-b border-gray-200 p-4 dark:border-gray-800 sm:flex-row sm:items-center sm:justify-between">
+        <div className={card}>
+          <div className="flex flex-col gap-3 border-b border-edge p-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="font-semibold">Dashboard Users</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-fg-muted">
                 Showing {filteredUsers.length} user
                 {filteredUsers.length === 1 ? "" : "s"}.
               </p>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <select
                 value={statusFilter}
                 onChange={(event) =>
                   setStatusFilter(event.target.value as Status | "all")
                 }
-                className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950"
+                className="rounded-lg border border-edge bg-surface px-3 py-2 text-sm text-fg transition-colors focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25"
               >
                 <option value="all">All statuses</option>
                 {statuses.map((status) => (
@@ -186,7 +188,7 @@ export default function UserManagement() {
               <button
                 type="button"
                 onClick={() => void loadUsers()}
-                className="rounded-md border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+                className={buttonSecondary}
               >
                 Refresh
               </button>
@@ -194,20 +196,20 @@ export default function UserManagement() {
           </div>
 
           {message && (
-            <div className="mx-4 mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300">
+            <div className={`mx-4 mt-4 ${alertSuccess}`}>
               {message}
             </div>
           )}
 
           {error && (
-            <div className="mx-4 mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">
+            <div className={`mx-4 mt-4 ${alertDanger}`}>
               {error}
             </div>
           )}
 
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-800">
-              <thead className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500 dark:bg-gray-950 dark:text-gray-400">
+            <table className="min-w-full divide-y divide-edge text-sm">
+              <thead className="bg-surface-2 text-left text-xs uppercase tracking-wide text-fg-muted">
                 <tr>
                   <th className="px-4 py-3">Full Name</th>
                   <th className="px-4 py-3">Username</th>
@@ -219,12 +221,12 @@ export default function UserManagement() {
                   <th className="px-4 py-3">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+              <tbody className="divide-y divide-edge">
                 {loading ? (
                   <tr>
                     <td
                       colSpan={8}
-                      className="px-4 py-10 text-center text-gray-500 dark:text-gray-400"
+                      className="px-4 py-10 text-center text-fg-muted"
                     >
                       Loading users...
                     </td>
@@ -233,7 +235,7 @@ export default function UserManagement() {
                   <tr>
                     <td
                       colSpan={8}
-                      className="px-4 py-10 text-center text-gray-500 dark:text-gray-400"
+                      className="px-4 py-10 text-center text-fg-muted"
                     >
                       No users found for this status.
                     </td>
@@ -242,7 +244,7 @@ export default function UserManagement() {
                   filteredUsers.map((user) => (
                     <tr
                       key={user.id}
-                      className="align-top hover:bg-gray-50 dark:hover:bg-gray-950/70"
+                      className="align-top transition-colors hover:bg-surface-2/60"
                     >
                       <td className="whitespace-nowrap px-4 py-3 font-medium">
                         {user.full_name || "-"}
@@ -283,7 +285,7 @@ export default function UserManagement() {
                                     "User approved."
                                   )
                                 }
-                                className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+                                className="rounded-lg bg-success px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 disabled:opacity-60"
                               >
                                 Approve as User
                               </button>
@@ -297,7 +299,7 @@ export default function UserManagement() {
                                     "Admin approved."
                                   )
                                 }
-                                className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+                                className="rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-accent-fg hover:bg-accent-hover disabled:opacity-60"
                               >
                                 Approve as Admin
                               </button>
@@ -311,7 +313,7 @@ export default function UserManagement() {
                                     "Request rejected."
                                   )
                                 }
-                                className="rounded-md border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-60 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950/40"
+                                className="rounded-lg border border-danger/30 px-3 py-1.5 text-xs font-medium text-danger-soft-fg hover:bg-danger-soft disabled:opacity-60"
                               >
                                 Reject
                               </button>
@@ -333,7 +335,7 @@ export default function UserManagement() {
                                     "Role updated."
                                   )
                                 }
-                                className="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 disabled:opacity-60 dark:border-gray-700 dark:hover:bg-gray-800"
+                                className="rounded-lg border border-edge px-3 py-1.5 text-xs font-medium hover:bg-surface-2 disabled:opacity-60"
                               >
                                 Change Role
                               </button>
@@ -347,7 +349,7 @@ export default function UserManagement() {
                                     "User deactivated."
                                   )
                                 }
-                                className="rounded-md border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-60 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-950/40"
+                                className="rounded-lg border border-danger/30 px-3 py-1.5 text-xs font-medium text-danger-soft-fg hover:bg-danger-soft disabled:opacity-60"
                               >
                                 Deactivate
                               </button>
@@ -367,7 +369,7 @@ export default function UserManagement() {
                                     "User reactivated."
                                   )
                                 }
-                                className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+                                className="rounded-lg bg-success px-3 py-1.5 text-xs font-medium text-white hover:opacity-90 disabled:opacity-60"
                               >
                                 Reactivate
                               </button>
@@ -384,7 +386,7 @@ export default function UserManagement() {
                                     "Role updated."
                                   )
                                 }
-                                className="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50 disabled:opacity-60 dark:border-gray-700 dark:hover:bg-gray-800"
+                                className="rounded-lg border border-edge px-3 py-1.5 text-xs font-medium hover:bg-surface-2 disabled:opacity-60"
                               >
                                 Set Role
                               </button>

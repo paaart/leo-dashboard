@@ -75,7 +75,7 @@ export default function WarehouseRenewModal({
   if (!open) return null;
 
   const inputClass =
-    "w-full rounded border border-gray-300 bg-white p-2 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white";
+    "w-full rounded-lg border border-edge bg-surface p-2 text-fg";
 
   const save = async () => {
     const newRate = Number(rate);
@@ -133,14 +133,14 @@ export default function WarehouseRenewModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div className="w-full max-w-lg rounded-lg bg-white p-6 shadow-xl dark:bg-[#1f2933]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-edge bg-surface p-6 shadow-overlay">
         <div className="mb-4">
           <h3 className="text-lg font-semibold">Renew Client</h3>
-          <p className="text-sm text-gray-600 dark:text-gray-300">
+          <p className="text-sm text-fg-muted">
             {clientId} — {clientName}
           </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-xs text-fg-muted">
             Ends on{" "}
             {endDate ? new Date(endDate).toLocaleDateString("en-IN") : "—"}
           </p>
@@ -148,7 +148,7 @@ export default function WarehouseRenewModal({
 
         <div className="space-y-3">
           <div>
-            <label className="mb-1 block font-medium">
+            <label className="mb-1.5 block text-sm font-medium text-fg">
               New monthly rate (₹)
             </label>
             <input
@@ -161,7 +161,7 @@ export default function WarehouseRenewModal({
           </div>
 
           <div>
-            <label className="mb-1 block font-medium">
+            <label className="mb-1.5 block text-sm font-medium text-fg">
               New duration (months)
             </label>
             <input
@@ -174,7 +174,7 @@ export default function WarehouseRenewModal({
           </div>
 
           <div>
-            <label className="mb-1 block font-medium">Insurance</label>
+            <label className="mb-1.5 block text-sm font-medium text-fg">Insurance</label>
             <select
               className={inputClass}
               value={insuranceProvider}
@@ -194,7 +194,7 @@ export default function WarehouseRenewModal({
           </div>
 
           <div>
-            <label className="mb-1 block font-medium">IDV (₹)</label>
+            <label className="mb-1.5 block text-sm font-medium text-fg">IDV (₹)</label>
             <input
               className={inputClass}
               type="number"
@@ -204,14 +204,14 @@ export default function WarehouseRenewModal({
               onChange={(e) => setInsuranceIdv(e.target.value)}
             />
             {insuranceProvider !== "leo" && (
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              <p className="mt-1 text-xs text-fg-muted">
                 IDV applies only when Leo insurance is selected.
               </p>
             )}
           </div>
 
           <div>
-            <label className="mb-1 block font-medium">
+            <label className="mb-1.5 block text-sm font-medium text-fg">
               Insurance value (₹)
             </label>
             <input
@@ -229,7 +229,7 @@ export default function WarehouseRenewModal({
           <button
             onClick={onClose}
             disabled={saving}
-            className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-70 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+            className="rounded-lg border border-edge bg-surface px-4 py-2 text-sm font-medium text-fg transition-colors hover:bg-surface-2 disabled:opacity-70"
           >
             Cancel
           </button>
@@ -237,7 +237,7 @@ export default function WarehouseRenewModal({
           <button
             onClick={save}
             disabled={saving}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-70"
+            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-accent-fg hover:bg-accent-hover disabled:opacity-70"
           >
             {saving ? "Saving..." : "Save"}
           </button>

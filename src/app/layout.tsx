@@ -1,7 +1,18 @@
 // src/app/layout.tsx
 import "./globals.css";
 import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "react-hot-toast";
+
+const geistSans = Geist({
+  subsets: ["latin"],
+  variable: "--font-geist-sans",
+});
+
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-geist-mono",
+});
 
 export const metadata: Metadata = {
   title: "Leo Dashboard",
@@ -14,9 +25,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <link rel="icon" href="/favicon.ico" />
-      <body className="bg-white text-gray-900 dark:bg-gray-950 dark:text-white">
+      <body className="bg-canvas text-fg antialiased">
         <Toaster position="top-center" />
         {children}
       </body>

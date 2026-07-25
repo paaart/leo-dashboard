@@ -67,15 +67,15 @@ export function VehicleSearchSelect({
           setQuery(event.target.value);
           if (!open) setOpen(true);
         }}
-        className="h-9 w-full rounded-md border border-gray-300 bg-white px-3 pr-8 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+        className="h-9 w-full rounded-lg border border-edge bg-surface px-3 pr-8 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
         placeholder={placeholder}
       />
-      <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-gray-500">
+      <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-fg-muted">
         <ChevronDown className="h-3.5 w-3.5" />
       </span>
 
       {open ? (
-        <div className="absolute left-0 top-full z-[70] mt-1 w-full max-h-56 overflow-auto rounded-md border border-gray-200 bg-white text-sm shadow-lg dark:border-gray-800 dark:bg-gray-950">
+        <div className="absolute left-0 top-full z-[70] mt-1 w-full max-h-56 overflow-auto rounded-lg border border-edge bg-surface text-sm shadow-overlay">
           <button
             type="button"
             onClick={() => {
@@ -83,13 +83,13 @@ export function VehicleSearchSelect({
               setOpen(false);
               setQuery("");
             }}
-            className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-900"
+            className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-fg-muted hover:bg-surface-2"
           >
             <span>{emptyLabel}</span>
             <X className="h-4 w-4" />
           </button>
           {filteredVehicles.length === 0 ? (
-            <div className="px-3 py-2 text-gray-500 dark:text-gray-400">
+            <div className="px-3 py-2 text-fg-muted">
               {vehicles.length === 0 ? "No vehicles loaded" : "No vehicles found"}
             </div>
           ) : (
@@ -102,10 +102,10 @@ export function VehicleSearchSelect({
                   setOpen(false);
                   setQuery("");
                 }}
-                className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-900"
+                className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-fg hover:bg-surface-2"
               >
                 <span>{vehicle.vehicle_no}</span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
+                <span className="text-xs text-fg-muted">
                   {[vehicle.vehicle_type, vehicle.company]
                     .filter(Boolean)
                     .join(" - ")}

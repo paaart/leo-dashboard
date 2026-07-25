@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { inputField, buttonPrimary, buttonSecondary } from "@/components/shared/ui";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
@@ -144,23 +145,23 @@ export default function LoginPage() {
     requestLoading || Boolean(requestValidationError());
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 text-gray-900 dark:bg-gray-950 dark:text-gray-100">
-      <div className="w-full max-w-md rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <h1 className="text-2xl font-semibold">Leo Dashboard</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+    <div className="flex min-h-screen items-center justify-center bg-canvas px-4 text-fg">
+      <div className="w-full max-w-md rounded-xl border border-edge bg-surface p-6 shadow-card">
+        <h1 className="text-2xl font-semibold tracking-tight">Leo Dashboard</h1>
+        <p className="mt-1 text-sm text-fg-muted">
           {showRequestForm
             ? "Request dashboard access from an administrator."
             : "Sign in with your dashboard account."}
         </p>
 
         {error && (
-          <p className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">
+          <p className="mt-4 rounded-lg border border-danger/25 bg-danger-soft px-3 py-2 text-sm text-danger-soft-fg">
             {error}
           </p>
         )}
 
         {success && (
-          <p className="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300">
+          <p className="mt-4 rounded-lg border border-success/25 bg-success-soft px-3 py-2 text-sm text-success-soft-fg">
             {success}
           </p>
         )}
@@ -168,7 +169,7 @@ export default function LoginPage() {
         {showRequestForm ? (
           <form onSubmit={handleRequestAccess} className="mt-6 space-y-4">
             <input
-              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
+              className={`${inputField}`}
               type="text"
               placeholder="Full Name"
               value={requestForm.fullName}
@@ -178,7 +179,7 @@ export default function LoginPage() {
               required
             />
             <input
-              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
+              className={`${inputField}`}
               type="text"
               placeholder="Username / Emp Code"
               value={requestForm.username}
@@ -189,7 +190,7 @@ export default function LoginPage() {
               required
             />
             <input
-              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
+              className={`${inputField}`}
               type="email"
               placeholder="Email"
               value={requestForm.email}
@@ -200,7 +201,7 @@ export default function LoginPage() {
               required
             />
             <input
-              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
+              className={`${inputField}`}
               type="tel"
               placeholder="Phone Number"
               value={requestForm.phone}
@@ -211,7 +212,7 @@ export default function LoginPage() {
               required
             />
             <input
-              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
+              className={`${inputField}`}
               type="password"
               placeholder="Password"
               value={requestForm.password}
@@ -222,7 +223,7 @@ export default function LoginPage() {
               required
             />
             <input
-              className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
+              className={`${inputField}`}
               type="password"
               placeholder="Confirm Password"
               value={requestForm.confirmPassword}
@@ -236,7 +237,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={disabledRequestSubmit}
-              className="w-full rounded-md bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className={`${buttonPrimary} w-full`}
             >
               {requestLoading ? "Submitting..." : "Submit Request"}
             </button>
@@ -247,7 +248,7 @@ export default function LoginPage() {
                 setError(null);
                 setSuccess(null);
               }}
-              className="w-full rounded-md border border-gray-300 px-4 py-2 font-medium hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+              className={`${buttonSecondary} w-full`}
             >
               Back to Login
             </button>
@@ -256,13 +257,13 @@ export default function LoginPage() {
           <form onSubmit={handleLogin}>
             <label
               htmlFor="username"
-              className="mt-6 block text-sm font-medium text-gray-700 dark:text-gray-300"
+              className="mt-6 block text-sm font-medium text-fg"
             >
               Username / Emp Code
             </label>
             <input
               id="username"
-              className="mt-2 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
+              className={`mt-2 ${inputField}`}
               type="text"
               placeholder="Username"
               value={username}
@@ -272,7 +273,7 @@ export default function LoginPage() {
             />
 
             <input
-              className="mt-4 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-gray-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100"
+              className={`mt-4 ${inputField}`}
               type="password"
               placeholder="Password"
               value={password}
@@ -284,7 +285,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading || !username.trim() || !password}
-              className="mt-6 w-full rounded-md bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className={`${buttonPrimary} mt-6 w-full`}
             >
               {loading ? "Signing in..." : "Login"}
             </button>
@@ -295,7 +296,7 @@ export default function LoginPage() {
                 setError(null);
                 setSuccess(null);
               }}
-              className="mt-3 w-full rounded-md border border-gray-300 px-4 py-2 font-medium hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+              className={`${buttonSecondary} mt-3 w-full`}
             >
               Request Access / Create Account
             </button>

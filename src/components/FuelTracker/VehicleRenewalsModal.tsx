@@ -1,3 +1,4 @@
+import { modalOverlay } from "@/components/shared/ui";
 import { X } from "lucide-react";
 import type { Vehicle } from "@/lib/fuel-tracker/types";
 
@@ -31,20 +32,20 @@ function RenewalRow({
   vendor: string | null;
 }) {
   return (
-    <tr className="border-t border-gray-200 text-sm dark:border-gray-800">
-      <td className="px-4 py-3 font-medium text-gray-950 dark:text-gray-50">
+    <tr className="border-t border-edge text-sm">
+      <td className="px-4 py-3 font-medium text-fg">
         {label}
       </td>
-      <td className="px-4 py-3 text-gray-700 dark:text-gray-200">
+      <td className="px-4 py-3 text-fg-muted">
         {fmtDate(lastRenewalDate)}
       </td>
-      <td className="px-4 py-3 text-gray-700 dark:text-gray-200">
+      <td className="px-4 py-3 text-fg-muted">
         {fmtDate(nextRenewalDate)}
       </td>
-      <td className="px-4 py-3 text-gray-700 dark:text-gray-200">
+      <td className="px-4 py-3 text-fg-muted">
         {fmtCurrency(amount)}
       </td>
-      <td className="px-4 py-3 text-gray-700 dark:text-gray-200">
+      <td className="px-4 py-3 text-fg-muted">
         {vendor ?? "-"}
       </td>
     </tr>
@@ -62,25 +63,25 @@ export function VehicleRenewalsModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      className={modalOverlay}
       role="dialog"
       aria-modal="true"
       aria-labelledby="vehicle-renewals-title"
       onClick={onClose}
     >
       <div
-        className="max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-950"
+        className="max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-xl border border-edge bg-surface shadow-overlay"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 dark:border-gray-800">
+        <div className="flex items-start justify-between gap-4 border-b border-edge px-5 py-4">
           <div>
             <h2
               id="vehicle-renewals-title"
-              className="text-lg font-semibold text-gray-950 dark:text-gray-50"
+              className="text-lg font-semibold text-fg"
             >
               Renewals
             </h2>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-sm text-fg-muted">
               {vehicle.vehicle_no}
               {vehicle.company ? ` · ${vehicle.company}` : ""}
             </p>
@@ -88,7 +89,7 @@ export function VehicleRenewalsModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+            className="rounded-md p-2 text-fg-muted hover:bg-surface-2 hover:text-fg"
             aria-label="Close renewals dialog"
           >
             <X className="h-4 w-4" />
@@ -96,13 +97,13 @@ export function VehicleRenewalsModal({
         </div>
 
         <div className="max-h-[calc(90vh-4rem)] overflow-auto px-5 py-5">
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-fg-muted">
             Alerts and urgency are driven from the next renewal date.
           </p>
 
-          <div className="mt-4 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800">
-            <table className="w-full text-left">
-              <thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:bg-gray-900 dark:text-gray-400">
+          <div className="mt-4 overflow-x-auto rounded-lg border border-edge">
+            <table className="min-w-max w-full text-left">
+              <thead className="bg-surface-2 text-xs uppercase tracking-wide text-fg-muted">
                 <tr>
                   <th className="px-4 py-3 font-semibold">Item</th>
                   <th className="px-4 py-3 font-semibold">Last Renewal</th>
@@ -111,7 +112,7 @@ export function VehicleRenewalsModal({
                   <th className="px-4 py-3 font-semibold">Vendor</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+              <tbody className="divide-y divide-edge">
                 <RenewalRow
                   label="National Permit"
                   lastRenewalDate={vehicle.national_permit_last_renewal_date}
@@ -137,7 +138,7 @@ export function VehicleRenewalsModal({
             </table>
           </div>
 
-          <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-200">
+          <div className="mt-4 rounded-lg border border-accent/25 bg-accent-soft px-4 py-3 text-sm text-accent-soft-fg">
             Last Renewal is the date payment was actually made. Next Renewal is
             the date used for alerts and urgency.
           </div>

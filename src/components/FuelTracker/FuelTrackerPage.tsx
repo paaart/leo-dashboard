@@ -79,10 +79,10 @@ function SectionHeader({
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <h2 className="text-lg font-semibold text-gray-950 dark:text-gray-50">
+        <h2 className="text-lg font-semibold text-fg">
           {title}
         </h2>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        <p className="mt-1 text-sm text-fg-muted">
           {description}
         </p>
       </div>
@@ -105,7 +105,7 @@ function AddButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+      className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-accent px-4 text-sm font-semibold text-accent-fg shadow-card hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
     >
       <Plus className="h-4 w-4" />
       {children}
@@ -131,12 +131,12 @@ function SummaryCards({
       {cards.map((card) => (
         <div
           key={card.label}
-          className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-950"
+          className="rounded-xl border border-edge bg-surface p-4 shadow-card"
         >
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-fg-muted">
             {card.label}
           </p>
-          <p className="mt-2 text-xl font-semibold text-gray-950 dark:text-gray-50">
+          <p className="mt-2 text-xl font-semibold text-fg">
             {card.value}
           </p>
         </div>
@@ -795,17 +795,17 @@ export default function FuelTrackerPage() {
   };
 
   return (
-    <div className="min-h-full bg-gray-50 px-4 py-6 text-gray-950 dark:bg-gray-950 dark:text-gray-50 sm:px-6 lg:px-8">
+    <div className="min-h-full bg-canvas px-4 py-6 text-fg sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
-        <div className="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-4 rounded-xl border border-edge bg-surface p-5 shadow-card sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-blue-600 dark:text-blue-400">
+            <p className="text-xs font-semibold uppercase tracking-wide text-accent">
               Operations
             </p>
-            <h1 className="mt-2 text-2xl font-semibold tracking-tight text-gray-950 dark:text-gray-50">
+            <h1 className="mt-2 text-2xl font-semibold tracking-tight text-fg">
               Vehicle Tracker
             </h1>
-            <p className="mt-2 max-w-2xl text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-2 max-w-2xl text-sm text-fg-muted">
               Monitor vehicle fuel usage, expenses, mileage, and operational
               costs.
             </p>
@@ -818,7 +818,7 @@ export default function FuelTrackerPage() {
               void loadVehicleRenewalAlerts();
             }}
             disabled={loading || analyticsLoading || renewalAlertsLoading}
-            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-edge px-4 text-sm font-medium text-fg hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <RefreshCw
               className={`h-4 w-4 ${
@@ -874,9 +874,9 @@ export default function FuelTrackerPage() {
               onDismiss={handleDismissVehicleRenewalAlert}
               onCreateInvoice={handleCreateRenewalVendorInvoice}
             />
-            <div className="grid gap-3 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950 md:grid-cols-2">
+            <div className="grid gap-3 rounded-xl border border-edge bg-surface p-4 shadow-card md:grid-cols-2">
               <label className="space-y-1.5">
-                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                <span className="text-sm font-medium text-fg">
                   Vehicle Filter
                 </span>
                 <VehicleSearchSelect
@@ -885,7 +885,7 @@ export default function FuelTrackerPage() {
                   onChange={setVehicleFilter}
                   emptyLabel="All vehicles"
                 />
-                <span className="text-xs text-gray-500 dark:text-gray-400">
+                <span className="text-xs text-fg-muted">
                   Search and select a vehicle to narrow the list.
                 </span>
               </label>
@@ -934,9 +934,9 @@ export default function FuelTrackerPage() {
               }
             />
 
-            <div className="grid gap-3 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950 md:grid-cols-3">
+            <div className="grid gap-3 rounded-xl border border-edge bg-surface p-4 shadow-card md:grid-cols-3">
               <label className="space-y-1.5">
-                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                <span className="text-sm font-medium text-fg">
                   Vehicle Filter
                 </span>
                 <VehicleSearchSelect
@@ -945,32 +945,32 @@ export default function FuelTrackerPage() {
                   onChange={setFuelVehicleFilter}
                   emptyLabel="All vehicles"
                 />
-                <span className="text-xs text-gray-500 dark:text-gray-400">
+                <span className="text-xs text-fg-muted">
                   Search and select a vehicle to narrow the list.
                 </span>
               </label>
 
               <label className="space-y-1.5">
-                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                <span className="text-sm font-medium text-fg">
                   From
                 </span>
                 <input
                   type="date"
                   value={dateFrom}
                   onChange={(event) => setDateFrom(event.target.value)}
-                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                  className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                 />
               </label>
 
               <label className="space-y-1.5">
-                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                <span className="text-sm font-medium text-fg">
                   To
                 </span>
                 <input
                   type="date"
                   value={dateTo}
                   onChange={(event) => setDateTo(event.target.value)}
-                  className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                  className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                 />
               </label>
             </div>
@@ -1024,7 +1024,7 @@ export default function FuelTrackerPage() {
               <SummaryCards cards={vendorInvoiceSummaryCards} />
             ) : null}
 
-            <div className="flex flex-wrap gap-2 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950">
+            <div className="flex flex-wrap gap-2 rounded-xl border border-edge bg-surface p-4 shadow-card">
               {[
                 { id: "all", label: "All" },
                 { id: "unpaid", label: "Unpaid" },
@@ -1044,8 +1044,8 @@ export default function FuelTrackerPage() {
                     }
                     className={`min-h-9 rounded-md px-3 text-sm font-medium transition-colors ${
                       active
-                        ? "bg-blue-600 text-white shadow-sm"
-                        : "border border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                        ? "bg-accent text-accent-fg shadow-card"
+                        : "border border-edge text-fg hover:bg-surface-2"
                     }`}
                   >
                     {filter.label}

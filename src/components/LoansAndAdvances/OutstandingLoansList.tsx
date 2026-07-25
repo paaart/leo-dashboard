@@ -11,6 +11,19 @@ import {
   PageHeader,
   SectionCard,
 } from "@/components/shared/DashboardUI";
+import {
+  badgeClass,
+  buttonPrimary,
+  buttonSecondary,
+  iconButton,
+  inputField,
+  modalOverlay,
+  modalPanel,
+  modalTitle,
+  tableHead,
+  tableHeadCell,
+  tableWrapper,
+} from "@/components/shared/ui";
 import LoanSummaryCards from "./LoanSummaryCards";
 
 interface EmployeeInfo {
@@ -211,7 +224,7 @@ export default function OutstandingLoansList() {
 
   if (loading) {
     return (
-      <div className="min-h-full bg-gray-50 px-4 py-6 text-gray-950 dark:bg-gray-950 dark:text-gray-50 sm:px-6 lg:px-8">
+      <div className="min-h-full bg-canvas px-4 py-6 text-fg sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl space-y-6">
           <PageHeader
             eyebrow="Finance"
@@ -225,7 +238,7 @@ export default function OutstandingLoansList() {
   }
 
   return (
-    <div className="min-h-full bg-gray-50 px-4 py-6 text-gray-950 dark:bg-gray-950 dark:text-gray-50 sm:px-6 lg:px-8">
+    <div className="min-h-full bg-canvas px-4 py-6 text-fg sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
         <PageHeader
           eyebrow="Finance"
@@ -235,7 +248,7 @@ export default function OutstandingLoansList() {
             <button
               type="button"
               onClick={() => setIsDownloadModalOpen(true)}
-              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+              className={buttonSecondary}
             >
               <Download className="h-4 w-4" />
               Download CSV
@@ -255,41 +268,41 @@ export default function OutstandingLoansList() {
               description="Employees with active loan or advance balances will appear here."
             />
           ) : (
-            <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800">
+            <div className={tableWrapper}>
               <table className="min-w-[820px] w-full text-sm">
-                <thead className="bg-gray-50 text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+                <thead className={tableHead}>
                   <tr>
-                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                    <th className={`${tableHeadCell} text-left`}>
                       Employee Name
                     </th>
-                    <th className="border-b border-gray-200 px-4 py-3 text-right font-semibold dark:border-gray-800">
+                    <th className={`${tableHeadCell} text-right`}>
                       Total Outstanding
                     </th>
-                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                    <th className={`${tableHeadCell} text-left`}>
                       Last Transaction Date
                     </th>
-                    <th className="border-b border-gray-200 px-4 py-3 text-left font-semibold dark:border-gray-800">
+                    <th className={`${tableHeadCell} text-left`}>
                       Transaction Count
                     </th>
-                    <th className="border-b border-gray-200 px-4 py-3 text-right font-semibold dark:border-gray-800">
+                    <th className={`${tableHeadCell} text-right`}>
                       Actions
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                <tbody className="divide-y divide-edge">
                   {loans.map((loan) => {
                     const outstanding = getOutstandingValue(loan);
                     return (
                       <tr
                         key={loan.employee_id}
-                        className="bg-white hover:bg-gray-50 dark:bg-gray-950 dark:hover:bg-gray-900"
+                        className="bg-surface transition-colors hover:bg-surface-2/60"
                       >
                         <td className="px-4 py-3">
                           <div>
-                            <p className="font-medium text-gray-950 dark:text-gray-50">
+                            <p className="font-medium text-fg">
                               {loan.name}
                             </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                            <p className="text-xs text-fg-muted">
                               {loan.employee_code}
                             </p>
                           </div>
@@ -298,18 +311,18 @@ export default function OutstandingLoansList() {
                           <span
                             className={`font-semibold tabular-nums ${
                               outstanding > 0
-                                ? "text-blue-700 dark:text-blue-300"
-                                : "text-gray-700 dark:text-gray-300"
+                                ? "text-accent"
+                                : "text-fg-muted"
                             }`}
                           >
                             {formatCurrency(outstanding)}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                        <td className="px-4 py-3 text-fg-muted">
                           {formatDate(loan.last_txn_date)}
                         </td>
                         <td className="px-4 py-3">
-                          <span className="inline-flex rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs font-medium text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                          <span className={badgeClass("neutral")}>
                             {loan.txn_count ?? 0} transactions
                           </span>
                         </td>
@@ -317,7 +330,7 @@ export default function OutstandingLoansList() {
                           <button
                             type="button"
                             onClick={() => setSelectedEmployee(loan)}
-                            className="inline-flex min-h-9 items-center justify-center gap-2 rounded-md border border-gray-300 px-3 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                            className={buttonSecondary}
                           >
                             <Eye className="h-4 w-4" />
                             View History
@@ -335,14 +348,14 @@ export default function OutstandingLoansList() {
 
       {/* Download modal */}
       {isDownloadModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-lg border border-gray-200 bg-white p-5 shadow-xl dark:border-gray-800 dark:bg-gray-950">
+        <div className={modalOverlay}>
+          <div className={`${modalPanel} max-h-[90vh] max-w-md overflow-y-auto p-5`}>
             <div className="mb-5 flex items-start justify-between gap-3">
               <div>
-                <h3 className="text-lg font-semibold text-gray-950 dark:text-gray-50">
+                <h3 className={modalTitle}>
                   Download Transactions
                 </h3>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                <p className="mt-1 text-sm text-fg-muted">
                   Export all transactions in a selected date range.
                 </p>
               </div>
@@ -350,7 +363,7 @@ export default function OutstandingLoansList() {
                 type="button"
                 onClick={() => setIsDownloadModalOpen(false)}
                 disabled={isDownloading}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-gray-300 text-gray-600 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+                className={`${iconButton} disabled:cursor-not-allowed disabled:opacity-60`}
               >
                 <X className="h-4 w-4" />
               </button>
@@ -358,26 +371,26 @@ export default function OutstandingLoansList() {
 
             <div className="space-y-4">
               <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                <label className="text-sm font-medium text-fg">
                   From date
                 </label>
                 <input
                   type="date"
                   value={fromDate}
                   onChange={(e) => setFromDate(e.target.value)}
-                  className="h-10 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                  className={`${inputField} h-10`}
                 />
               </div>
 
               <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                <label className="text-sm font-medium text-fg">
                   To date
                 </label>
                 <input
                   type="date"
                   value={toDate}
                   onChange={(e) => setToDate(e.target.value)}
-                  className="h-10 rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                  className={`${inputField} h-10`}
                 />
               </div>
             </div>
@@ -386,7 +399,7 @@ export default function OutstandingLoansList() {
               <button
                 type="button"
                 onClick={() => setIsDownloadModalOpen(false)}
-                className="inline-flex min-h-10 items-center justify-center rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                className={buttonSecondary}
                 disabled={isDownloading}
               >
                 Cancel
@@ -394,7 +407,7 @@ export default function OutstandingLoansList() {
               <button
                 type="button"
                 onClick={handleDownloadCsv}
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-blue-600 px-4 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className={buttonPrimary}
                 disabled={isDownloading}
               >
                 <Download className="h-4 w-4" />

@@ -80,26 +80,26 @@ export function FuelDashboardCards({
         return (
           <div
             key={card.label}
-            className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-950"
+            className="rounded-xl border border-edge bg-surface p-4 shadow-card"
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-sm text-fg-muted">
                   {card.label}
                 </p>
                 {loading ? (
-                  <div className="mt-2 h-7 w-28 animate-pulse rounded bg-gray-100 dark:bg-gray-800" />
+                  <div className="mt-2 h-7 w-28 animate-pulse rounded bg-surface-2" />
                 ) : (
-                  <p className="mt-1 text-2xl font-semibold text-gray-950 dark:text-gray-50">
+                  <p className="mt-1 text-2xl font-semibold tracking-tight text-fg">
                     {card.value}
                   </p>
                 )}
               </div>
-              <div className="rounded-md border border-gray-200 bg-gray-50 p-2 text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+              <div className="rounded-lg bg-accent-soft p-2 text-accent-soft-fg">
                 <Icon className="h-5 w-5" />
               </div>
             </div>
-            <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+            <p className="mt-3 text-xs text-fg-subtle">
               {card.hint}
             </p>
           </div>

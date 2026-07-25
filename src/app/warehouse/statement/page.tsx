@@ -114,9 +114,9 @@ export default function WarehouseStatement() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white p-10 text-black">
+    <div className="min-h-screen bg-white p-4 text-black sm:p-10">
       <div className="mx-auto max-w-5xl">
-        <div className="mb-6 flex items-start justify-between gap-6">
+        <div className="mb-6 flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h1 className="mb-2 text-2xl font-bold">
               Warehouse Ledger Statement
@@ -135,8 +135,8 @@ export default function WarehouseStatement() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3 print:hidden">
-            <div className="flex overflow-hidden rounded border border-gray-300 dark:border-gray-700">
+          <div className="flex flex-wrap items-center gap-3 print:hidden">
+            <div className="flex overflow-hidden rounded-lg border border-gray-300">
               <button
                 type="button"
                 onClick={() => setDownloadMode("client")}
@@ -144,7 +144,7 @@ export default function WarehouseStatement() {
                   "px-4 py-2 text-sm font-medium transition",
                   downloadMode === "client"
                     ? "bg-blue-600 text-white"
-                    : "bg-white text-black hover:bg-gray-100 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700",
+                    : "bg-white text-black hover:bg-gray-100",
                 ].join(" ")}
               >
                 Client
@@ -154,10 +154,10 @@ export default function WarehouseStatement() {
                 type="button"
                 onClick={() => setDownloadMode("internal")}
                 className={[
-                  "border-l border-gray-300 px-4 py-2 text-sm font-medium transition dark:border-gray-700",
+                  "border-l border-gray-300 px-4 py-2 text-sm font-medium transition",
                   downloadMode === "internal"
                     ? "bg-black text-white"
-                    : "bg-white text-black hover:bg-gray-100 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700",
+                    : "bg-white text-black hover:bg-gray-100",
                 ].join(" ")}
               >
                 Internal
@@ -166,7 +166,7 @@ export default function WarehouseStatement() {
 
             <button
               onClick={handlePrint}
-              className="rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+              className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
             >
               Download PDF
             </button>
@@ -193,7 +193,8 @@ export default function WarehouseStatement() {
           </div>
         </div>
 
-        <table className="w-full overflow-hidden rounded-lg border border-gray-300 text-sm">
+        <div className="overflow-x-auto rounded-lg border border-gray-300">
+        <table className="w-full min-w-[560px] text-sm">
           <thead className="bg-gray-100 text-gray-900">
             <tr>
               <th className="p-2 text-left">Date</th>
@@ -223,6 +224,7 @@ export default function WarehouseStatement() {
             ))}
           </tbody>
         </table>
+        </div>
 
         <div className="mt-6 flex justify-end">
           <div className="w-full max-w-sm rounded-lg border border-gray-300 bg-gray-50 p-4 text-sm">

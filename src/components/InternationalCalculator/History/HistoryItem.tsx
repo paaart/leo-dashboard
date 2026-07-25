@@ -200,20 +200,20 @@ export default function HistoryItem({ entry, onClick }: Props) {
 
   return (
     <div
-      className="p-4 rounded-md shadow-sm bg-gray-100 dark:bg-gray-800 cursor-pointer border"
+      className="p-4 rounded-xl shadow-card bg-surface-2 cursor-pointer border border-edge"
       onClick={onClick}
     >
       <div
         className="overflow-x-auto"
         style={{ WebkitOverflowScrolling: "touch" }}
       >
-        <table className="min-w-max text-xs border border-gray-300 dark:border-gray-700">
+        <table className="min-w-max text-xs border border-edge">
           <thead>
             <tr>
               {HEADERS.map((header) => (
                 <th
                   key={header.label}
-                  className="px-2 py-1 border-b border-gray-300 dark:border-gray-700 bg-gray-200 dark:bg-gray-700 text-left"
+                  className="px-2 py-1 border-b border-edge bg-surface-2 text-left"
                 >
                   {header.label}
                 </th>
@@ -225,7 +225,7 @@ export default function HistoryItem({ entry, onClick }: Props) {
               {HEADERS.map((header) => (
                 <td
                   key={header.label}
-                  className="px-2 py-1 border-b border-gray-200 dark:border-gray-700 text-left"
+                  className="px-2 py-1 border-b border-edge text-left"
                 >
                   {header.getValue(entry, calculatedValues)}
                 </td>

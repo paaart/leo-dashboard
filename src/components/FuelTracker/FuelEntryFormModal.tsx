@@ -1,3 +1,4 @@
+import { modalOverlay } from "@/components/shared/ui";
 import { ImagePlus, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
@@ -33,15 +34,15 @@ function FilePicker({
 }) {
   return (
     <label className="block space-y-1.5">
-      <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+      <span className="text-sm font-medium text-fg">
         {label}
       </span>
-      <div className="flex min-h-10 items-center gap-3 rounded-md border border-dashed border-gray-300 bg-gray-50 px-3 py-2 dark:border-gray-700 dark:bg-gray-900">
-        <ImagePlus className="h-4 w-4 text-gray-500 dark:text-gray-400" />
-        <span className="min-w-0 flex-1 truncate text-sm text-gray-600 dark:text-gray-300">
+      <div className="flex min-h-10 items-center gap-3 rounded-md border border-dashed border-edge-strong bg-surface-2 px-3 py-2">
+        <ImagePlus className="h-4 w-4 text-fg-muted" />
+        <span className="min-w-0 flex-1 truncate text-sm text-fg-muted">
           {file ? file.name : "PNG, JPEG, or WebP up to 5 MB"}
         </span>
-        <span className="rounded-md border border-gray-300 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200">
+        <span className="rounded-md border border-edge bg-surface px-2.5 py-1 text-xs font-medium text-fg">
           Choose
         </span>
       </div>
@@ -53,7 +54,7 @@ function FilePicker({
         onChange={(event) => onChange(event.target.files?.[0] ?? null)}
       />
       {error ? (
-        <span className="text-xs text-red-600 dark:text-red-400">
+        <span className="text-xs text-danger">
           {error}
         </span>
       ) : null}
@@ -168,14 +169,14 @@ export function FuelEntryFormModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="max-h-[92vh] w-full max-w-3xl overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-950">
-        <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 dark:border-gray-800">
+    <div className={modalOverlay}>
+      <div className="max-h-[92vh] w-full max-w-3xl overflow-hidden rounded-xl border border-edge bg-surface shadow-overlay">
+        <div className="flex items-start justify-between gap-4 border-b border-edge px-5 py-4">
           <div>
-            <h2 className="text-lg font-semibold text-gray-950 dark:text-gray-50">
+            <h2 className="text-lg font-semibold text-fg">
               {isEdit ? "Edit Fuel Entry" : "Add Fuel Entry"}
             </h2>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-sm text-fg-muted">
               {isEdit
                 ? "Correct fuel details and recalculate the affected mileage chain."
                 : "Upload bill and meter photos if available."}
@@ -184,7 +185,7 @@ export function FuelEntryFormModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+            className="rounded-md p-2 text-fg-muted hover:bg-surface-2 hover:text-fg"
             aria-label="Close add fuel entry dialog"
           >
             <X className="h-4 w-4" />
@@ -197,7 +198,7 @@ export function FuelEntryFormModal({
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="space-y-1.5 sm:col-span-2">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-medium text-fg">
                 Vehicle
               </span>
               <select
@@ -208,7 +209,7 @@ export function FuelEntryFormModal({
                     vehicleId: event.target.value,
                   }))
                 }
-                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
               >
                 <option value="">Select vehicle</option>
                 {vehicles.map((vehicle) => (
@@ -220,7 +221,7 @@ export function FuelEntryFormModal({
             </label>
 
             <label className="space-y-1.5">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-medium text-fg">
                 Fuel Date
               </span>
               <input
@@ -232,12 +233,12 @@ export function FuelEntryFormModal({
                     fuelDate: event.target.value,
                   }))
                 }
-                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
               />
             </label>
 
             <label className="space-y-1.5">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-medium text-fg">
                 Fuel Amount
               </span>
               <input
@@ -251,13 +252,13 @@ export function FuelEntryFormModal({
                     fuelAmount: event.target.value,
                   }))
                 }
-                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                 placeholder="4500"
               />
             </label>
 
             <label className="space-y-1.5">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-medium text-fg">
                 Fuel Liters
               </span>
               <input
@@ -271,13 +272,13 @@ export function FuelEntryFormModal({
                     fuelLiters: event.target.value,
                   }))
                 }
-                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                 placeholder="50"
               />
             </label>
 
             <label className="space-y-1.5">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-medium text-fg">
                 Odometer Reading
               </span>
               <input
@@ -291,13 +292,13 @@ export function FuelEntryFormModal({
                     odometerReading: event.target.value,
                   }))
                 }
-                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                 placeholder="100200"
               />
             </label>
 
             <label className="space-y-1.5">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-medium text-fg">
                 Driver Name
               </span>
               <input
@@ -308,13 +309,13 @@ export function FuelEntryFormModal({
                     driverName: event.target.value,
                   }))
                 }
-                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                 placeholder="Driver name"
               />
             </label>
 
             <label className="space-y-1.5">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-medium text-fg">
                 Driver Mobile
               </span>
               <input
@@ -327,7 +328,7 @@ export function FuelEntryFormModal({
                     driverMobile: event.target.value.replace(/\D/g, ""),
                   }))
                 }
-                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                 placeholder="9876543210"
               />
             </label>
@@ -348,13 +349,13 @@ export function FuelEntryFormModal({
             />
           </div>
           {isEdit ? (
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-fg-muted">
               Existing proof images are kept unless a new file is selected.
             </p>
           ) : null}
 
           <label className="block space-y-1.5">
-            <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+            <span className="text-sm font-medium text-fg">
               Remarks
             </span>
             <textarea
@@ -365,30 +366,30 @@ export function FuelEntryFormModal({
                   remarks: event.target.value,
                 }))
               }
-              className="min-h-24 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+              className="min-h-24 w-full rounded-lg border border-edge bg-surface px-3 py-2 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
               placeholder="Optional notes"
             />
           </label>
 
           {error ? (
-            <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">
+            <div className="rounded-lg border border-danger/25 bg-danger-soft px-3 py-2 text-sm text-danger-soft-fg">
               {error}
             </div>
           ) : null}
 
-          <div className="flex flex-col-reverse gap-3 border-t border-gray-200 pt-4 dark:border-gray-800 sm:flex-row sm:justify-end">
+          <div className="flex flex-col-reverse gap-3 border-t border-edge pt-4 sm:flex-row sm:justify-end">
             <button
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="min-h-10 rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+              className="min-h-10 rounded-lg border border-edge px-4 text-sm font-medium text-fg hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading || vehicles.length === 0}
-              className="min-h-10 rounded-md bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="min-h-10 rounded-lg bg-accent px-4 text-sm font-semibold text-accent-fg hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? "Saving..." : isEdit ? "Save Changes" : "Add Fuel Entry"}
             </button>

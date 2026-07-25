@@ -11,6 +11,7 @@ import {
   PageHeader,
   SectionCard,
 } from "@/components/shared/DashboardUI";
+import { tableHead, tableWrapper } from "@/components/shared/ui";
 
 // Header definitions and mapping to data (copied from HistoryItem)
 const HEADERS: {
@@ -222,7 +223,7 @@ export default function HistoryView() {
   }, []);
 
   return (
-    <div className="min-h-full bg-gray-50 px-4 py-6 text-gray-950 dark:bg-gray-950 dark:text-gray-50 sm:px-6 lg:px-8">
+    <div className="min-h-full bg-canvas px-4 py-6 text-fg sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
         <PageHeader
           eyebrow="Operations"
@@ -243,35 +244,35 @@ export default function HistoryView() {
             description="Select a row to preview the generated quote document."
           >
             <div
-              className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800"
+              className={tableWrapper}
               style={{ WebkitOverflowScrolling: "touch" }}
             >
               <table className="min-w-max text-xs">
-                <thead className="bg-gray-50 text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+                <thead className={tableHead}>
                   <tr>
                     {HEADERS.map((header) => (
                       <th
                         key={header.label}
-                        className="border-b border-gray-200 px-3 py-2 text-left font-semibold dark:border-gray-800"
+                        className="px-3 py-2 text-left font-medium"
                       >
                         {header.label}
                       </th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                <tbody className="divide-y divide-edge">
                   {entries.map((entry, idx) => {
                     const calculatedValues = computeDerivedValues(entry);
                     return (
                       <tr
                         key={idx}
-                        className="cursor-pointer bg-white hover:bg-blue-50 dark:bg-gray-950 dark:hover:bg-blue-950/40"
+                        className="cursor-pointer bg-surface transition-colors hover:bg-accent-soft"
                         onClick={() => setSelectedEntry(entry)}
                       >
                         {HEADERS.map((header) => (
                           <td
                             key={header.label}
-                            className="px-3 py-2 text-left text-gray-700 dark:text-gray-300"
+                            className="px-3 py-2 text-left text-fg-muted"
                           >
                             {header.getValue(entry, calculatedValues)}
                           </td>

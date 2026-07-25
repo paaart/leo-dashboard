@@ -1,3 +1,4 @@
+import { modalOverlay } from "@/components/shared/ui";
 import { Plus, Trash2, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import type { FormEvent } from "react";
@@ -217,21 +218,21 @@ export function VendorPaymentBatchFormModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="max-h-[92vh] w-full max-w-5xl overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-950">
-        <div className="flex items-start justify-between gap-4 border-b border-gray-200 px-5 py-4 dark:border-gray-800">
+    <div className={modalOverlay}>
+      <div className="max-h-[92vh] w-full max-w-5xl overflow-hidden rounded-xl border border-edge bg-surface shadow-overlay">
+        <div className="flex items-start justify-between gap-4 border-b border-edge px-5 py-4">
           <div>
-            <h2 className="text-lg font-semibold text-gray-950 dark:text-gray-50">
+            <h2 className="text-lg font-semibold text-fg">
               Create Payment Batch
             </h2>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            <p className="mt-1 text-sm text-fg-muted">
               Allocate one vendor payment across one or more outstanding invoices.
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+            className="rounded-md p-2 text-fg-muted hover:bg-surface-2 hover:text-fg"
             aria-label="Close payment batch dialog"
           >
             <X className="h-4 w-4" />
@@ -244,7 +245,7 @@ export function VendorPaymentBatchFormModal({
         >
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="space-y-1.5">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-medium text-fg">
                 Vendor
               </span>
               <input
@@ -255,13 +256,13 @@ export function VendorPaymentBatchFormModal({
                     vendorName: event.target.value,
                   }))
                 }
-                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                 placeholder="Vendor name"
               />
             </label>
 
             <label className="space-y-1.5">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-medium text-fg">
                 Payment Date
               </span>
               <input
@@ -273,12 +274,12 @@ export function VendorPaymentBatchFormModal({
                     paymentDate: event.target.value,
                   }))
                 }
-                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
               />
             </label>
 
             <label className="space-y-1.5">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-medium text-fg">
                 Payment Mode
               </span>
               <input
@@ -289,13 +290,13 @@ export function VendorPaymentBatchFormModal({
                     paymentMode: event.target.value,
                   }))
                 }
-                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                 placeholder="Cash, UPI, bank transfer"
               />
             </label>
 
             <label className="space-y-1.5">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-medium text-fg">
                 Reference Number
               </span>
               <input
@@ -306,13 +307,13 @@ export function VendorPaymentBatchFormModal({
                     referenceNumber: event.target.value,
                   }))
                 }
-                className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                 placeholder="Optional"
               />
             </label>
 
             <label className="space-y-1.5 sm:col-span-2">
-              <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+              <span className="text-sm font-medium text-fg">
                 Remarks
               </span>
               <textarea
@@ -321,7 +322,7 @@ export function VendorPaymentBatchFormModal({
                   setForm((prev) => ({ ...prev, remarks: event.target.value }))
                 }
                 rows={3}
-                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                className="w-full rounded-lg border border-edge bg-surface px-3 py-2 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                 placeholder="Optional remarks"
               />
             </label>
@@ -329,13 +330,13 @@ export function VendorPaymentBatchFormModal({
 
           <div className="space-y-3">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              <h3 className="text-sm font-semibold uppercase tracking-wide text-fg-muted">
                 Invoice Allocations
               </h3>
               <button
                 type="button"
                 onClick={addAllocation}
-                className="inline-flex min-h-9 items-center justify-center gap-2 rounded-md border border-gray-300 px-3 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+                className="inline-flex min-h-9 items-center justify-center gap-2 rounded-lg border border-edge px-3 text-sm font-medium text-fg hover:bg-surface-2"
               >
                 <Plus className="h-4 w-4" />
                 Add Allocation
@@ -346,10 +347,10 @@ export function VendorPaymentBatchFormModal({
               return (
                 <div
                   key={index}
-                  className="grid gap-4 rounded-lg border border-gray-200 p-4 dark:border-gray-800 md:grid-cols-[1fr_180px_auto]"
+                  className="grid gap-4 rounded-lg border border-edge p-4 md:grid-cols-[1fr_180px_auto]"
                 >
                   <div className="space-y-1.5">
-                    <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                    <span className="text-sm font-medium text-fg">
                       Invoice
                     </span>
                     <input
@@ -359,7 +360,7 @@ export function VendorPaymentBatchFormModal({
                           invoiceSearch: event.target.value,
                         })
                       }
-                      className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                      className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                       placeholder="Search invoices"
                     />
                     <select
@@ -378,7 +379,7 @@ export function VendorPaymentBatchFormModal({
                           allocatedAmount: "",
                         });
                       }}
-                      className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                      className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                     >
                       <option value="">Select invoice</option>
                       {payableInvoices
@@ -398,7 +399,7 @@ export function VendorPaymentBatchFormModal({
                           </option>
                         ))}
                     </select>
-                    <span className="block text-xs text-gray-500 dark:text-gray-400">
+                    <span className="block text-xs text-fg-muted">
                       Outstanding:{" "}
                       {allocation.outstandingAmount !== null
                         ? formatCurrency(allocation.outstandingAmount)
@@ -407,7 +408,7 @@ export function VendorPaymentBatchFormModal({
                   </div>
 
                   <label className="space-y-1.5">
-                    <span className="text-sm font-medium text-gray-800 dark:text-gray-200">
+                    <span className="text-sm font-medium text-fg">
                       Allocated Amount
                     </span>
                     <input
@@ -420,7 +421,7 @@ export function VendorPaymentBatchFormModal({
                           allocatedAmount: event.target.value,
                         })
                       }
-                      className="h-10 w-full rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-950 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-50"
+                      className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
                       placeholder="Amount"
                     />
                   </label>
@@ -430,7 +431,7 @@ export function VendorPaymentBatchFormModal({
                       type="button"
                       onClick={() => removeAllocation(index)}
                       disabled={form.allocations.length === 1}
-                      className="inline-flex min-h-10 items-center gap-2 rounded-md border border-red-200 px-3 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/40"
+                      className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-danger/25 px-3 text-sm font-medium text-danger-soft-fg hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <Trash2 className="h-4 w-4" />
                       Remove
@@ -441,11 +442,11 @@ export function VendorPaymentBatchFormModal({
             })}
 
             <div className="flex justify-end">
-              <div className="rounded-md border border-gray-200 px-4 py-3 text-right dark:border-gray-800">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              <div className="rounded-md border border-edge px-4 py-3 text-right">
+                <p className="text-xs font-semibold uppercase tracking-wide text-fg-muted">
                   Batch Total
                 </p>
-                <p className="mt-1 text-xl font-semibold text-gray-950 dark:text-gray-50">
+                <p className="mt-1 text-xl font-semibold text-fg">
                   {formatCurrency(runningTotal)}
                 </p>
               </div>
@@ -453,24 +454,24 @@ export function VendorPaymentBatchFormModal({
           </div>
 
           {error ? (
-            <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">
+            <div className="rounded-lg border border-danger/25 bg-danger-soft px-3 py-2 text-sm text-danger-soft-fg">
               {error}
             </div>
           ) : null}
 
-          <div className="flex flex-col-reverse gap-3 border-t border-gray-200 pt-4 dark:border-gray-800 sm:flex-row sm:justify-end">
+          <div className="flex flex-col-reverse gap-3 border-t border-edge pt-4 sm:flex-row sm:justify-end">
             <button
               type="button"
               onClick={onClose}
               disabled={loading}
-              className="min-h-10 rounded-md border border-gray-300 px-4 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
+              className="min-h-10 rounded-lg border border-edge px-4 text-sm font-medium text-fg hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-60"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="min-h-10 rounded-md bg-blue-600 px-4 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+              className="min-h-10 rounded-lg bg-accent px-4 text-sm font-semibold text-accent-fg hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading ? "Saving..." : "Create Payment Batch"}
             </button>

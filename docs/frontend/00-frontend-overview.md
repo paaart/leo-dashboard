@@ -18,8 +18,12 @@ the single-shell model that everything here plugs into.
   (hidden in `Sidebar`, blocked in the shell — the real guard is server-side).
 - **Mobile matters:** drivers, warehouse staff, and managers use phones. Forms stay
   simple; the driver fuel flow is a dedicated public mobile page.
-- **Light + dark throughout:** every component uses Tailwind `dark:` variants. Keep new
-  UI theme-aware.
+- **Light + dark throughout:** styling uses semantic design tokens defined in
+  `src/app/globals.css` (`bg-surface`, `border-edge`, `text-fg`, `text-fg-muted`,
+  accent/success/warning/danger tones) that flip automatically with the OS color
+  scheme — components should NOT hand-write `dark:` variants or raw palette classes.
+  Reusable class constants (buttons, inputs, modals, tables, badges, alerts) live in
+  `src/components/shared/ui.ts`; use those for new UI.
 
 ---
 
