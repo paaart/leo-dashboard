@@ -22,6 +22,7 @@ export function FuelTooltip({
 }) {
   const [position, setPosition] = useState<TooltipPosition | null>(null);
   const timeoutRef = useRef<number | null>(null);
+  const triggerRef = useRef<HTMLSpanElement | null>(null);
 
   useEffect(() => {
     return () => {
@@ -29,25 +30,29 @@ export function FuelTooltip({
     };
   }, []);
 
+  const computePosition = (target: HTMLElement): TooltipPosition => {
+    const rect = target.getBoundingClientRect();
+    const tooltipHalfWidth = 160;
+    const viewportPadding = 12;
+    const left = Math.min(
+      Math.max(rect.left + rect.width / 2, tooltipHalfWidth + viewportPadding),
+      window.innerWidth - tooltipHalfWidth - viewportPadding
+    );
+    const hasRoomAbove = rect.top > 140;
+
+    return {
+      left,
+      top: hasRoomAbove ? rect.top : rect.bottom,
+      placement: hasRoomAbove ? "top" : "bottom",
+    };
+  };
+
   const showTooltip = (target: EventTarget & HTMLElement) => {
     if (!content) return;
 
     if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
     timeoutRef.current = window.setTimeout(() => {
-      const rect = target.getBoundingClientRect();
-      const tooltipHalfWidth = 160;
-      const viewportPadding = 12;
-      const left = Math.min(
-        Math.max(rect.left + rect.width / 2, tooltipHalfWidth + viewportPadding),
-        window.innerWidth - tooltipHalfWidth - viewportPadding
-      );
-      const hasRoomAbove = rect.top > 140;
-
-      setPosition({
-        left,
-        top: hasRoomAbove ? rect.top : rect.bottom,
-        placement: hasRoomAbove ? "top" : "bottom",
-      });
+      setPosition(computePosition(target));
     }, delayMs);
   };
 
@@ -56,14 +61,44 @@ export function FuelTooltip({
     setPosition(null);
   };
 
+  // Tap/click toggles so tooltip content stays reachable on touch devices,
+  // where hover never fires.
+  const toggleTooltip = (target: EventTarget & HTMLElement) => {
+    if (!content) return;
+
+    if (timeoutRef.current) window.clearTimeout(timeoutRef.current);
+    setPosition((previous) => (previous ? null : computePosition(target)));
+  };
+
+  useEffect(() => {
+    if (!position) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (triggerRef.current?.contains(event.target as Node)) return;
+      hideTooltip();
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") hideTooltip();
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [position]);
+
   return (
     <>
       <span
+        ref={triggerRef}
         tabIndex={0}
         onMouseEnter={(event) => showTooltip(event.currentTarget)}
         onMouseLeave={hideTooltip}
         onFocus={(event) => showTooltip(event.currentTarget)}
         onBlur={hideTooltip}
+        onClick={(event) => toggleTooltip(event.currentTarget)}
         className={`inline-block max-w-full cursor-help ${className}`}
       >
         {children}
@@ -80,7 +115,7 @@ export function FuelTooltip({
                     ? "translate(-50%, calc(-100% - 8px))"
                     : "translate(-50%, 8px)",
               }}
-              className="pointer-events-none fixed z-50 max-w-80 whitespace-normal break-words rounded-md border border-gray-700 bg-gray-950 px-3 py-2 text-left text-xs font-medium leading-5 text-white shadow-lg dark:border-gray-600"
+              className="pointer-events-none fixed z-50 max-w-80 whitespace-normal break-words rounded-lg border border-edge-inverse bg-surface-inverse px-3 py-2 text-left text-xs font-medium leading-5 text-fg-inverse shadow-overlay"
             >
               {content}
             </div>,
