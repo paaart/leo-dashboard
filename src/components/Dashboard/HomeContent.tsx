@@ -106,6 +106,25 @@ async function getLoansOutstanding(): Promise<number | null> {
   }
 }
 
+/*
+  One retry with a short pause, then null. The session-mode pooler can
+  transiently reject connections from a fresh serverless instance; a failed
+  source must render as a failure, never as fake "all clear" data.
+*/
+async function tryLoad<T>(label: string, fn: () => Promise<T>): Promise<T | null> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      console.error(`home: ${label} failed (attempt ${attempt + 1})`, error);
+      if (attempt === 0) {
+        await new Promise((resolve) => setTimeout(resolve, 300));
+      }
+    }
+  }
+  return null;
+}
+
 function QuickAction({
   href,
   label,
@@ -145,27 +164,30 @@ export default async function HomeContent({ user }: { user: AppUser }) {
     timeZone: TIME_ZONE,
   }).format(now);
 
+  // null = the source failed (rendered as a failure state); [] = genuinely empty.
   const [alerts, warehouse, paymentAlerts, loansOutstanding] =
     await Promise.all([
-      listVehicleRenewalAlerts().catch(
-        () => [] as VehicleRenewalAlert[]
+      tryLoad<VehicleRenewalAlert[]>("renewal alerts", () =>
+        listVehicleRenewalAlerts()
       ),
       isAdmin
-        ? getWarehouseDashboardSummary().catch(
-            () => null as WarehouseDashboardSummary | null
+        ? tryLoad<WarehouseDashboardSummary>("warehouse summary", () =>
+            getWarehouseDashboardSummary()
           )
         : Promise.resolve(null),
       isAdmin
-        ? listWarehousePaymentAlerts().catch(
-            () => [] as WarehousePaymentAlertRow[]
+        ? tryLoad<WarehousePaymentAlertRow[]>("payment alerts", () =>
+            listWarehousePaymentAlerts()
           )
-        : Promise.resolve([] as WarehousePaymentAlertRow[]),
+        : Promise.resolve<WarehousePaymentAlertRow[] | null>([]),
       isAdmin ? getLoansOutstanding() : Promise.resolve(null),
     ]);
 
   const displayName = user.fullName || user.username || user.email || "there";
-  const shownAlerts = alerts.slice(0, 5);
-  const shownPayments = paymentAlerts.slice(0, 5);
+  const shownAlerts = (alerts ?? []).slice(0, 5);
+  const shownPayments = (paymentAlerts ?? []).slice(0, 5);
+  const loadFailure =
+    "Couldn’t load this right now — pull to refresh or reload the page.";
 
   return (
     <div className="min-h-full bg-canvas px-4 py-6 text-fg sm:px-6 lg:px-8">
@@ -187,6 +209,13 @@ export default async function HomeContent({ user }: { user: AppUser }) {
             }).format(now)}
           </p>
         </div>
+
+        {isAdmin && warehouse === null ? (
+          <div className="rounded-lg border border-warning/25 bg-warning-soft px-4 py-3 text-sm text-warning-soft-fg">
+            Warehouse figures couldn’t load right now — reload the page to
+            retry.
+          </div>
+        ) : null}
 
         {isAdmin ? (
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -242,7 +271,11 @@ export default async function HomeContent({ user }: { user: AppUser }) {
             </Link>
           }
         >
-          {shownAlerts.length === 0 ? (
+          {alerts === null ? (
+            <div className="rounded-lg border border-warning/25 bg-warning-soft px-4 py-3 text-sm text-warning-soft-fg">
+              {loadFailure}
+            </div>
+          ) : shownAlerts.length === 0 ? (
             <div className="rounded-lg border border-success/25 bg-success-soft px-4 py-3 text-sm text-success-soft-fg">
               All clear — no vehicle renewals due in the next 15 days.
             </div>
@@ -274,10 +307,10 @@ export default async function HomeContent({ user }: { user: AppUser }) {
                   </span>
                 </li>
               ))}
-              {alerts.length > shownAlerts.length ? (
+              {(alerts ?? []).length > shownAlerts.length ? (
                 <li className="px-1 pt-1 text-xs text-fg-muted">
-                  +{alerts.length - shownAlerts.length} more in Vehicle
-                  Tracker
+                  +{(alerts ?? []).length - shownAlerts.length} more in
+                  Vehicle Tracker
                 </li>
               ) : null}
             </ul>
@@ -298,7 +331,11 @@ export default async function HomeContent({ user }: { user: AppUser }) {
               </Link>
             }
           >
-            {shownPayments.length === 0 ? (
+            {paymentAlerts === null ? (
+              <div className="rounded-lg border border-warning/25 bg-warning-soft px-4 py-3 text-sm text-warning-soft-fg">
+                {loadFailure}
+              </div>
+            ) : shownPayments.length === 0 ? (
               <div className="rounded-lg border border-success/25 bg-success-soft px-4 py-3 text-sm text-success-soft-fg">
                 All clear — no pod payments due in the next 5 days.
               </div>
@@ -346,10 +383,10 @@ export default async function HomeContent({ user }: { user: AppUser }) {
                     </li>
                   );
                 })}
-                {paymentAlerts.length > shownPayments.length ? (
+                {(paymentAlerts ?? []).length > shownPayments.length ? (
                   <li className="px-1 pt-1 text-xs text-fg-muted">
-                    +{paymentAlerts.length - shownPayments.length} more in
-                    Payment Alerts
+                    +{(paymentAlerts ?? []).length - shownPayments.length}{" "}
+                    more in Payment Alerts
                   </li>
                 ) : null}
               </ul>
