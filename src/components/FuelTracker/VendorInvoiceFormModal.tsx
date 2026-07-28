@@ -374,7 +374,7 @@ export function VendorInvoiceFormModal({
             </label>
           </div>
 
-          <div className="overflow-hidden rounded-lg border border-edge">
+          <div className="overflow-visible rounded-lg border border-edge">
             <div className="flex items-center justify-between gap-3 border-b border-edge bg-surface-2 px-3 py-2">
               <h3 className="text-sm font-semibold text-fg">
                 Line Items
