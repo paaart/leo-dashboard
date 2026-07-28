@@ -1,5 +1,6 @@
 // src/app/layout.tsx
 import "./globals.css";
+import { NumberInputWheelGuard } from "@/components/shared/NumberInputWheelGuard";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "react-hot-toast";
@@ -28,6 +29,7 @@ export default function RootLayout({
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <link rel="icon" href="/favicon.ico" />
       <body className="bg-canvas text-fg antialiased">
+        <NumberInputWheelGuard />
         <Toaster position="top-center" />
         {children}
       </body>

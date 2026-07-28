@@ -131,13 +131,17 @@ input[type="radio"] {
   accent-color: var(--accent);
 }
 
+input[type="number"],
 .no-number-spinner {
   -moz-appearance: textfield;
   appearance: textfield;
 }
 
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button,
 .no-number-spinner::-webkit-inner-spin-button,
 .no-number-spinner::-webkit-outer-spin-button {
   -webkit-appearance: none;
+  appearance: none;
   margin: 0;
 }
