@@ -33,6 +33,7 @@ export function VehicleSearchSelect({
     placement: "top" | "bottom";
   } | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
   const selectedVehicle =
     vehicles.find((vehicle) => vehicle.id === value) ?? null;
 
@@ -44,9 +45,15 @@ export function VehicleSearchSelect({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      const clickedInsideContainer =
+        containerRef.current?.contains(target) ?? false;
+      const clickedInsideDropdown =
+        dropdownRef.current?.contains(target) ?? false;
+
       if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
+        !clickedInsideContainer &&
+        !clickedInsideDropdown
       ) {
         setOpen(false);
       }
@@ -119,6 +126,7 @@ export function VehicleSearchSelect({
       {open && position && typeof document !== "undefined"
         ? createPortal(
             <div
+              ref={dropdownRef}
               className="fixed z-[70] max-h-72 overflow-auto rounded-lg border border-edge bg-surface p-1 text-sm shadow-overlay"
               style={{
                 left: position.left,
