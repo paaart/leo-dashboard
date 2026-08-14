@@ -1455,17 +1455,31 @@ function expenseAnalyticsWhere(filters: FuelAnalyticsFilters) {
 
   if (filters.vehicleId) {
     values.push(filters.vehicleId);
-    clauses.push(`ve.vehicle_id = $${values.length}`);
+    const vehicleParam = `$${values.length}::uuid`;
+    clauses.push(`exists (
+      select 1
+      from public.vehicle_expense_invoice_items ii
+      where ii.invoice_id = i.id
+        and (
+          ii.vehicle_id = ${vehicleParam}
+          or exists (
+            select 1
+            from public.vehicle_expense_invoice_item_vehicles iiv
+            where iiv.invoice_item_id = ii.id
+              and iiv.vehicle_id = ${vehicleParam}
+          )
+        )
+    )`);
   }
 
   if (filters.dateFrom) {
     values.push(filters.dateFrom);
-    clauses.push(`ve.expense_date >= $${values.length}::date`);
+    clauses.push(`i.invoice_date >= $${values.length}::date`);
   }
 
   if (filters.dateTo) {
     values.push(filters.dateTo);
-    clauses.push(`ve.expense_date <= $${values.length}::date`);
+    clauses.push(`i.invoice_date <= $${values.length}::date`);
   }
 
   return {
@@ -1625,10 +1639,27 @@ export async function getFuelDashboardAnalytics(
     }
   );
 
+  const expenseAmountSql = filters.vehicleId
+    ? `(
+        select coalesce(sum(ii.amount), 0)
+        from public.vehicle_expense_invoice_items ii
+        where ii.invoice_id = i.id
+          and (
+            ii.vehicle_id = $1::uuid
+            or exists (
+              select 1
+              from public.vehicle_expense_invoice_item_vehicles iiv
+              where iiv.invoice_item_id = ii.id
+                and iiv.vehicle_id = $1::uuid
+            )
+          )
+      )`
+    : "i.total_amount";
+
   const expenseTotals = await db.query(
     `
-    select coalesce(sum(ve.amount), 0) as total_other_expenses
-    from public.vehicle_expenses ve
+    select coalesce(sum(${expenseAmountSql}), 0) as total_other_expenses
+    from public.vehicle_expense_invoices i
     ${expenseWhere.sql}
     `,
     expenseWhere.values
