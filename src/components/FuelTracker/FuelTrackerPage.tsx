@@ -248,6 +248,17 @@ export default function FuelTrackerPage() {
       (invoice) => invoice.status === invoiceStatusFilter
     );
   }, [invoiceStatusFilter, vendorInvoices]);
+  const vendorNames = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          vendorInvoices
+            .map((invoice) => invoice.vendor_name.trim())
+            .filter(Boolean)
+        )
+      ).sort((a, b) => a.localeCompare(b)),
+    [vendorInvoices]
+  );
 
   const paginatedVehicles = useMemo(
     () => paginateItems(filteredVehicles, vehiclesPage),
@@ -1172,6 +1183,7 @@ export default function FuelTrackerPage() {
       <VendorInvoiceFormModal
         open={vendorInvoiceModalOpen}
         vehicles={vehicles}
+        vendorNames={vendorNames}
         loading={savingVendorInvoice}
         invoice={editingVendorInvoice}
         draft={vendorInvoiceDraft}

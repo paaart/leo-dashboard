@@ -87,6 +87,17 @@ export function VendorPaymentBatchFormModal({
     }, 0);
     return centsToNumber(cents);
   }, [form.allocations]);
+  const selectedVendorNames = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          form.allocations
+            .map((allocation) => invoicesById.get(allocation.invoiceId)?.vendor_name)
+            .filter((vendorName): vendorName is string => Boolean(vendorName))
+        )
+      ),
+    [form.allocations, invoicesById]
+  );
 
   if (!open) return null;
 
@@ -123,11 +134,6 @@ export function VendorPaymentBatchFormModal({
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
-
-    if (!form.vendorName.trim()) {
-      setError("Vendor name is required.");
-      return;
-    }
 
     if (!form.paymentDate) {
       setError("Payment date is required.");
@@ -198,8 +204,13 @@ export function VendorPaymentBatchFormModal({
       return;
     }
 
+    if (selectedVendorNames.length !== 1) {
+      setError("Select invoices from one vendor for each payment batch.");
+      return;
+    }
+
     await onSubmit({
-      vendorName: form.vendorName.trim(),
+      vendorName: selectedVendorNames[0],
       paymentDate: form.paymentDate,
       paymentMode: form.paymentMode.trim() || null,
       referenceNumber: form.referenceNumber.trim() || null,
@@ -249,16 +260,14 @@ export function VendorPaymentBatchFormModal({
                 Vendor
               </span>
               <input
-                value={form.vendorName}
-                onChange={(event) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    vendorName: event.target.value,
-                  }))
-                }
-                className="h-10 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
-                placeholder="Vendor name"
+                value={selectedVendorNames.join(", ")}
+                readOnly
+                className="h-10 w-full rounded-lg border border-edge bg-surface-2 px-3 text-sm text-fg-muted outline-none"
+                placeholder="Select invoices to choose vendor"
               />
+              <span className="block text-xs text-fg-muted">
+                The vendor is taken from the selected invoices.
+              </span>
             </label>
 
             <label className="space-y-1.5">

@@ -84,6 +84,7 @@ function itemFromInvoice(
 export function VendorInvoiceFormModal({
   open,
   vehicles,
+  vendorNames,
   loading,
   invoice,
   draft,
@@ -92,6 +93,7 @@ export function VendorInvoiceFormModal({
 }: {
   open: boolean;
   vehicles: Vehicle[];
+  vendorNames: string[];
   loading: boolean;
   invoice?: VehicleExpenseInvoice | null;
   draft?: VendorInvoiceFormDraft | null;
@@ -108,6 +110,7 @@ export function VendorInvoiceFormModal({
       return Number.isFinite(amount) ? sum + amount : sum;
     }, 0);
   }, [form.items]);
+  const isExistingVendor = vendorNames.includes(form.vendorName);
 
   useEffect(() => {
     if (!open) return;
@@ -297,17 +300,37 @@ export function VendorInvoiceFormModal({
               <span className="text-sm font-medium text-fg">
                 Vendor
               </span>
-              <input
-                value={form.vendorName}
+              <select
+                value={isExistingVendor ? form.vendorName : "__new__"}
                 onChange={(event) =>
                   setForm((prev) => ({
                     ...prev,
-                    vendorName: event.target.value,
+                    vendorName:
+                      event.target.value === "__new__"
+                        ? ""
+                        : event.target.value,
                   }))
                 }
                 className="h-9 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
-                placeholder="Vendor name"
-              />
+              >
+                <option value="__new__">New vendor…</option>
+                {vendorNames.map((vendorName) => (
+                  <option key={vendorName} value={vendorName} />
+                ))}
+              </select>
+              {!isExistingVendor ? (
+                <input
+                  value={form.vendorName}
+                  onChange={(event) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      vendorName: event.target.value,
+                    }))
+                  }
+                  className="mt-2 h-9 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
+                  placeholder="Enter new vendor name"
+                />
+              ) : null}
             </label>
 
             <label className="space-y-1">
