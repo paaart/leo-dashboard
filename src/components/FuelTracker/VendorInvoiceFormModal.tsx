@@ -315,7 +315,9 @@ export function VendorInvoiceFormModal({
               >
                 <option value="__new__">New vendor…</option>
                 {vendorNames.map((vendorName) => (
-                  <option key={vendorName} value={vendorName} />
+                  <option key={vendorName} value={vendorName}>
+                    {vendorName}
+                  </option>
                 ))}
               </select>
               {!isExistingVendor ? (
