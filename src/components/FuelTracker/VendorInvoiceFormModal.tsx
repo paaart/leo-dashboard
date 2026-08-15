@@ -3,6 +3,7 @@ import { Copy, Plus, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { SERIAL_COLUMN_CLASS, serialNumber } from "./SerialNumber";
 import { VehicleSearchSelect } from "./VehicleSearchSelect";
+import { VendorSearchSelect } from "./VendorSearchSelect";
 import type { FormEvent } from "react";
 import type {
   CreateVehicleExpenseInvoicePayload,
@@ -110,8 +111,6 @@ export function VendorInvoiceFormModal({
       return Number.isFinite(amount) ? sum + amount : sum;
     }, 0);
   }, [form.items]);
-  const isExistingVendor = vendorNames.includes(form.vendorName);
-
   useEffect(() => {
     if (!open) return;
 
@@ -300,39 +299,13 @@ export function VendorInvoiceFormModal({
               <span className="text-sm font-medium text-fg">
                 Vendor
               </span>
-              <select
-                value={isExistingVendor ? form.vendorName : "__new__"}
-                onChange={(event) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    vendorName:
-                      event.target.value === "__new__"
-                        ? ""
-                        : event.target.value,
-                  }))
+              <VendorSearchSelect
+                vendors={vendorNames}
+                value={form.vendorName}
+                onChange={(vendorName) =>
+                  setForm((prev) => ({ ...prev, vendorName }))
                 }
-                className="h-9 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
-              >
-                <option value="__new__">New vendor…</option>
-                {vendorNames.map((vendorName) => (
-                  <option key={vendorName} value={vendorName}>
-                    {vendorName}
-                  </option>
-                ))}
-              </select>
-              {!isExistingVendor ? (
-                <input
-                  value={form.vendorName}
-                  onChange={(event) =>
-                    setForm((prev) => ({
-                      ...prev,
-                      vendorName: event.target.value,
-                    }))
-                  }
-                  className="mt-2 h-9 w-full rounded-lg border border-edge bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle outline-none focus:border-accent focus:ring-2 focus:ring-accent/25"
-                  placeholder="Enter new vendor name"
-                />
-              ) : null}
+              />
             </label>
 
             <label className="space-y-1">
