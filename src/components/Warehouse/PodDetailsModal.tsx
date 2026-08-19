@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { supabase } from "@/lib/supabaseClient";
 import type { WarehousePodSummary, WarehouseTxn } from "@/lib/warehouse/types";
 import { money } from "@/lib/warehouse/billing";
 import { Trash2 } from "lucide-react";
@@ -10,6 +9,10 @@ import {
   fetchPodTransactions,
   accrueWarehousePod,
 } from "@/lib/warehouse/queries";
+import {
+  deleteWarehouseTransaction,
+  recordWarehousePayment,
+} from "@/lib/warehouse/ledger";
 import EditPodModal from "./EditPodModal";
 import { getErrorMessage } from "@/lib/errors";
 import {
@@ -66,18 +69,13 @@ export default function PodDetailsModal({
     if (!payAmount || isNaN(Number(payAmount)) || Number(payAmount) <= 0)
       return;
 
-    const run = async () => {
-      const { error } = await supabase
-        .from("warehouse_pod_transactions")
-        .insert({
-          pod_id: pod.id,
-          type: "payment",
-          amount: Number(payAmount),
-          tx_date: payDate,
-          note: payNote.trim() ? payNote.trim() : null,
-        });
-      if (error) throw error;
-    };
+    const run = () =>
+      recordWarehousePayment({
+        podId: pod.id,
+        amount: Number(payAmount),
+        txDate: payDate,
+        note: payNote.trim() || null,
+      });
 
     await toast.promise(run(), {
       loading: "Saving payment...",
@@ -97,13 +95,7 @@ export default function PodDetailsModal({
     if (!confirm("Delete this transaction? This cannot be undone.")) return;
     setDeletingId(id);
 
-    const run = async () => {
-      const { error } = await supabase
-        .from("warehouse_pod_transactions")
-        .delete()
-        .eq("id", id);
-      if (error) throw error;
-    };
+    const run = () => deleteWarehouseTransaction(id);
 
     try {
       await toast.promise(run(), {

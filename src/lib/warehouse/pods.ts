@@ -96,6 +96,21 @@ export async function createWarehousePod(
   return data;
 }
 
+export async function getWarehouseOptions(): Promise<{
+  companies: Array<{ id: number; name: string; is_active?: boolean }>;
+  locations: Array<{ id: number; name: string; is_active?: boolean }>;
+}> {
+  return fetchJson("/api/warehouse/options", { method: "GET" });
+}
+
+export async function fetchWarehouseRenewals() {
+  const data = await fetchJson<{ rows: import("./types").WarehouseRenewalRow[] }>(
+    "/api/warehouse/pods/renewals",
+    { method: "GET", cache: "no-store" }
+  );
+  return data.rows ?? [];
+}
+
 export async function fetchPodCycles(podId: string): Promise<WarehouseCycle[]> {
   const url = `/api/warehouse/pods/cycles?podId=${encodeURIComponent(podId)}`;
   const data = await fetchJson<{ rows: WarehouseCycle[] }>(url, {

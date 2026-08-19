@@ -138,6 +138,11 @@ export async function updateWarehouseClient(args: {
   name: string;
   email?: string | null;
   contact: string;
+  locationName?: string;
+  rate?: number;
+  durationMonths?: number;
+  billingInterval?: "monthly" | "quarterly" | "half_yearly" | "yearly";
+  modeOfPayment?: string | null;
 }): Promise<{
   id: string;
   name: string;
@@ -159,6 +164,11 @@ export async function updateWarehouseClient(args: {
       name: args.name,
       email: args.email ?? null,
       contact: args.contact,
+      locationName: args.locationName,
+      rate: args.rate,
+      durationMonths: args.durationMonths,
+      billingInterval: args.billingInterval,
+      modeOfPayment: args.modeOfPayment,
     }),
     cache: "no-store",
   });

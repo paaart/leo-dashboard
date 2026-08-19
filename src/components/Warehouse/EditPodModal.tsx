@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { supabase } from "@/lib/supabaseClient";
 import { getErrorMessage } from "@/lib/errors";
+import { updateWarehouseClient } from "@/lib/warehouse/ledger";
 import {
   buttonGhost,
   buttonPrimary,
@@ -55,21 +55,17 @@ export default function EditPodModal({
 
     setLoading(true);
     try {
-      const { error } = await supabase
-        .from("warehouse_pods")
-        .update({
-          name: name.trim(),
-          email: email.trim() ? email.trim() : null,
-          contact: contact.trim(),
-          location: location.trim() ? location.trim() : null,
-          rate: Number(rate),
-          duration_months: Number(durationMonths),
-          billing_interval: billingInterval,
-          mode_of_payment: modeOfPayment.trim() ? modeOfPayment.trim() : null,
-        })
-        .eq("id", podId);
-
-      if (error) throw error;
+      await updateWarehouseClient({
+        podId,
+        name: name.trim(),
+        email: email.trim() || null,
+        contact: contact.trim(),
+        locationName: location,
+        rate: Number(rate),
+        durationMonths: Number(durationMonths),
+        billingInterval,
+        modeOfPayment: modeOfPayment.trim() || null,
+      });
 
       toast.success("Updated ✅");
       onSaved();

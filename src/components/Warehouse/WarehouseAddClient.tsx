@@ -3,9 +3,12 @@
 import { useEffect, useState, type ChangeEvent, type ReactNode } from "react";
 import toast from "react-hot-toast";
 import { getErrorMessage } from "@/lib/errors";
-import { supabase } from "@/lib/supabaseClient";
 
-import { CreatePodBody, createWarehousePod } from "@/lib/warehouse/pods";
+import {
+  CreatePodBody,
+  createWarehousePod,
+  getWarehouseOptions,
+} from "@/lib/warehouse/pods";
 import type { BillingInterval, InsuranceProvider } from "@/lib/warehouse/types";
 import { PageHeader, SectionCard } from "@/components/shared/DashboardUI";
 import {
@@ -77,25 +80,9 @@ export default function WarehouseAddClient() {
   useEffect(() => {
     const fetchOptions = async () => {
       try {
-        const [{ data: comp, error: compErr }, { data: loc, error: locErr }] =
-          await Promise.all([
-            supabase
-              .from("companies")
-              .select("id,name,is_active")
-              .eq("is_active", true)
-              .order("name"),
-            supabase
-              .from("locations")
-              .select("id,name,is_active")
-              .eq("is_active", true)
-              .order("name"),
-          ]);
-
-        if (compErr) throw compErr;
-        if (locErr) throw locErr;
-
-        setCompanies((comp ?? []) as Option[]);
-        setLocations((loc ?? []) as Option[]);
+        const data = await getWarehouseOptions();
+        setCompanies(data.companies as Option[]);
+        setLocations(data.locations as Option[]);
       } catch (err: unknown) {
         toast.error(getErrorMessage(err) || "Failed to load options");
         setCompanies([]);
