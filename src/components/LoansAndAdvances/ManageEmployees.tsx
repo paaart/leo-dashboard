@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import {
+  createEmployee,
+  fetchEmployees,
+  updateEmployee,
+} from "@/lib/loans-api";
 import toast from "react-hot-toast";
 import {
   EmptyState,
@@ -55,49 +59,17 @@ export default function ManageEmployees() {
     const fetchAll = async () => {
       setLoading(true);
 
-      // Load fixed lists
-      const [{ data: comp, error: compErr }, { data: loc, error: locErr }] =
-        await Promise.all([
-          supabase
-            .from("companies")
-            .select("id,name,is_active")
-            .eq("is_active", true)
-            .order("name"),
-          supabase
-            .from("locations")
-            .select("id,name,is_active")
-            .eq("is_active", true)
-            .order("name"),
-        ]);
-
-      if (compErr || locErr) {
-        toast.error("Failed to load dropdown options");
-      } else {
-        setCompanies((comp ?? []) as Option[]);
-        setLocations((loc ?? []) as Option[]);
-      }
-
-      // Load employees with relation labels (requires FKs)
-      const { data: emps, error: empErr } = await supabase
-        .from("employees")
-        .select(
-          `
-          id, name, employee_code, created_at, company_id, location_id,
-          company:company_id ( id, name ),
-          location:location_id ( id, name )
-        `
-        )
-        .eq("display", true)
-        .order("created_at", { ascending: false });
-
-      if (empErr) {
+      try {
+        const data = await fetchEmployees();
+        setCompanies(data.companies);
+        setLocations(data.locations);
+        setEmployees(data.employees as unknown as Employee[]);
+      } catch {
         toast.error("Error fetching employees");
         setEmployees([]);
-      } else {
-        setEmployees((emps ?? []) as unknown as Employee[]);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     };
 
     fetchAll();
@@ -114,37 +86,15 @@ export default function ManageEmployees() {
     const normalizedCode = employeeCode.toUpperCase().trim();
 
     const promise = async () => {
-      // Frontend duplicate check for nicer UX
-      // Also trust DB UNIQUE constraint as final guard
       if (codeExists(normalizedCode)) {
         throw new Error("Employee code already exists");
       }
-
-      // Server-side check (optional extra)
-      const { data: existing, error: fetchError } = await supabase
-        .from("employees")
-        .select("id")
-        .eq("employee_code", normalizedCode)
-        .maybeSingle();
-
-      if (fetchError && fetchError.code !== "PGRST116") {
-        throw new Error("Error checking employee code");
-      }
-      if (existing) throw new Error("Employee code already exists");
-
-      const payload = {
+      await createEmployee({
         name: name.trim(),
-        employee_code: normalizedCode,
-        company_id: companyId === "" ? null : Number(companyId),
-        location_id: locationId === "" ? null : Number(locationId),
-      };
-
-      const { error: insertError } = await supabase
-        .from("employees")
-        .insert(payload);
-      if (insertError) throw new Error(insertError.message || "Insert failed");
-
-      return true;
+        employeeCode: normalizedCode,
+        companyId: companyId === "" ? null : Number(companyId),
+        locationId: locationId === "" ? null : Number(locationId),
+      });
     };
 
     toast
@@ -164,20 +114,17 @@ export default function ManageEmployees() {
 
   const saveRow = async (row: Employee) => {
     setSavingRowId(row.id);
-    const { error } = await supabase
-      .from("employees")
-      .update({
-        company_id: row.company_id,
-        location_id: row.location_id,
-      })
-      .eq("id", row.id);
-
-    setSavingRowId(null);
-    if (error) {
-      toast.error(error.message || "Failed to update employee");
-    } else {
+    try {
+      await updateEmployee(row.id, {
+        companyId: row.company_id,
+        locationId: row.location_id,
+      });
       toast.success("Updated");
       setRefresh((r) => r + 1);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to update employee");
+    } finally {
+      setSavingRowId(null);
     }
   };
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import { createLoanEntry, fetchEmployees } from "@/lib/loans-api";
 import toast from "react-hot-toast";
 import { EmployeeSearchSelect } from "@/lib/EmployeeSearchSelect";
 import { PageHeader, SectionCard } from "@/components/shared/DashboardUI";
@@ -33,18 +33,22 @@ export default function LoanEntryForm() {
   const [validationError, setValidationError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchEmployees = async () => {
-      const { data, error } = await supabase
-        .from("employees")
-        .select("id, name, employee_code")
-        .eq("display", true)
-        .order("created_at", { ascending: true });
-
-      if (data) setEmployees(data);
-      if (error) console.error("Error fetching employees", error);
+    const loadEmployees = async () => {
+      try {
+        const { employees } = await fetchEmployees();
+        setEmployees(
+          employees.map((employee) => ({
+            id: String(employee.id),
+            name: String(employee.name),
+            employee_code: String(employee.employee_code),
+          }))
+        );
+      } catch (error) {
+        console.error("Error fetching employees", error);
+      }
     };
 
-    fetchEmployees();
+    void loadEmployees();
   }, []);
 
   const handleSubmit = async () => {
@@ -56,37 +60,24 @@ export default function LoanEntryForm() {
     setValidationError(null);
     setLoading(true);
 
-    const numericAmount =
-      type === "loan" || type === "advance" ? Number(amount) : -Number(amount);
-
-    const { error } = await supabase.from("employee_loans").insert({
-      employee_id: selectedEmployee,
-      amount: numericAmount,
-      type,
-      remarks,
-      payment_date: date,
-    });
-
-    console.log("Submitting data:", {
-      selectedEmployee,
-      amount,
-      type,
-      remarks,
-      date,
-    });
-
-    if (error) {
-      toast.error("Failed to record entry");
-    } else {
+    try {
+      await createLoanEntry({
+        employeeId: selectedEmployee,
+        amount: Number(amount),
+        type,
+        remarks,
+        paymentDate: date,
+      });
       toast.success(`Successfully recorded ${type}.`);
       setAmount("");
       setType("loan");
       setRemarks("");
       setDate(new Date().toISOString().split("T")[0]);
-      // I’m leaving selectedEmployee as-is so they can add multiple entries
+    } catch {
+      toast.error("Failed to record entry");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (

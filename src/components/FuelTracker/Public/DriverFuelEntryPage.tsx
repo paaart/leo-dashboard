@@ -195,8 +195,8 @@ export default function DriverFuelEntryPage() {
 
     try {
       const [billImagePath, meterImagePath] = await Promise.all([
-        billFile ? uploadFuelImage(billFile, "bills") : null,
-        meterFile ? uploadFuelImage(meterFile, "meters") : null,
+        billFile ? uploadFuelImage(billFile, "bills", { public: true }) : null,
+        meterFile ? uploadFuelImage(meterFile, "meters", { public: true }) : null,
       ]);
 
       await submitPublicFuelEntry({

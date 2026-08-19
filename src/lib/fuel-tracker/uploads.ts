@@ -1,47 +1,33 @@
-import { supabase } from "@/lib/supabaseClient";
-
-const ACCEPTED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp"];
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
-const BUCKET = "fuel-uploads";
-
-type FuelUploadFolder = "bills" | "meters";
-
-export function validateFuelImage(file: File) {
-  if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-    throw new Error("Upload a PNG, JPEG, or WebP image.");
-  }
-
-  if (file.size > MAX_FILE_SIZE) {
-    throw new Error("Image must be 5 MB or smaller.");
-  }
-}
+import {
+  type FuelUploadFolder,
+  validateFuelImage,
+} from "./upload-validation";
 
 export async function uploadFuelImage(
   file: File,
-  folder: FuelUploadFolder
+  folder: FuelUploadFolder,
+  options?: { public?: boolean }
 ): Promise<string> {
   validateFuelImage(file);
-
-  const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
-  const path = `${folder}/${crypto.randomUUID()}.${extension}`;
-
-  const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
-    cacheControl: "3600",
-    contentType: file.type,
-    upsert: false,
-  });
-
-  if (error) throw new Error(error.message);
-
-  return path;
+  const form = new FormData();
+  form.set("file", file);
+  form.set("folder", folder);
+  const response = await fetch(
+    options?.public ? "/api/fuel-uploads/public" : "/api/fuel-uploads",
+    { method: "POST", body: form }
+  );
+  const json = (await response.json()) as
+    | { ok: true; data: { path: string } }
+    | { ok: false; error: string };
+  if (!response.ok || !json.ok) throw new Error(json.ok ? "Upload failed" : json.error);
+  return json.data.path;
 }
 
 export async function createFuelImageSignedUrl(path: string): Promise<string> {
-  const { data, error } = await supabase.storage
-    .from(BUCKET)
-    .createSignedUrl(path, 5 * 60);
-
-  if (error) throw new Error(error.message);
-
-  return data.signedUrl;
+  const response = await fetch(`/api/fuel-uploads?path=${encodeURIComponent(path)}`);
+  const json = (await response.json()) as
+    | { ok: true; data: { signedUrl: string } }
+    | { ok: false; error: string };
+  if (!response.ok || !json.ok) throw new Error(json.ok ? "Unable to open image" : json.error);
+  return json.data.signedUrl;
 }

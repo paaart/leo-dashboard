@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import {
+  deleteLoanEntry,
+  fetchEmployee,
+  fetchLoanTransactions,
+} from "@/lib/loans-api";
 import toast from "react-hot-toast";
 import { ArrowLeft, Trash2 } from "lucide-react";
 import {
@@ -61,25 +65,15 @@ export default function EmployeeHistoryView({ employee, onBack }: Props) {
   useEffect(() => {
     const fetchMeta = async () => {
       setMetaLoading(true);
-      const { data, error } = await supabase
-        .from("employees")
-        .select(
-          `
-          id, name, employee_code,
-          company:company_id ( name ),
-          location:location_id ( name )
-        `
-        )
-        .eq("id", employee.employee_id)
-        .single();
-
-      if (error) {
+      try {
+        const data = await fetchEmployee(employee.employee_id);
+        setEmpMeta(data as EmployeeData);
+      } catch {
         toast.error("Failed to load employee details");
         setEmpMeta(null);
-      } else {
-        setEmpMeta(data as unknown as EmployeeData);
+      } finally {
+        setMetaLoading(false);
       }
-      setMetaLoading(false);
     };
 
     fetchMeta();
@@ -87,19 +81,18 @@ export default function EmployeeHistoryView({ employee, onBack }: Props) {
 
   const fetchHistory = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("employee_loans")
-      .select("id, amount, type, remarks, payment_date, created_at")
-      .eq("employee_id", employee.employee_id)
-      .order("created_at", { ascending: false })
-      .range(page * pageSize, page * pageSize + pageSize - 1);
-
-    if (error) {
+    try {
+      const data = await fetchLoanTransactions({
+        employeeId: employee.employee_id,
+        limit: pageSize,
+        offset: page * pageSize,
+      });
+      setTransactions(data as unknown as Transaction[]);
+    } catch {
       toast.error("Error fetching loan history");
-    } else {
-      setTransactions(data ?? []);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [employee.employee_id, page]);
 
   useEffect(() => {
@@ -110,13 +103,7 @@ export default function EmployeeHistoryView({ employee, onBack }: Props) {
     if (!confirm("Delete this transaction? This cannot be undone.")) return;
     setDeletingId(id);
 
-    const run = async () => {
-      const { error } = await supabase
-        .from("employee_loans")
-        .delete()
-        .eq("id", id);
-      if (error) throw error;
-    };
+    const run = () => deleteLoanEntry(id);
 
     try {
       await toast.promise(run(), {

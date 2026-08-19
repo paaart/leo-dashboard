@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
+import {
+  fetchLoanTransactions,
+  fetchOutstandingLoans,
+} from "@/lib/loans-api";
 import EmployeeHistoryView from "./EmployeeHistoryView";
 import toast from "react-hot-toast";
 import { Download, Eye, X } from "lucide-react";
@@ -67,22 +70,21 @@ export default function OutstandingLoansList() {
   const [isDownloading, setIsDownloading] = useState(false);
 
   useEffect(() => {
-    const fetchOutstandingLoans = async () => {
+    const loadOutstandingLoans = async () => {
       setLoading(true);
 
-      const { data, error } = await supabase.rpc("get_outstanding_loans");
-
-      if (error) {
+      try {
+        const data = await fetchOutstandingLoans();
+        setLoans(data as unknown as OutstandingLoan[]);
+      } catch (error) {
         console.error(error);
         toast.error("Error fetching loans");
-      } else {
-        setLoans((data || []) as OutstandingLoan[]);
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     };
 
-    fetchOutstandingLoans();
+    void loadOutstandingLoans();
   }, []);
 
   // Helper to get numeric outstanding per employee regardless of field name
@@ -114,37 +116,12 @@ export default function OutstandingLoansList() {
     try {
       setIsDownloading(true);
 
-      const { data, error } = await supabase
-        .from("employee_loans")
-        .select(
-          `
-          id,
-          employee_id,
-          amount,
-          type,
-          remarks,
-          created_at,
-          payment_date,
-          employee:employee_id!inner (
-            id,
-            name,
-            employee_code
-          )
-        `
-        )
-
-        .gte("payment_date", fromDate)
-        .lte("payment_date", toDate)
-        .order("payment_date", { ascending: true });
-
-      if (error) {
-        console.error(error);
-        toast.error("Error fetching transactions for export");
-        return;
-      }
-
-      const rows: EmployeeLoanRow[] = (data ??
-        []) as unknown as EmployeeLoanRow[];
+      const rows = (await fetchLoanTransactions({
+        fromDate,
+        toDate,
+        limit: 5000,
+        order: "asc",
+      })) as unknown as EmployeeLoanRow[];
 
       if (rows.length === 0) {
         toast("No transactions found in this date range");

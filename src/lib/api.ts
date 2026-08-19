@@ -1,5 +1,4 @@
 import { BasicDetails } from "@/components/InternationalCalculator/types";
-import { supabase } from "./supabaseClient";
 
 async function parseJsonResponse(res: Response): Promise<unknown> {
   const text = await res.text();
@@ -30,9 +29,14 @@ function getErrorMessageFromResponse(res: Response, parsed: unknown) {
 }
 
 export async function getHHGQuoteMap() {
-  const { data, error } = await supabase.from("transport_quotes").select("*");
-
-  if (error) throw new Error(error.message);
+  const res = await fetch("/api/quotes?type=hhg");
+  const parsed = await parseJsonResponse(res);
+  if (!res.ok) throw new Error(getErrorMessageFromResponse(res, parsed));
+  const data = (
+    typeof parsed === "object" && parsed !== null && "data" in parsed
+      ? parsed.data
+      : []
+  ) as { source: string; destination: string; packaging: string; transportation: string }[];
 
   const grouped: Record<
     string,
@@ -57,16 +61,24 @@ export async function getVehicleQuotesDict(
   source: string,
   destination: string
 ) {
-  const { data, error } = await supabase
-    .from("vehicle_quotes")
-    .select("*")
-    .eq("source", source)
-    .eq("destination", destination);
-
-  if (error) {
-    console.error("Error fetching vehicle quotes:", error.message);
+  const params = new URLSearchParams({ type: "vehicle", source, destination });
+  const res = await fetch(`/api/quotes?${params}`);
+  const parsed = await parseJsonResponse(res);
+  if (!res.ok) {
+    console.error("Error fetching vehicle quotes:", getErrorMessageFromResponse(res, parsed));
     return {};
   }
+  const data = (
+    typeof parsed === "object" && parsed !== null && "data" in parsed
+      ? parsed.data
+      : []
+  ) as {
+    source: string;
+    destination: string;
+    size: string;
+    carrier_cost: number;
+    leo_cost: number;
+  }[];
 
   const vehicleMap: Record<
     string,
@@ -94,19 +106,17 @@ export async function getDistance(
   source: string,
   destination: string
 ): Promise<number | null> {
-  const { data, error } = await supabase
-    .from("transport_distances")
-    .select("distance")
-    .eq("source", source.toUpperCase().trim())
-    .eq("destination", destination.toUpperCase().trim())
-    .single();
-
-  if (error) {
-    console.error("Distance fetch error:", error.message);
+  const params = new URLSearchParams({ type: "distance", source, destination });
+  const res = await fetch(`/api/quotes?${params}`);
+  const parsed = await parseJsonResponse(res);
+  if (!res.ok) {
+    console.error("Distance fetch error:", getErrorMessageFromResponse(res, parsed));
     return null;
   }
-
-  return data?.distance || null;
+  const data = typeof parsed === "object" && parsed !== null && "data" in parsed
+    ? parsed.data as { distance?: number } | null
+    : null;
+  return data?.distance ?? null;
 }
 
 export async function saveInternationalQuote(values: BasicDetails) {

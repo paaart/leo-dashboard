@@ -2,19 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { IndianRupee, ReceiptText, TrendingDown, Users } from "lucide-react";
-import { supabase } from "@/lib/supabaseClient";
+import { fetchLoanSummary } from "@/lib/loans-api";
 import { MetricCard } from "@/components/shared/DashboardUI";
 import { alertDanger } from "@/components/shared/ui";
-
-type OutstandingLoan = {
-  total_outstanding?: number;
-  balance?: number;
-};
-
-type TransactionRow = {
-  amount: number;
-  type: string | null;
-};
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("en-IN", {
@@ -22,10 +12,6 @@ function formatCurrency(value: number) {
     currency: "INR",
     maximumFractionDigits: 0,
   }).format(value);
-}
-
-function getOutstandingValue(loan: OutstandingLoan) {
-  return loan.total_outstanding ?? loan.balance ?? 0;
 }
 
 export default function LoanSummaryCards() {
@@ -45,41 +31,20 @@ export default function LoanSummaryCards() {
       setLoading(true);
       setError(null);
 
-      const [outstandingResult, transactionsResult] = await Promise.all([
-        supabase.rpc("get_outstanding_loans"),
-        supabase.from("employee_loans").select("amount,type"),
-      ]);
-
-      if (cancelled) return;
-
-      if (outstandingResult.error || transactionsResult.error) {
-        setError("Unable to load loan summary");
-        setLoading(false);
-        return;
+      try {
+        const data = await fetchLoanSummary();
+        if (cancelled) return;
+        setSummary({
+          totalOutstanding: data.totalOutstanding,
+          activeEmployeesWithBalance: data.activeEmployeesWithBalance,
+          totalGiven: data.totalGiven,
+          totalRepayments: data.totalRepayments,
+        });
+      } catch {
+        if (!cancelled) setError("Unable to load loan summary");
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-
-      const outstandingRows =
-        (outstandingResult.data as OutstandingLoan[] | null) ?? [];
-      const transactions =
-        (transactionsResult.data as TransactionRow[] | null) ?? [];
-
-      setSummary({
-        totalOutstanding: outstandingRows.reduce(
-          (sum, row) => sum + getOutstandingValue(row),
-          0
-        ),
-        activeEmployeesWithBalance: outstandingRows.filter(
-          (row) => getOutstandingValue(row) !== 0
-        ).length,
-        totalGiven: transactions
-          .filter((row) => row.type === "loan" || row.type === "advance")
-          .reduce((sum, row) => sum + Math.abs(Number(row.amount) || 0), 0),
-        totalRepayments: transactions
-          .filter((row) => row.type === "repayment")
-          .reduce((sum, row) => sum + Math.abs(Number(row.amount) || 0), 0),
-      });
-
-      setLoading(false);
     };
 
     void loadSummary();
