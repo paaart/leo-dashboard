@@ -1,6 +1,6 @@
 // src/app/api/international/history/route.ts
 import { requireAuth } from "@/lib/auth";
-import { supabase } from "@/lib/supabaseClient";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse, type NextRequest } from "next/server";
 import {
   BasicDetails,
@@ -11,7 +11,8 @@ export async function GET(req: NextRequest) {
   const auth = await requireAuth(req);
   if (!auth.ok) return auth.response;
 
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from("international_quotes")
     .select("*")
     .order("created_at", { ascending: false });

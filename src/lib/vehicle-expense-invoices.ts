@@ -1515,10 +1515,6 @@ async function ensurePaymentAllocationCrossBatchSupport(client: PoolClient) {
     );
   }
 
-  await client.query(`
-    create unique index if not exists vehicle_expense_payment_allocations_batch_invoice_uidx
-    on public.vehicle_expense_payment_allocations (payment_batch_id, invoice_id)
-  `);
 }
 
 export async function createVehicleExpensePaymentBatch(

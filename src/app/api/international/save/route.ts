@@ -1,6 +1,6 @@
 // src/app/api/international/save/route.ts
 import { requireAuth } from "@/lib/auth";
-import { supabase } from "@/lib/supabaseClient";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -27,7 +27,8 @@ export async function POST(req: NextRequest) {
     calculate_gst_val: values.calculateGSTVal,
   };
 
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+  const { data, error } = await admin
     .from("international_quotes")
     .insert([payload])
     .select();
