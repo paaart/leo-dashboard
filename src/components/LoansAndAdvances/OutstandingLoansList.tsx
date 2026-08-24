@@ -5,6 +5,7 @@ import {
   fetchLoanTransactions,
   fetchOutstandingLoans,
 } from "@/lib/loans-api";
+import { EmployeeSearchSelect } from "@/lib/EmployeeSearchSelect";
 import EmployeeHistoryView from "./EmployeeHistoryView";
 import toast from "react-hot-toast";
 import { Download, Eye, X } from "lucide-react";
@@ -59,6 +60,7 @@ type OutstandingLoan = {
 
 export default function OutstandingLoansList() {
   const [loans, setLoans] = useState<OutstandingLoan[]>([]);
+  const [employeeFilter, setEmployeeFilter] = useState("");
   const [loading, setLoading] = useState(true);
   const [selectedEmployee, setSelectedEmployee] =
     useState<OutstandingLoan | null>(null);
@@ -100,6 +102,10 @@ export default function OutstandingLoansList() {
 
   const formatDate = (value?: string) =>
     value ? new Date(value).toLocaleDateString("en-IN") : "-";
+
+  const filteredLoans = employeeFilter
+    ? loans.filter((loan) => loan.employee_id === employeeFilter)
+    : loans;
 
   // Download CSV of ALL transactions from employee_loans for date range
   const handleDownloadCsv = async () => {
@@ -245,80 +251,104 @@ export default function OutstandingLoansList() {
               description="Employees with active loan or advance balances will appear here."
             />
           ) : (
-            <div className={tableWrapper}>
-              <table className="min-w-[820px] w-full text-sm">
-                <thead className={tableHead}>
-                  <tr>
-                    <th className={`${tableHeadCell} text-left`}>
-                      Employee Name
-                    </th>
-                    <th className={`${tableHeadCell} text-right`}>
-                      Total Outstanding
-                    </th>
-                    <th className={`${tableHeadCell} text-left`}>
-                      Last Transaction Date
-                    </th>
-                    <th className={`${tableHeadCell} text-left`}>
-                      Transaction Count
-                    </th>
-                    <th className={`${tableHeadCell} text-right`}>
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-edge">
-                  {loans.map((loan) => {
-                    const outstanding = getOutstandingValue(loan);
-                    return (
-                      <tr
-                        key={loan.employee_id}
-                        className="bg-surface transition-colors hover:bg-surface-2/60"
-                      >
-                        <td className="px-4 py-3">
-                          <div>
-                            <p className="font-medium text-fg">
-                              {loan.name}
-                            </p>
-                            <p className="text-xs text-fg-muted">
-                              {loan.employee_code}
-                            </p>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <span
-                            className={`font-semibold tabular-nums ${
-                              outstanding > 0
-                                ? "text-accent"
-                                : "text-fg-muted"
-                            }`}
-                          >
-                            {formatCurrency(outstanding)}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-fg-muted">
-                          {formatDate(loan.last_txn_date)}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={badgeClass("neutral")}>
-                            {loan.txn_count ?? 0} transactions
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <button
-                            type="button"
-                            onClick={() => setSelectedEmployee(loan)}
-                            className={buttonSecondary}
-                          >
-                            <Eye className="h-4 w-4" />
-                            View History
-                          </button>
-                        </td>
+            <>
+              <div className="mb-5 max-w-xl">
+                <EmployeeSearchSelect
+                  employees={loans.map((loan) => ({
+                    id: loan.employee_id,
+                    name: loan.name,
+                    employee_code: loan.employee_code,
+                  }))}
+                  value={employeeFilter}
+                  onChange={setEmployeeFilter}
+                  label="Search employee"
+                  placeholder="Type an employee name or code..."
+                  clearSelectionLabel="Show all employees"
+                />
+              </div>
+
+              {filteredLoans.length === 0 ? (
+                <EmptyState
+                  title="No matching employees"
+                  description="Try a different employee name or employee code."
+                />
+              ) : (
+                <div className={tableWrapper}>
+                  <table className="min-w-[820px] w-full text-sm">
+                    <thead className={tableHead}>
+                      <tr>
+                        <th className={`${tableHeadCell} text-left`}>
+                          Employee Name
+                        </th>
+                        <th className={`${tableHeadCell} text-right`}>
+                          Total Outstanding
+                        </th>
+                        <th className={`${tableHeadCell} text-left`}>
+                          Last Transaction Date
+                        </th>
+                        <th className={`${tableHeadCell} text-left`}>
+                          Transaction Count
+                        </th>
+                        <th className={`${tableHeadCell} text-right`}>
+                          Actions
+                        </th>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                    </thead>
+                    <tbody className="divide-y divide-edge">
+                      {filteredLoans.map((loan) => {
+                        const outstanding = getOutstandingValue(loan);
+                        return (
+                          <tr
+                            key={loan.employee_id}
+                            className="bg-surface transition-colors hover:bg-surface-2/60"
+                          >
+                            <td className="px-4 py-3">
+                              <div>
+                                <p className="font-medium text-fg">
+                                  {loan.name}
+                                </p>
+                                <p className="text-xs text-fg-muted">
+                                  {loan.employee_code}
+                                </p>
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <span
+                                className={`font-semibold tabular-nums ${
+                                  outstanding > 0
+                                    ? "text-accent"
+                                    : "text-fg-muted"
+                                }`}
+                              >
+                                {formatCurrency(outstanding)}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-fg-muted">
+                              {formatDate(loan.last_txn_date)}
+                            </td>
+                            <td className="px-4 py-3">
+                              <span className={badgeClass("neutral")}>
+                                {loan.txn_count ?? 0} transactions
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <button
+                                type="button"
+                                onClick={() => setSelectedEmployee(loan)}
+                                className={buttonSecondary}
+                              >
+                                <Eye className="h-4 w-4" />
+                                View History
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
           )}
         </SectionCard>
       </div>

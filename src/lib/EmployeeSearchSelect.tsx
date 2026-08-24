@@ -12,12 +12,18 @@ type EmployeeSearchSelectProps = {
   employees: Employee[];
   value: string; // selected employee id
   onChange: (id: string) => void;
+  label?: string;
+  placeholder?: string;
+  clearSelectionLabel?: string;
 };
 
 export function EmployeeSearchSelect({
   employees,
   value,
   onChange,
+  label = "Employee",
+  placeholder = "Type to search employee...",
+  clearSelectionLabel,
 }: EmployeeSearchSelectProps) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -59,14 +65,14 @@ export function EmployeeSearchSelect({
   return (
     <div ref={containerRef} className="relative">
       <label className="block text-sm font-medium text-fg">
-        Employee
+        {label}
       </label>
 
       <div className="relative mt-1.5">
         <input
           type="text"
           className={`${inputField} h-10 pr-8`}
-          placeholder="Type to search employee..."
+          placeholder={placeholder}
           value={displayValue}
           onClick={() => {
             setOpen(true);
@@ -86,6 +92,20 @@ export function EmployeeSearchSelect({
 
       {open && (
         <div className="absolute z-20 mt-1 max-h-56 w-full overflow-auto rounded-lg border border-edge bg-surface text-sm shadow-overlay">
+          {clearSelectionLabel && value && !query.trim() ? (
+            <button
+              type="button"
+              className="w-full border-b border-edge px-3 py-2 text-left font-medium text-accent transition-colors hover:bg-surface-2"
+              onClick={() => {
+                onChange("");
+                setOpen(false);
+                setQuery("");
+              }}
+            >
+              {clearSelectionLabel}
+            </button>
+          ) : null}
+
           {filteredEmployees.length === 0 ? (
             <div className="px-3 py-2 text-fg-muted">
               No employees found
