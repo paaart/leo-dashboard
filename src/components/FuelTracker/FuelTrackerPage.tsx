@@ -1,8 +1,9 @@
 "use client";
 
-import { Plus, RefreshCw } from "lucide-react";
+import { Download, Plus, RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
+import { saveAs } from "file-saver";
 import toast from "react-hot-toast";
 import { FuelTrackerDashboard } from "./FuelTrackerDashboard";
 import { FuelEntryFormModal } from "./FuelEntryFormModal";
@@ -39,6 +40,7 @@ import {
   dismissVehicleRenewalAlert,
   updateVehicle,
   fetchFuelDashboardAnalytics,
+  fetchVehicleTrackerExport,
   fetchFuelEntries,
   fetchVehicleRenewalAlerts,
   fetchVehicleExpenseInvoiceAnalytics,
@@ -167,6 +169,7 @@ export default function FuelTrackerPage() {
   const [loading, setLoading] = useState(true);
   const [renewalAlertsLoading, setRenewalAlertsLoading] = useState(true);
   const [analyticsLoading, setAnalyticsLoading] = useState(true);
+  const [exportingAnalytics, setExportingAnalytics] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [analyticsError, setAnalyticsError] = useState<string | null>(null);
   const [vehicleModalOpen, setVehicleModalOpen] = useState(false);
@@ -816,6 +819,35 @@ export default function FuelTrackerPage() {
     }
   };
 
+  const handleExportAnalytics = async () => {
+    if (
+      analyticsFilters.dateFrom &&
+      analyticsFilters.dateTo &&
+      analyticsFilters.dateFrom > analyticsFilters.dateTo
+    ) {
+      toast.error("From date cannot be after To date");
+      return;
+    }
+
+    setExportingAnalytics(true);
+
+    try {
+      const { blob, filename } = await fetchVehicleTrackerExport(
+        analyticsFilters
+      );
+      saveAs(blob, filename);
+      toast.success("Excel download started");
+    } catch (exportError) {
+      const message =
+        exportError instanceof Error
+          ? exportError.message
+          : "Failed to export vehicle entries.";
+      toast.error(message);
+    } finally {
+      setExportingAnalytics(false);
+    }
+  };
+
   return (
     <div className="min-h-full bg-canvas px-4 py-6 text-fg sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-6">
@@ -860,6 +892,17 @@ export default function FuelTrackerPage() {
             <SectionHeader
               title="Analytics Dashboard"
               description="Fleet-level fuel spend, other expenses, mileage, costs, warnings, and operational deviation."
+              action={
+                <button
+                  type="button"
+                  onClick={() => void handleExportAnalytics()}
+                  disabled={exportingAnalytics}
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-edge bg-surface px-4 text-sm font-medium text-fg shadow-card hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <Download className="h-4 w-4" />
+                  {exportingAnalytics ? "Preparing Excel..." : "Download Excel"}
+                </button>
+              }
             />
             <FuelTrackerDashboard
               analytics={analytics}

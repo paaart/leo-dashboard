@@ -323,3 +323,37 @@ export function fetchFuelDashboardAnalytics(filters: {
     `/api/fuel-dashboard/analytics${query ? `?${query}` : ""}`
   );
 }
+
+export async function fetchVehicleTrackerExport(filters: {
+  vehicleId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+}) {
+  const params = new URLSearchParams();
+
+  if (filters.vehicleId && filters.vehicleId !== "all") {
+    params.set("vehicleId", filters.vehicleId);
+  }
+  if (filters.dateFrom) params.set("dateFrom", filters.dateFrom);
+  if (filters.dateTo) params.set("dateTo", filters.dateTo);
+
+  const query = params.toString();
+  const response = await fetch(
+    `/api/fuel-dashboard/export${query ? `?${query}` : ""}`
+  );
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as
+      | { error?: string }
+      | null;
+    throw new Error(body?.error ?? "Failed to export vehicle entries.");
+  }
+
+  const disposition = response.headers.get("Content-Disposition") ?? "";
+  const filenameMatch = disposition.match(/filename="([^"]+)"/i);
+
+  return {
+    blob: await response.blob(),
+    filename: filenameMatch?.[1] ?? "vehicle-tracker-export.xlsx",
+  };
+}
