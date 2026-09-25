@@ -12,7 +12,7 @@ hangs off it.
 
 ```
 docs/
-  AI_CONTEXT.md          ← read first: what this is, the seven modules, non-negotiables
+  AI_CONTEXT.md          ← read first: what this is, the eight modules, non-negotiables
   PROJECT_STATE.md       ← owns all status: what works / broken / risky
   DECISIONS.md           ← why it's built this way (the real tradeoffs)
 
@@ -38,6 +38,7 @@ docs/
     08-warehouse-pods-and-cycles.md  pods, cycles, renewals, rate changes
     09-warehouse-transactions.md     the ledger (charge / payment / adjustment)
     10-warehouse-billing-payments-alerts.md  accrual cron, payments, alerts, dashboard
+    11-inventory.md                  materials, branches, branch-staff assignments
 
   frontend/
     00-frontend-overview.md          conventions, module boundaries, shared UI
@@ -49,6 +50,7 @@ docs/
     06-user-management.md
     07-shared-components-and-lib.md
     08-home.md                       the server-rendered landing page
+    09-inventory.md                  Inventory Management (packaging stock) + the branch role
 ```
 
 ---

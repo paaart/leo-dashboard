@@ -25,6 +25,13 @@ were additionally exercised live in the browser — light/dark, desktop/375px).
   Loans/Advances, User Management. Home is a server component with data in the HTML;
   the rest map to `DashboardShell` sections loaded lazily via `next/dynamic` (see
   [architecture/04](architecture/04-dashboard-shell-and-routing.md)).
+- **Inventory Management — Setup only** — verified in code 2026-09-24. The eighth
+  module. Materials, branches and branch-staff assignments (admin CRUD over
+  `/api/inventory/**`), plus the new `branch` role that sees only this module. The
+  stock-count, purchase, dispatch, vendor and analytics screens are **not built yet**
+  (see [frontend/09](frontend/09-inventory.md)); a branch-staff user who logs in today
+  is redirected to `/dashboard/inventory` and sees an "Access denied" card because no
+  sub-section is open to that role yet.
 - **Design system** — verified in browser. All UI runs on semantic tokens in
   `globals.css` + class constants in `shared/ui.ts`; light/dark flips with the OS
   scheme with no hand-written `dark:` variants (intentional exceptions: the always-dark

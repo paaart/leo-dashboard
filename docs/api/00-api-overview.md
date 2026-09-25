@@ -21,7 +21,10 @@ const auth = await requireAdmin(request);  // active admin, else 403
 if (!auth.ok) return auth.response;
 ```
 
-- **`requireAdmin`** — all `warehouse/**` and `admin/**` routes.
+- **`requireAdmin`** — all `warehouse/**`, `admin/**` and `inventory/**` routes.
+- **`requireInventoryAccess`** (`src/lib/inventory/access.ts`) — admin *or* branch-staff,
+  returning the branch ids the caller may touch. Reserved for the branch-facing
+  inventory routes; no route uses it yet.
 - **`requireAuth`** — international, fuel, vehicles, and all vehicle-expense/vendor-invoice
   routes (so any active user, not just admins, can use the Vehicle Tracker).
 - **No guard (public by design)** — `auth/login`, `auth/logout`, `auth/request-access`,
@@ -66,9 +69,10 @@ them.
   `pg` Pool and/or the service-role client, which don't run on the edge.
 - **Validation lives in three places:** hand-rolled `validate*Input` functions in
   `src/lib/fuel-tracker/` and `src/lib/vehicle-expense-invoices.ts` (returning
-  `{ ok, value } | { ok:false, error }`); inline checks in warehouse routes; and `zod`
-  is a dependency used in newer spots. Dates are validated with an `isISODate`
-  (`YYYY-MM-DD`) check throughout.
+  `{ ok, value } | { ok:false, error }`); inline checks in warehouse routes; and the
+  small `cleanName` / `isUuid` / `parseMinStock` helpers in `src/lib/inventory/http.ts`
+  for the inventory routes. Dates are validated with an `isISODate` (`YYYY-MM-DD`)
+  check throughout. (`zod` is installed but not used by any route.)
 - **Pagination:** list routes accept `?limit` (default 500, capped 2000) and `?offset`;
   the paged warehouse lists use `?page`/`?pageSize` (default 50, capped 200) instead.
 - **Money integrity:** warehouse routes use the raw `pg` Pool with `BEGIN/COMMIT`; the
@@ -173,6 +177,17 @@ Warehouse billing / payments / alerts — [api/10](10-warehouse-billing-payments
 | GET | `/api/warehouse/dashboard-summary` | admin |
 | GET | `/api/warehouse/payment-alerts` | admin |
 | POST | `/api/warehouse/payment-alerts/dismiss` | admin |
+
+Inventory Management — [api/11](11-inventory.md)
+
+| Method | Path | Guard |
+|---|---|---|
+| GET / POST | `/api/inventory/branches` (`?includeInactive`) | admin |
+| PATCH | `/api/inventory/branches/[id]` | admin |
+| GET / POST | `/api/inventory/materials` (`?includeInactive`) | admin |
+| PATCH | `/api/inventory/materials/[id]` | admin |
+| GET | `/api/inventory/assignments` | admin |
+| PUT | `/api/inventory/assignments/[profileId]` | admin |
 
 ---
 

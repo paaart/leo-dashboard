@@ -14,7 +14,8 @@ Where admins approve access requests and manage roles/status. It's the human sid
 
 - Lists profiles from `GET /api/admin/users` (optionally filtered by `?status`, to show
   the `pending` approval queue).
-- For each user, an admin can change **role** (`user` ↔ `admin`) and **status**
+- For each user, an admin can change **role** (a select: User / Admin / Branch staff —
+  labels from `ROLE_LABELS` in `src/lib/roles.ts`) and **status**
   (`pending` / `active` / `inactive` / `rejected`) via `PATCH /api/admin/users/[id]`.
 
 The core action is approving a signup: a `request-access` submission arrives as

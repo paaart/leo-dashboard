@@ -7,8 +7,9 @@ import {
   buttonSecondary,
   card,
 } from "@/components/shared/ui";
+import { APP_ROLES, ROLE_LABELS, type AppRole } from "@/lib/roles";
 
-type Role = "user" | "admin";
+type Role = AppRole;
 type Status = "pending" | "active" | "inactive" | "rejected";
 
 type ManagedUser = {
@@ -34,6 +35,36 @@ const statusStyles: Record<Status, string> = {
   inactive: "border-edge bg-surface-2 text-fg-muted",
   rejected: "border-danger/25 bg-danger-soft text-danger-soft-fg",
 };
+
+/* Three roles is one too many for a toggle button, so role changes are a select. */
+function RoleSelect({
+  value,
+  disabled,
+  onChange,
+}: {
+  value: Role;
+  disabled: boolean;
+  onChange: (role: Role) => void;
+}) {
+  return (
+    <select
+      value={value}
+      disabled={disabled}
+      onChange={(e) => {
+        const next = e.target.value as Role;
+        if (next !== value) onChange(next);
+      }}
+      aria-label="Role"
+      className="h-8 rounded-lg border border-edge bg-surface px-2 text-xs font-medium text-fg outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/25 disabled:opacity-60"
+    >
+      {APP_ROLES.map((role) => (
+        <option key={role} value={role}>
+          {ROLE_LABELS[role]}
+        </option>
+      ))}
+    </select>
+  );
+}
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("en-IN", {
@@ -258,8 +289,8 @@ export default function UserManagement() {
                       <td className="whitespace-nowrap px-4 py-3">
                         {user.phone || "-"}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-3 capitalize">
-                        {user.role}
+                      <td className="whitespace-nowrap px-4 py-3">
+                        {ROLE_LABELS[user.role]}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3">
                         <span
@@ -309,6 +340,20 @@ export default function UserManagement() {
                                 onClick={() =>
                                   void updateUser(
                                     user.id,
+                                    { role: "branch", status: "active" },
+                                    "Branch staff approved."
+                                  )
+                                }
+                                className="rounded-lg border border-edge px-3 py-1.5 text-xs font-medium hover:bg-surface-2 disabled:opacity-60"
+                              >
+                                Approve as Branch staff
+                              </button>
+                              <button
+                                type="button"
+                                disabled={savingId === user.id}
+                                onClick={() =>
+                                  void updateUser(
+                                    user.id,
                                     { status: "rejected" },
                                     "Request rejected."
                                   )
@@ -322,23 +367,17 @@ export default function UserManagement() {
 
                           {user.status === "active" && (
                             <>
-                              <button
-                                type="button"
+                              <RoleSelect
+                                value={user.role}
                                 disabled={savingId === user.id}
-                                onClick={() =>
+                                onChange={(role) =>
                                   void updateUser(
                                     user.id,
-                                    {
-                                      role:
-                                        user.role === "admin" ? "user" : "admin",
-                                    },
+                                    { role },
                                     "Role updated."
                                   )
                                 }
-                                className="rounded-lg border border-edge px-3 py-1.5 text-xs font-medium hover:bg-surface-2 disabled:opacity-60"
-                              >
-                                Change Role
-                              </button>
+                              />
                               <button
                                 type="button"
                                 disabled={savingId === user.id}
@@ -373,23 +412,17 @@ export default function UserManagement() {
                               >
                                 Reactivate
                               </button>
-                              <button
-                                type="button"
+                              <RoleSelect
+                                value={user.role}
                                 disabled={savingId === user.id}
-                                onClick={() =>
+                                onChange={(role) =>
                                   void updateUser(
                                     user.id,
-                                    {
-                                      role:
-                                        user.role === "admin" ? "user" : "admin",
-                                    },
+                                    { role },
                                     "Role updated."
                                   )
                                 }
-                                className="rounded-lg border border-edge px-3 py-1.5 text-xs font-medium hover:bg-surface-2 disabled:opacity-60"
-                              >
-                                Set Role
-                              </button>
+                              />
                             </>
                           )}
                         </div>

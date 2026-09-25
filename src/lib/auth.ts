@@ -2,8 +2,9 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createRouteClient } from "@/lib/supabase/route";
 import { createServerComponentClient } from "@/lib/supabase/server";
+import type { AppRole } from "@/lib/roles";
 
-export type AppRole = "user" | "admin";
+export type { AppRole } from "@/lib/roles";
 export type AppStatus = "pending" | "active" | "inactive" | "rejected";
 
 export type AppUser = {

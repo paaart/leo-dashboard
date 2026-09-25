@@ -171,6 +171,37 @@ of deferred constraint triggers that validate totals and keep `status` correct.
 
 ---
 
+## Inventory Management **[migration]**
+
+Packaging-material stock. Migration `20260924083141`. All three tables have RLS
+enabled with the standard `authenticated_app_access` policy, but the app only reaches
+them through admin routes on the `pg` Pool. Routes:
+[api/11](../api/11-inventory.md).
+
+### `inventory_branches`
+
+A location that holds packaging material. `name` (unique, case-insensitive),
+`is_central` (**at most one row**, enforced by a partial unique index — the central
+store buys from vendors and dispatches to the others), `is_active`, `sort_order`,
+`created_at`/`updated_at` (trigger `set_inventory_updated_at`). Seeded with the 12
+branches from the client's FY 2026-27 sheet; Uttarahalli is central.
+
+### `inventory_materials`
+
+Anything counted or purchased. `name` (unique, case-insensitive), `unit` (default
+`'pcs'`), `min_stock` (nullable, ≥ 0 — the company-wide restock threshold),
+`is_active`, `sort_order`, timestamps. Seeded with the 17 materials from the client's
+stock and purchase sheets.
+
+### `inventory_branch_assignments`
+
+`(profile_id, branch_id)` primary key; both FKs `on delete cascade`. Which
+`profiles.role = 'branch'` users may report stock for which branches.
+
+### `profiles.role` (changed)
+
+`profiles_role_valid` now allows `'branch'` alongside `'user'` and `'admin'`.
+
 ## Warehouse **[supabase-only, except alert dismissals]**
 
 The warehouse core tables are **not** in the migrations folder — they were built in

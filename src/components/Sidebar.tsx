@@ -4,14 +4,21 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronDown, ChevronRight, X } from "lucide-react";
 import type { Section } from "@/components/Dashboard/DashboardShell";
+import {
+  defaultInventorySub,
+  inventorySubsForRole,
+} from "@/components/Inventory/sections";
+import type { AppRole } from "@/lib/roles";
 
 type SidebarProps = {
   section: Section;
   setSection: (section: Section) => void;
   mobileOpen: boolean;
   onMobileClose: () => void;
-  role: "user" | "admin";
+  role: AppRole;
 };
+
+type OpenGroup = "international" | "loans" | "warehouse" | "inventory" | null;
 
 const mainLinkClass = (active: boolean) =>
   `block w-full rounded-lg px-3 py-2 text-left text-sm transition-colors ${
@@ -34,11 +41,81 @@ const subLinkClass = (active: boolean) =>
       : "text-fg-muted hover:bg-surface-2 hover:text-fg"
   }`;
 
+/* Which accordion group a section belongs to (null for flat links). */
+function groupForSection(main: Section["main"]): OpenGroup {
+  switch (main) {
+    case "international":
+    case "loans":
+    case "warehouse":
+    case "inventory":
+      return main;
+    default:
+      return null;
+  }
+}
+
 function GroupChevron({ open }: { open: boolean }) {
   return open ? (
     <ChevronDown className="h-4 w-4 opacity-70" />
   ) : (
     <ChevronRight className="h-4 w-4 opacity-70" />
+  );
+}
+
+/*
+  Inventory Management is the one group whose sub-links depend on the role:
+  admins get every screen, branch staff only the ones for reporting stock.
+*/
+function InventoryGroup({
+  section,
+  setSection,
+  open,
+  setOpen,
+  role,
+  onAnyNavigate,
+}: {
+  section: Section;
+  setSection: (section: Section) => void;
+  open: OpenGroup;
+  setOpen: React.Dispatch<React.SetStateAction<OpenGroup>>;
+  role: AppRole;
+  onAnyNavigate?: () => void;
+}) {
+  const subs = inventorySubsForRole(role);
+  const defaultSub = defaultInventorySub(role);
+  if (!defaultSub) return null;
+
+  return (
+    <div>
+      <Link
+        href="/dashboard/inventory"
+        onClick={() => {
+          setSection({ main: "inventory", sub: defaultSub });
+          setOpen((prev) => (prev === "inventory" ? null : "inventory"));
+        }}
+        className={groupLinkClass(section.main === "inventory")}
+      >
+        <span>Inventory Management</span>
+        <GroupChevron open={open === "inventory"} />
+      </Link>
+
+      {open === "inventory" && section.main === "inventory" && (
+        <div className="ml-3 mt-1 space-y-0.5 border-l border-edge pl-3">
+          {subs.map((sub) => (
+            <button
+              key={sub.id}
+              onClick={() => {
+                setSection({ main: "inventory", sub: sub.id });
+                onAnyNavigate?.();
+              }}
+              className={subLinkClass(section.sub === sub.id)}
+            >
+              {sub.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -52,15 +129,29 @@ function SidebarNav({
 }: {
   section: Section;
   setSection: (section: Section) => void;
-  open: "international" | "loans" | "warehouse" | null;
-  setOpen: React.Dispatch<
-    React.SetStateAction<"international" | "loans" | "warehouse" | null>
-  >;
-  role: "user" | "admin";
+  open: OpenGroup;
+  setOpen: React.Dispatch<React.SetStateAction<OpenGroup>>;
+  role: AppRole;
   onAnyNavigate?: () => void;
 }) {
   const isActive = (main: Section["main"]) => section.main === main;
   const isAdmin = role === "admin";
+
+  // Branch staff have exactly one module; nothing else applies to them.
+  if (role === "branch") {
+    return (
+      <nav className="space-y-1">
+        <InventoryGroup
+          section={section}
+          setSection={setSection}
+          open={open}
+          setOpen={setOpen}
+          role={role}
+          onAnyNavigate={onAnyNavigate}
+        />
+      </nav>
+    );
+  }
 
   return (
     <nav className="space-y-1">
@@ -275,6 +366,17 @@ function SidebarNav({
           )}
         </div>
       )}
+
+      {isAdmin && (
+        <InventoryGroup
+          section={section}
+          setSection={setSection}
+          open={open}
+          setOpen={setOpen}
+          role={role}
+          onAnyNavigate={onAnyNavigate}
+        />
+      )}
     </nav>
   );
 }
@@ -286,28 +388,12 @@ export default function Sidebar({
   onMobileClose,
   role,
 }: SidebarProps) {
-  const [open, setOpen] = useState<
-    "international" | "loans" | "warehouse" | null
-  >(
-    section.main === "international"
-      ? "international"
-      : section.main === "loans"
-      ? "loans"
-      : section.main === "warehouse"
-      ? "warehouse"
-      : null
+  const [open, setOpen] = useState<OpenGroup>(() =>
+    groupForSection(section.main)
   );
 
   useEffect(() => {
-    setOpen(
-      section.main === "international"
-        ? "international"
-        : section.main === "loans"
-        ? "loans"
-        : section.main === "warehouse"
-        ? "warehouse"
-        : null
-    );
+    setOpen(groupForSection(section.main));
   }, [section.main]);
 
   return (

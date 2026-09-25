@@ -60,13 +60,13 @@ moving together.
 | Every table, grouped by module | [database/01-schema-overview.md](database/01-schema-overview.md) |
 | Migration workflow + the migration-drift warning | [database/02-migrations-and-drift.md](database/02-migrations-and-drift.md) |
 | API conventions (auth, response shapes, errors) | [api/00-api-overview.md](api/00-api-overview.md) |
-| Per-module API contracts | `api/01`–`api/10` (see file map in the API overview) |
+| Per-module API contracts | `api/01`–`api/11` (see file map in the API overview) |
 | Frontend conventions + module layout | [frontend/00-frontend-overview.md](frontend/00-frontend-overview.md) |
-| Per-module UI contracts | `frontend/01`–`frontend/08` |
+| Per-module UI contracts | `frontend/01`–`frontend/09` |
 
 ---
 
-## The seven modules
+## The eight modules
 
 Every feature belongs to one of these. Sidebar labels in parentheses.
 
@@ -79,6 +79,10 @@ Every feature belongs to one of these. Sidebar labels in parentheses.
 | Warehouse | **admin only** | "Warehouse" | `components/Warehouse/` + `api/warehouse/**` |
 | Loans / Advances | **admin only** | "Loans / Advances" | `components/LoansAndAdvances/`, reads Supabase directly |
 | User Management | **admin only** | "User Management" | `components/UserManagement/` + `api/admin/users/**` |
+| Inventory Management | **admin + `branch` role** | "Inventory Management" | `components/Inventory/` + `api/inventory/**` + `lib/inventory/` (see [frontend/09](frontend/09-inventory.md)) |
+
+Roles are `user` / `admin` / `branch` (`src/lib/roles.ts`). Branch staff see *only*
+Inventory Management — see [architecture/02](architecture/02-auth-and-access-control.md).
 
 ---
 

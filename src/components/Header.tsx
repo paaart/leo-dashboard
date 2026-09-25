@@ -3,12 +3,13 @@
 import Image from "next/image";
 import { Menu } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { ROLE_LABELS, type AppRole } from "@/lib/roles";
 
 type HeaderUser = {
   email: string;
   username: string;
   fullName: string | null;
-  role: "user" | "admin";
+  role: AppRole;
 };
 
 export default function Header({
@@ -66,8 +67,8 @@ export default function Header({
             <span className="max-w-36 truncate text-sm font-medium text-fg">
               {displayName}
             </span>
-            <span className="text-xs capitalize text-fg-subtle">
-              {user.role}
+            <span className="text-xs text-fg-subtle">
+              {ROLE_LABELS[user.role]}
             </span>
           </div>
         </div>

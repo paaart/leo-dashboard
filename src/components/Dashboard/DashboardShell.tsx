@@ -6,6 +6,12 @@ import { useSelectedLayoutSegment } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
+import {
+  canOpenInventorySub,
+  defaultInventorySub,
+  type InventorySub,
+} from "@/components/Inventory/sections";
+import type { AppRole } from "@/lib/roles";
 import { useDashboardAuth } from "./DashboardAuthProvider";
 
 /*
@@ -72,6 +78,10 @@ const UserManagement = dynamic(
   () => import("@/components/UserManagement/UserManagement"),
   { loading: moduleLoading }
 );
+const InventorySetup = dynamic(
+  () => import("@/components/Inventory/InventorySetup"),
+  { loading: moduleLoading }
+);
 
 export type DashboardModule =
   | "home"
@@ -80,7 +90,8 @@ export type DashboardModule =
   | "fuel-tracker"
   | "warehouse"
   | "loans"
-  | "users";
+  | "users"
+  | "inventory";
 
 export type Section =
   | { main: "home"; sub?: null }
@@ -98,9 +109,10 @@ export type Section =
         | "payments"
         | "closed"
         | "payment-alerts";
-    };
+    }
+  | { main: "inventory"; sub: InventorySub };
 
-function sectionFromModule(module: DashboardModule): Section {
+function sectionFromModule(module: DashboardModule, role: AppRole): Section {
   switch (module) {
     case "home":
       return { main: "home", sub: null };
@@ -114,6 +126,9 @@ function sectionFromModule(module: DashboardModule): Section {
       return { main: "loans", sub: "create" };
     case "users":
       return { main: "users", sub: null };
+    case "inventory":
+      // Branch staff and admins land on different first screens.
+      return { main: "inventory", sub: defaultInventorySub(role) ?? "setup" };
     case "domestic":
     default:
       return { main: "domestic", sub: null };
@@ -129,6 +144,7 @@ function moduleFromSegment(segment: string | null): DashboardModule {
     "warehouse",
     "loans",
     "users",
+    "inventory",
   ];
 
   return modules.includes(segment as DashboardModule)
@@ -140,8 +156,22 @@ function isAdminSection(section: Section) {
   return (
     section.main === "warehouse" ||
     section.main === "loans" ||
-    section.main === "users"
+    section.main === "users" ||
+    section.main === "inventory"
   );
+}
+
+/*
+  Admins see everything. Branch staff see only their Inventory Management
+  screens. Regular users see everything that isn't admin-only.
+*/
+function canAccessSection(role: AppRole, section: Section) {
+  if (role === "admin") return true;
+  if (section.main === "inventory") {
+    return canOpenInventorySub(role, section.sub);
+  }
+  if (role === "branch") return false;
+  return !isAdminSection(section);
 }
 
 function ContentLoadingState() {
@@ -189,21 +219,24 @@ export default function DashboardShell({
   const { user, loading: authLoading, ready } = useDashboardAuth();
   const activeModule = moduleFromSegment(useSelectedLayoutSegment());
   const [isPending, startTransition] = useTransition();
+  // Role only matters for the inventory default sub; "user" is a safe
+  // placeholder until the auth provider has resolved the real user.
+  const role: AppRole = user?.role ?? "user";
   const [section, setSection] = useState<Section>(() =>
-    sectionFromModule(activeModule)
+    sectionFromModule(activeModule, role)
   );
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   useEffect(() => {
     startTransition(() => {
-      setSection(sectionFromModule(activeModule));
+      setSection(sectionFromModule(activeModule, role));
     });
-  }, [activeModule]);
+  }, [activeModule, role]);
 
   const setAllowedSection = (nextSection: Section) => {
-    if (user?.role !== "admin" && isAdminSection(nextSection)) {
+    if (!canAccessSection(role, nextSection)) {
       startTransition(() => {
-        setSection(sectionFromModule(activeModule));
+        setSection(sectionFromModule(activeModule, role));
       });
       return;
     }
@@ -218,7 +251,7 @@ export default function DashboardShell({
 
     const { main, sub } = section;
 
-    if (user.role !== "admin" && isAdminSection(section)) {
+    if (!canAccessSection(user.role, section)) {
       return (
         <div className="p-6">
           <div className="rounded-xl border border-danger/25 bg-danger-soft p-6 text-danger-soft-fg">
@@ -276,6 +309,13 @@ export default function DashboardShell({
             return <WarehousePaymentAlerts />;
           default:
             return <WarehouseClosedPods />;
+        }
+
+      case "inventory":
+        switch (sub) {
+          case "setup":
+          default:
+            return <InventorySetup />;
         }
 
       default:

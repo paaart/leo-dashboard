@@ -1,10 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isAppRole, type AppRole } from "@/lib/roles";
 
 export const runtime = "nodejs";
 
-type Role = "user" | "admin";
+type Role = AppRole;
 type Status = "pending" | "active" | "inactive" | "rejected";
 
 type UpdateBody = {
@@ -12,7 +13,6 @@ type UpdateBody = {
   status?: unknown;
 };
 
-const validRoles: Role[] = ["user", "admin"];
 const validStatuses: Status[] = ["pending", "active", "inactive", "rejected"];
 
 export async function PATCH(
@@ -37,13 +37,13 @@ export async function PATCH(
   const updates: { role?: Role; status?: Status } = {};
 
   if (body.role !== undefined) {
-    if (typeof body.role !== "string" || !validRoles.includes(body.role as Role)) {
+    if (!isAppRole(body.role)) {
       return NextResponse.json(
         { ok: false, error: "Invalid role" },
         { status: 400 }
       );
     }
-    updates.role = body.role as Role;
+    updates.role = body.role;
   }
 
   if (body.status !== undefined) {

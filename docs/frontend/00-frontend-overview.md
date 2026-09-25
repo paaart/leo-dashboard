@@ -21,8 +21,9 @@ the single-shell model that everything here plugs into.
   queries the DB during the request — its KPIs/alerts arrive in the HTML, no client
   fetches. Its data helpers live in `lib/warehouse/summary.ts` (shared with the API
   routes) and `getServerComponentAppUser()` in `lib/auth.ts` provides auth in RSCs.
-- **Role-aware:** admins see Warehouse, Loans, and User Management; regular users don't
-  (hidden in `Sidebar`, blocked in the shell — the real guard is server-side).
+- **Role-aware:** admins see Warehouse, Loans, User Management and Inventory Management;
+  regular users don't; branch-staff users see *only* Inventory Management (hidden in
+  `Sidebar`, blocked in the shell — the real guard is server-side).
 - **Mobile matters:** drivers, warehouse staff, and managers use phones. Forms stay
   simple; the driver fuel flow is a dedicated public mobile page. Hard rules: every
   `<table>` keeps its natural width (`min-w-*`) inside an `overflow-x-auto` wrapper so
@@ -54,11 +55,14 @@ src/components/
   FuelTracker/              frontend/04  (Vehicle Tracker: tabs, tables, modals, Public/)
   Warehouse/                frontend/05  (+ Ledger/ subfolder)
   UserManagement/           frontend/06
+  Inventory/                frontend/09  (sections.ts = sub-section + role registry)
 
 src/lib/
   api.ts                     domestic + international browser data helpers
   EmployeeSearchSelect.tsx   shared employee picker (used by Loans)
   fuel-tracker/  warehouse/  vehicle-expense-invoices.ts   (mostly server-side logic)
+  inventory/                 setup.ts (SQL), access.ts (guard), client.ts (browser), types.ts
+  roles.ts                   APP_ROLES / AppRole / ROLE_LABELS — the one place roles are listed
 ```
 
 Components are grouped by **business module**, not by UI type. There is no generic
@@ -81,6 +85,7 @@ This mirrors the [data-access patterns](../architecture/03-data-access-patterns.
 | Vehicle Tracker | `fetch("/api/...")` to the fuel/vehicle/vendor-invoice routes |
 | Warehouse | mostly `fetch("/api/warehouse/...")`; a few modals use Supabase directly |
 | User Management | `fetch("/api/admin/users")` |
+| Inventory Management | `fetch("/api/inventory/...")` via `src/lib/inventory/client.ts` |
 
 When a module fetches its own routes, it handles loading/error/empty states locally
 (usually with the shared `LoadingState` / `EmptyState`).
@@ -111,6 +116,7 @@ All module components are lazy (`next/dynamic`) — see
 | `warehouse` / `closed` | `WarehouseClosedPods` |
 | `warehouse` / `payment-alerts` | `WarehousePaymentAlerts` |
 | `users` | `UserManagement` |
+| `inventory` / `setup` | `InventorySetup` (internal tabs: Materials, Branches, Branch staff) |
 
 Note the Vehicle Tracker (`fuel`) uses its **own** tab bar inside one component rather
 than the shell's `sub` mechanism — see [frontend/04](04-vehicle-tracker.md).
@@ -120,7 +126,7 @@ than the shell's `sub` mechanism — see [frontend/04](04-vehicle-tracker.md).
 ## 5. Conventions for new frontend work
 
 - Compose the shared primitives (`PageHeader`, `SectionCard`, `MetricCard`,
-  `LoadingState`, `EmptyState`) instead of re-styling headers/cards.
+  `SegmentedTabs`, `LoadingState`, `EmptyState`) instead of re-styling headers/cards/tabs.
 - Use `react-hot-toast` for success/error feedback (the `Toaster` is mounted in the root
   layout).
 - Keep money/derived numbers coming from the server; don't recompute balances client-side.

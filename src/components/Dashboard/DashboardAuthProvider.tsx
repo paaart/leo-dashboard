@@ -9,13 +9,14 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
+import type { AppRole } from "@/lib/roles";
 
 export type DashboardAppUser = {
   id: string;
   email: string;
   username: string;
   fullName: string | null;
-  role: "user" | "admin";
+  role: AppRole;
   status: "active";
 };
 

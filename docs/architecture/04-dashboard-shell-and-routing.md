@@ -15,7 +15,7 @@ Once you see that, the "empty" page files make sense.
 
 ```tsx
 // src/app/dashboard/[module]/page.tsx  (server component; force-dynamic)
-const modules = ["home","domestic","international","fuel-tracker","warehouse","loans","users"];
+const modules = ["home","domestic","international","fuel-tracker","warehouse","loans","users","inventory"];
 export default async function DashboardModulePage({ params }) {
   const { module } = await params;
   if (!modules.includes(module)) notFound();
@@ -23,6 +23,7 @@ export default async function DashboardModulePage({ params }) {
   if (module === "home") {
     const user = await getServerComponentAppUser();   // RSC auth (see arch/02)
     if (!user) redirect("/login");
+    if (user.role === "branch") redirect("/dashboard/inventory");  // branch staff have no Home
     return <HomeContent user={user} />;               // ← data fetched server-side
   }
 
@@ -30,7 +31,7 @@ export default async function DashboardModulePage({ params }) {
 }
 ```
 
-For the six interactive modules its jobs are: **validate the slug** (404 on unknown
+For the seven interactive modules its jobs are: **validate the slug** (404 on unknown
 modules) and **exist as a URL** so deep links and back/forward work — the UI comes
 from the shell. For **`home`** it renders `HomeContent`, an async server component
 that queries the DB during the request (renewal alerts, warehouse summary, payment
@@ -68,10 +69,13 @@ type Section =
   | { main: "international"; sub: "calculator" | "history" }
   | { main: "loans";        sub: "create" | "view" | "employees" }
   | { main: "users" }
-  | { main: "warehouse";    sub: "add" | "active" | "renewals" | "payments" | "closed" | "payment-alerts" };
+  | { main: "warehouse";    sub: "add" | "active" | "renewals" | "payments" | "closed" | "payment-alerts" }
+  | { main: "inventory";    sub: InventorySub };   // union lives in components/Inventory/sections.ts
 ```
 
 - `main` maps to the URL (`/dashboard/<module>`). Changing modules changes the URL.
+- The inventory module's default `sub` depends on the role (`sectionFromModule(module, role)`),
+  because admins and branch staff land on different first screens.
 - `sub` is the screen **within** a module (e.g. warehouse "payments" vs "closed").
   **`sub` is React state only — it is not in the URL.** Clicking "Payments" in the
   warehouse submenu swaps the rendered component without navigating.
@@ -91,23 +95,30 @@ sub-section. Refreshing on warehouse always lands on the default sub (`active`).
 
 ---
 
-## 4. Admin gating lives here too
+## 4. Role gating lives here too
 
-Two guards, both in `DashboardShell`:
+One predicate, used in two places in `DashboardShell`:
 
 ```ts
 function isAdminSection(s) {
-  return s.main === "warehouse" || s.main === "loans" || s.main === "users";
+  return s.main === "warehouse" || s.main === "loans" || s.main === "users" || s.main === "inventory";
+}
+function canAccessSection(role, s) {
+  if (role === "admin") return true;
+  if (s.main === "inventory") return canOpenInventorySub(role, s.sub);  // per-sub role list
+  if (role === "branch") return false;                                  // branch staff: inventory only
+  return !isAdminSection(s);
 }
 ```
 
-- `setAllowedSection` refuses to switch a non-admin into an admin section (it snaps back
-  to the current module).
-- `renderContent` renders an "Access denied" card if a non-admin somehow lands on an
-  admin section.
+- `setAllowedSection` refuses to switch into a section the role can't access (it snaps
+  back to the current module).
+- `renderContent` renders an "Access denied" card if the user somehow lands on one.
 
-`Sidebar` also simply **doesn't render** the Warehouse / Loans / User Management links
-for non-admins.
+`Sidebar` also simply **doesn't render** links the role can't use: non-admins don't see
+Warehouse / Loans / User Management / Inventory Management, and branch-staff users see
+*only* the Inventory Management group (with the sub-links their role allows, from
+`inventorySubsForRole`).
 
 Remember: this is UX. The actual security is the server-side guard on the admin APIs
 (and RLS for Loans). See [02-auth-and-access-control.md](02-auth-and-access-control.md).
@@ -146,6 +157,9 @@ Not everything is in the shell:
   unions, add a `Sidebar` link, and a `renderContent()` branch whose component is
   imported via `next/dynamic` (match the existing pattern — a static import re-bundles
   every page). If it's admin-only, add it to `isAdminSection`.
+- **New Inventory Management sub-section:** add it to `INVENTORY_SUBS` in
+  `components/Inventory/sections.ts` with the roles allowed to open it, then a
+  `renderContent()` branch. The sidebar and the gating pick it up from there.
 - **New server-rendered view (like Home):** render it from `[module]/page.tsx`, pass
   it through as the shell's `children`, and add a `renderContent()` case returning
   `children`. Auth comes from `getServerComponentAppUser()`; data comes from the

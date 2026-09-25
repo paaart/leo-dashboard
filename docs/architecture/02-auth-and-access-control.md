@@ -14,13 +14,26 @@ Supabase Auth (auth.users)      ← email + password, cookie session
         ▼
 public.profiles                 ← the APP user: username, role, status
         │
-        ├── role:   'user' | 'admin'
+        ├── role:   'user' | 'admin' | 'branch'
         └── status: 'pending' | 'active' | 'inactive' | 'rejected'
 ```
 
 A person can only *use* the app when they have both a Supabase auth user **and** a
 `profiles` row with `status = 'active'`. The `profiles` table is the bridge: it adds a
 username, a role, and an approval status on top of Supabase's email identity.
+
+**Roles** (the canonical list is `APP_ROLES` in `src/lib/roles.ts`, which is
+dependency-free so client components can import it):
+
+| role | Who | Sees |
+|---|---|---|
+| `user` | default for approved signups | calculators, Vehicle Tracker, Home |
+| `admin` | operations/owners | everything, including the admin-only modules |
+| `branch` | branch staff reporting packaging stock | **only** Inventory Management (their sub-sections); `/dashboard/home` redirects them to `/dashboard/inventory` |
+
+Branch-staff users are tied to branches through `inventory_branch_assignments`
+(see [api/11](../api/11-inventory.md)); `requireInventoryAccess` in
+`src/lib/inventory/access.ts` resolves which branch ids a caller may touch.
 
 ---
 

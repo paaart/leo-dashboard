@@ -44,6 +44,14 @@ This is the important part. Only **some** of the live schema is in
 - vehicle renewal dates and alert dismissals (`20260722114426`)
 - vehicle renewal amount/vendor invoice prefill fields (`20260722115635`)
 - vehicle renewal last/next date split (`202607250001`)
+- one-paisa vendor payment fixes (`202607280001`, `202607280002`) and vendor-name
+  normalisation (`20260814094315`)
+- RLS enabled on every table that existed at the time, with an
+  `authenticated_app_access` policy, and `anon` revoked (`20260818155239`) — **tables
+  created after this must enable RLS + the policy themselves**
+- inventory reference data + the `branch` role (`20260924083141`): `inventory_branches`,
+  `inventory_materials`, `inventory_branch_assignments`, seeds, and the widened
+  `profiles_role_valid` check
 
 **NOT in migrations (created directly in Supabase — invisible to `db:reset`):**
 

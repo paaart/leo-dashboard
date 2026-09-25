@@ -13,6 +13,7 @@ const modules: DashboardModule[] = [
   "warehouse",
   "loans",
   "users",
+  "inventory",
 ];
 
 export default async function DashboardModulePage({
@@ -32,6 +33,9 @@ export default async function DashboardModulePage({
   if (module === "home") {
     const user = await getServerComponentAppUser();
     if (!user) redirect("/login");
+
+    // Branch staff only have Inventory Management; Home would be empty for them.
+    if (user.role === "branch") redirect("/dashboard/inventory");
 
     return <HomeContent user={user} />;
   }

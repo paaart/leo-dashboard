@@ -31,7 +31,7 @@ Update a user's `role` and/or `status`. `id` is the `profiles.id`.
 
 | Field | Allowed values |
 |---|---|
-| `role` | `user` \| `admin` |
+| `role` | `user` \| `admin` \| `branch` (validated with `isAppRole` from `src/lib/roles.ts`) |
 | `status` | `pending` \| `active` \| `inactive` \| `rejected` |
 
 **Errors:**

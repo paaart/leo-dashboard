@@ -98,6 +98,42 @@ export function MetricCard({
   );
 }
 
+/* Pill-style tab strip for screens with internal tabs (same look as the Vehicle Tracker's). */
+export function SegmentedTabs<T extends string>({
+  tabs,
+  active,
+  onChange,
+}: {
+  tabs: { id: T; label: string }[];
+  active: T;
+  onChange: (tab: T) => void;
+}) {
+  return (
+    <div className="overflow-x-auto">
+      <div className="inline-flex min-w-full gap-1 rounded-lg border border-edge bg-surface-2 p-1 sm:min-w-0">
+        {tabs.map((tab) => {
+          const isActive = active === tab.id;
+
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => onChange(tab.id)}
+              className={`min-h-10 whitespace-nowrap rounded-md px-4 text-sm font-medium transition-colors ${
+                isActive
+                  ? "bg-surface text-fg shadow-card"
+                  : "text-fg-muted hover:text-fg"
+              }`}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function LoadingState({ label = "Loading" }: { label?: string }) {
   return (
     <div className="flex min-h-64 items-center justify-center rounded-xl border border-edge bg-surface p-6 text-fg-muted shadow-card">
