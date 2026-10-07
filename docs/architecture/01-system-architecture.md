@@ -136,6 +136,7 @@ never print values.**
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | browser client, SSR client, middleware | anon key, RLS-bound |
 | `SUPABASE_SERVICE_ROLE_KEY` | `supabase/admin.ts` | service role, **bypasses RLS** — server only |
 | `SUPABASE_DB_URL` | `src/lib/db.ts` | direct Postgres connection string for `pg` (prefer session mode, not the pooler, for transactions) |
+| `CRON_SECRET` | warehouse bulk accrual route | authorizes Vercel's scheduled request — server only |
 
 `NEXT_PUBLIC_*` vars are exposed to the browser by design. The service-role key and DB
 URL must never reach the client.
@@ -146,7 +147,7 @@ URL must never reach the client.
 
 - **Vercel**, building on push. `next build` type-checks — that's the only gate (no
   tests, no other CI).
-- **Cron** (`vercel.json`): `/api/warehouse/pods/accrue-due?batchSize=50` at 02:00 UTC
+- **Cron** (`vercel.json`): `/api/warehouse/pods/accrue-due?batchSize=2000` at 02:00 UTC
   on Mon, Wed, and Fri. This drives warehouse charge accrual. See
   [api/10](../api/10-warehouse-billing-payments-alerts.md).
 - **`next.config.ts`** allows remote images from `leopackersandmovers.com`.

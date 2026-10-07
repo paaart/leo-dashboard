@@ -170,7 +170,7 @@ Warehouse billing / payments / alerts — [api/10](10-warehouse-billing-payments
 
 | Method | Path | Guard |
 |---|---|---|
-| GET | `/api/warehouse/pods/accrue-due` (`?batchSize`) | admin · **cron** |
+| GET/POST | `/api/warehouse/pods/accrue-due` (`?batchSize`) | admin/dashboard · **cron secret** |
 | POST | `/api/warehouse/pods/accrue` (`?podId`) | admin |
 | GET | `/api/warehouse/pods/payments` (`?page,pageSize,search,fromDate,toDate,...`) | admin |
 | GET | `/api/warehouse/payments/export` (`?startDate,endDate`) | admin · CSV |

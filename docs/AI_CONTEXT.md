@@ -165,8 +165,9 @@ your final response.
   future cleanup. New work goes through vendor invoices. See
   [api/06-vendor-invoices-and-payments.md](api/06-vendor-invoices-and-payments.md) and
   [api/07-legacy-vehicle-expenses.md](api/07-legacy-vehicle-expenses.md).
-- **Warehouse billing runs on a Vercel cron**, not on demand. `accrue-due` is hit
-  Mon/Wed/Fri 02:00 UTC (`vercel.json`). Charges appear because the cron inserted them.
+- **Warehouse billing is scheduled and reconciled on dashboard refresh.** `accrue-due`
+  is hit by Vercel cron Mon/Wed/Fri 02:00 UTC and by the authenticated Warehouse
+  dashboard before it reads balances. The shared set-based operation is idempotent.
 - **The `.env` file is present locally and git-ignored.** It holds real Supabase keys
   (including the service-role key). Never print its values into docs, code, or logs.
 - **`Documentation/` (capital D, repo root) is empty** and `leodashboard.md` +

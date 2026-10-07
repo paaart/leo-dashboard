@@ -3,13 +3,15 @@ import type {
   WarehouseTxn,
   WarehouseRenewalRow,
 } from "./types";
-import { accrueWarehouseCharges, fetchWarehouseRenewals } from "./pods";
+import {
+  accrueDueWarehousePods,
+  accrueWarehouseCharges,
+  fetchWarehouseRenewals,
+} from "./pods";
 import { fetchCycleTransactions } from "./ledger";
 
 export async function accrueAllWarehousePods() {
-  // Global accrual is deliberately handled by the scheduled backend route.
-  // The UI only accrues the pod it is about to display.
-  return;
+  return accrueDueWarehousePods();
 }
 
 export async function accrueWarehousePod(podId: string) {

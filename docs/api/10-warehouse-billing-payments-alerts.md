@@ -11,26 +11,27 @@ The automated billing engine plus the read-side dashboards and alerts.
 
 ## Charge accrual (the billing engine)
 
-### GET `/api/warehouse/pods/accrue-due` (`?batchSize`) — **the cron target**
+### GET/POST `/api/warehouse/pods/accrue-due` (`?batchSize`) — bulk accrual
 Finds active pods whose `next_charge_date <= current_date` (oldest first, limited to
-`batchSize`, default 50, max 200), accrues each pod's due charges, and advances its
-`next_charge_date`. Returns a summary:
+`batchSize`, default 200, max 2000), accrues every missing interval charge in one
+set-based transaction, and advances `next_charge_date`/`next_payment_date`. Returns:
 
 ```json
-{ "ok": true, "data": { "requested": N, "successCount": N, "failureCount": N,
-  "failures": [{ "podId": "...", "error": "..." }], "message": "..." } }
+{ "ok": true, "data": { "requested": N, "chargesInserted": N,
+  "podsUpdated": N, "message": "..." } }
 ```
 
-**This is what the Vercel cron calls** — Mon/Wed/Fri 02:00 UTC (`vercel.json`,
-`?batchSize=50`). It's a `GET` because Vercel cron issues GETs. Accrual is **idempotent**
-(charges are deduped by `tx_month` per cycle), so re-running never double-charges.
+The Vercel cron calls `GET` Mon/Wed/Fri 02:00 UTC (`vercel.json`, batch 2000) and is
+authorized by `CRON_SECRET`. The Warehouse dashboard calls authenticated `POST` before
+loading its table and summary cards. Accrual is **idempotent**: the partial unique index
+on `(cycle_id, tx_month)` for `Auto charge` rows prevents duplicate monthly charges.
 
-> Charges appear because the cron ran. If they're missing, check the cron — don't add
-> accrue-on-page-load (see [DECISIONS.md](../DECISIONS.md) §9).
+`FOR UPDATE SKIP LOCKED` prevents concurrent cron/dashboard requests from processing
+the same POD while allowing another request to continue with other due PODs.
 
 ### POST `/api/warehouse/pods/accrue` (`?podId`) — single pod, manual
-Accrues one pod on demand. **Global accrual is deliberately disabled here** — without a
-`podId` it returns 400. Use this to force a specific pod up to date.
+Accrues one pod on demand through the shared accrual implementation. Without `podId` it
+returns 400. Use this to force a specific pod up to date.
 
 **Both touch:** `warehouse_pods`, `warehouse_pod_cycles`, `warehouse_pod_transactions`.
 

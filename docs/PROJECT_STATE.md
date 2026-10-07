@@ -46,10 +46,11 @@ were additionally exercised live in the browser — light/dark, desktop/375px).
   transaction ledger (charge/payment/adjustment) with GST on charges. Balances are
   derived from the ledger, not stored. Renewals create new cycles; rate changes are
   atomic. Uses the raw `pg` Pool for transactional integrity.
-- **Warehouse charge accrual runs on a schedule** — verified in `vercel.json`. A Vercel
-  cron calls `/api/warehouse/pods/accrue-due?batchSize=50` at **02:00 UTC on Mon, Wed,
-  Fri**. This is how monthly charges get inserted. There is also a manual
-  `/api/warehouse/pods/accrue` endpoint.
+- **Warehouse charge accrual runs on a schedule and dashboard refresh** — a Vercel cron
+  calls `/api/warehouse/pods/accrue-due?batchSize=2000` at **02:00 UTC on Mon, Wed,
+  Fri**, and Warehouse Management calls the same bulk route before loading balances.
+  Both use one idempotent set-based accrual implementation; the manual single-POD
+  `/api/warehouse/pods/accrue` endpoint shares it.
 - **Vendor invoices (Vehicle Tracker)** — verified in code + schema. `vehicle_expense_invoices`
   with line items, multi-invoice **payment batches** and **allocations**. Invoice
   paid-totals and status (`unpaid`/`partially_paid`/`paid`) are derived from allocation

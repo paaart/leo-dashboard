@@ -15,6 +15,18 @@ export async function accrueWarehouseCharges(podId?: string): Promise<void> {
   await fetchJson<void>(url, { method: "POST" });
 }
 
+export async function accrueDueWarehousePods(): Promise<{
+  requested: number;
+  chargesInserted: number;
+  podsUpdated: number;
+  message: string;
+}> {
+  return fetchJson("/api/warehouse/pods/accrue-due?batchSize=2000", {
+    method: "POST",
+    cache: "no-store",
+  });
+}
+
 export async function listWarehousePods(args?: {
   status?: "active" | "closed" | "all";
   limit?: number;

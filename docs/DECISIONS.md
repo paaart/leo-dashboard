@@ -169,17 +169,20 @@ is a known future task — don't build new features on the legacy tables.
 
 ---
 
-## 9. Warehouse billing is time-driven via cron, not event-driven
+## 9. Warehouse billing is scheduled and reconciled on dashboard refresh
 
-Monthly charges are inserted by a Vercel cron hitting `accrue-due`, not when a user
-opens a screen.
+Monthly charges are normally inserted by a Vercel cron hitting `accrue-due`. Opening or
+refreshing the Warehouse Management dashboard also calls the same bulk accrual route
+before balances are read, so a delayed cron cannot leave the summary stale.
 
 **Why:** billing must happen whether or not anyone logs in, and must be idempotent
-(don't double-charge if the cron runs twice). The accrual logic checks `next_charge_date`
-and advances it, so re-running is safe.
+(don't double-charge if the cron and a dashboard refresh overlap). The accrual logic
+locks due PODs, inserts with the ledger's unique month key, and advances
+`next_charge_date`, so re-running is safe.
 
-**Consequence:** if charges look missing, check the cron ran — don't add
-"accrue-on-page-load" logic that could double-charge.
+**Consequence:** the dashboard can safely reconcile all due PODs in one set-based
+transaction. Individual ledger screens use the same accrual implementation for a
+single POD.
 
 ---
 

@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { getErrorMessage } from "@/lib/errors";
 import type { WarehousePodSummary } from "@/lib/warehouse/types";
 import { listWarehousePods, deleteWarehousePod } from "@/lib/warehouse/pods";
+import { accrueAllWarehousePods } from "@/lib/warehouse/queries";
 import WarehousePodHistoryView from "./Ledger/WarehousePodLedger";
 import {
   EmptyState,
@@ -51,23 +52,29 @@ export default function WarehouseActivePods() {
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<WarehousePodSummary | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [summaryReady, setSummaryReady] = useState(false);
+  const [summaryRefreshKey, setSummaryRefreshKey] = useState(0);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
+    setSummaryReady(false);
     try {
+      await accrueAllWarehousePods();
       const data = await listWarehousePods();
       setRows(data);
     } catch (err: unknown) {
       toast.error(getErrorMessage(err) || "Failed to load warehouse pods");
       setRows([]);
     } finally {
+      setSummaryRefreshKey((current) => current + 1);
+      setSummaryReady(true);
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();
@@ -138,7 +145,10 @@ export default function WarehouseActivePods() {
           subtitle="Manage warehouse clients, PODs, billing, payments, and storage ledgers."
         />
 
-        <WarehouseSummaryCards />
+        <WarehouseSummaryCards
+          enabled={summaryReady}
+          refreshKey={summaryRefreshKey}
+        />
 
         <SectionCard
           title="Warehouse PODs"

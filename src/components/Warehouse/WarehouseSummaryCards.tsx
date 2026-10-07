@@ -42,7 +42,13 @@ function LoadingValue({ width = "w-24" }: { width?: string }) {
   );
 }
 
-export default function WarehouseSummaryCards() {
+export default function WarehouseSummaryCards({
+  enabled = true,
+  refreshKey = 0,
+}: {
+  enabled?: boolean;
+  refreshKey?: number;
+}) {
   // Stale-while-revalidate: render the cached summary instantly (no
   // skeletons on revisit) and refresh it in the background.
   const cached = getCached<Summary>(CACHE_KEY);
@@ -60,6 +66,8 @@ export default function WarehouseSummaryCards() {
   );
 
   useEffect(() => {
+    if (!enabled) return;
+
     let cancelled = false;
 
     const load = async () => {
@@ -86,7 +94,7 @@ export default function WarehouseSummaryCards() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [enabled, refreshKey]);
 
   return (
     <div className="space-y-3">
