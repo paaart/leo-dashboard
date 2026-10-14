@@ -5,13 +5,17 @@
 */
 import type { AppRole } from "@/lib/roles";
 
-export type InventorySub = "setup";
+export type InventorySub = "overview" | "update" | "setup";
 
 export const INVENTORY_SUBS: {
   id: InventorySub;
   label: string;
   roles: readonly AppRole[];
-}[] = [{ id: "setup", label: "Setup", roles: ["admin"] }];
+}[] = [
+  { id: "overview", label: "Overview", roles: ["admin", "branch"] },
+  { id: "update", label: "Update stock", roles: ["admin", "branch"] },
+  { id: "setup", label: "Setup", roles: ["admin"] },
+];
 
 export function inventorySubsForRole(role: AppRole) {
   return INVENTORY_SUBS.filter((sub) => sub.roles.includes(role));

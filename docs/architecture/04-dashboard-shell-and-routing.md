@@ -75,7 +75,7 @@ type Section =
 
 - `main` maps to the URL (`/dashboard/<module>`). Changing modules changes the URL.
 - The inventory module's default `sub` depends on the role (`sectionFromModule(module, role)`),
-  because admins and branch staff land on different first screens.
+  using the shared registry; both admins and branch staff currently land on Overview.
 - `sub` is the screen **within** a module (e.g. warehouse "payments" vs "closed").
   **`sub` is React state only — it is not in the URL.** Clicking "Payments" in the
   warehouse submenu swaps the rendered component without navigating.

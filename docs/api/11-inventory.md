@@ -1,13 +1,12 @@
 # Inventory Management API
 
-> Status: Current. Verified against code 2026-09-24.
-> Files: `src/app/api/inventory/**`, `src/lib/inventory/{setup,access,http,types}.ts`.
+> Status: Current. Updated against code 2026-10-14; count migration applied live 2026-10-14.
+> Files: `src/app/api/inventory/**`, `src/lib/inventory/{setup,counts,count-validation,access,http,types}.ts`.
 > Frontend: [frontend/09](../frontend/09-inventory.md). Tables:
 > [database/01 § Inventory](../database/01-schema-overview.md#inventory-management-migration).
 
-Packaging-material stock across branches. This doc covers the reference-data routes
-(materials, branches, branch-staff assignments). All of them are **admin-only** and use
-the raw `pg` Pool (pattern C).
+Packaging-material stock across branches. Setup routes (materials, branches, branch-staff assignments) are **admin-only**.
+Count routes allow admins and assigned branch staff. All use the raw `pg` Pool (pattern C).
 
 ---
 
@@ -20,7 +19,7 @@ the raw `pg` Pool (pattern C).
 - Ids are uuids and are validated with `isUuid` before hitting the database.
 - Unique-name collisions (`23505`) map to **409** with a human message.
 - `requireInventoryAccess(request)` in `src/lib/inventory/access.ts` is the guard for the
-  branch-facing routes that later slices add: admins get `branchIds: "all"`, branch
+  count and history routes: admins get `branchIds: "all"`, branch
   staff get their assigned active branch ids (possibly `[]`), everyone else 403.
 
 ---
@@ -99,3 +98,44 @@ empty array unassigns the user. Runs delete + insert in one transaction.
 | any branch id unknown | 400 |
 
 → the updated `InventoryAssignment`.
+
+
+## Counts (admin + branch staff)
+
+Uses migration `20261013154626_inventory_counts.sql` (applied live 2026-10-14). This migration also revokes
+`anon`/`authenticated` Data API privileges on the three setup tables: their routes
+already use the server connection, and assignments must not be writable around the guard.
+
+### GET `/api/inventory/counts?date=YYYY-MM-DD`
+
+Returns `{ isCompanyView, branches, materials, counts }`. Only active branches accessible
+to the caller are included; an unassigned staff member gets empty branches/counts.
+Materials are active reference data. Omit date for the latest count per branch/material;
+provide date for exact-date counts. Missing entries are unknown, not zero.
+Count shape: `{ id, branchId, materialId, countDate, quantity, version, updatedAt }`.
+
+### POST `/api/inventory/counts`
+
+Body: `{ branchId, date, entries: [{ materialId, quantity, version }] }`.
+Use `version: null` to create, or the current version to correct an existing count.
+1–500 distinct materials; integer quantities 0–2147483647. Dates must be real calendar
+dates from 2026-08-31 through today in Asia/Kolkata. Omitting a material leaves it unchanged.
+The server supplies the actor. A transaction locks the branch, rechecks access, validates
+active materials and writes all entries with trigger-generated audit records. Unchanged
+values do not create edits. Stale versions return 409 and roll back the whole submission.
+Success: `{ saved: true }`. Unauthorized branch: 403; unavailable branch: 404.
+
+### GET `/api/inventory/counts/history?materialId=UUID&branchId=UUID&offset=0`
+
+`materialId` is required; `branchId` is optional and must be accessible. Returns up to
+100 audit entries, ordered by save time descending. Offset is an integer 0–1000000.
+Each entry has `{ id, countId, branchId, countDate, oldQuantity, newQuantity, editedBy,
+editedAt, version }`; `editedBy` is the current profile display name, while the database
+retains the actor's profile id. Creation uses `oldQuantity: null`.
+
+### Verification
+
+`npm ci && npm run test:inventory` runs isolated PostgreSQL (PGlite) migration, transaction,
+validation and route-access tests. No credentials, Docker, or live database writes are
+needed. The tests substitute authentication infrastructure, so real login and deployed
+browser verification remain rollout checks after live migration approval.

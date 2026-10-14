@@ -61,7 +61,7 @@ src/lib/
   api.ts                     domestic + international browser data helpers
   EmployeeSearchSelect.tsx   shared employee picker (used by Loans)
   fuel-tracker/  warehouse/  vehicle-expense-invoices.ts   (mostly server-side logic)
-  inventory/                 setup.ts (SQL), access.ts (guard), client.ts (browser), types.ts
+  inventory/                 setup.ts / counts.ts (SQL), access.ts (guard), client.ts (browser), types.ts
   roles.ts                   APP_ROLES / AppRole / ROLE_LABELS — the one place roles are listed
 ```
 
@@ -116,6 +116,7 @@ All module components are lazy (`next/dynamic`) — see
 | `warehouse` / `closed` | `WarehouseClosedPods` |
 | `warehouse` / `payment-alerts` | `WarehousePaymentAlerts` |
 | `users` | `UserManagement` |
+| `inventory` / `overview`, `update` | `InventoryCounts` (role-scoped snapshots and corrections) |
 | `inventory` / `setup` | `InventorySetup` (internal tabs: Materials, Branches, Branch staff) |
 
 Note the Vehicle Tracker (`fuel`) uses its **own** tab bar inside one component rather

@@ -82,3 +82,15 @@ export function setInventoryAssignments(profileId: string, branchIds: string[]) 
     jsonInit("PUT", { branchIds })
   );
 }
+
+export function loadInventoryStock(date?: string) {
+  return fetchJson<import('./types').StockData>(`/api/inventory/counts${date ? `?date=${encodeURIComponent(date)}` : ''}`, { cache: 'no-store' });
+}
+export function saveInventoryCounts(branchId: string, date: string, entries: import('./types').CountInput[]) {
+  return fetchJson<{ saved: boolean }>('/api/inventory/counts', jsonInit('POST', { branchId, date, entries }));
+}
+export function loadInventoryHistory(materialId: string, branchId: string, offset = 0) {
+  const params = new URLSearchParams({ materialId, offset: String(offset) });
+  if (branchId) params.set('branchId', branchId);
+  return fetchJson<import('./types').CountEdit[]>(`/api/inventory/counts/history?${params}`, { cache: 'no-store' });
+}

@@ -21,10 +21,10 @@ const auth = await requireAdmin(request);  // active admin, else 403
 if (!auth.ok) return auth.response;
 ```
 
-- **`requireAdmin`** — all `warehouse/**`, `admin/**` and `inventory/**` routes.
+- **`requireAdmin`** — all `warehouse/**`, `admin/**` and inventory setup routes.
 - **`requireInventoryAccess`** (`src/lib/inventory/access.ts`) — admin *or* branch-staff,
   returning the branch ids the caller may touch. Reserved for the branch-facing
-  inventory routes; no route uses it yet.
+  inventory count and history routes.
 - **`requireAuth`** — international, fuel, vehicles, and all vehicle-expense/vendor-invoice
   routes (so any active user, not just admins, can use the Vehicle Tracker).
 - **No guard (public by design)** — `auth/login`, `auth/logout`, `auth/request-access`,
@@ -196,3 +196,6 @@ Inventory Management — [api/11](11-inventory.md)
 Each `api/NN-*.md` should cover, per endpoint: **method + path**, **auth**, **query/body**,
 **success shape**, **notable errors/status codes**, **which lib function / SQL it calls**,
 and **which tables it touches**. Keep it to current reality — no roadmap.
+
+Inventory count routes (admin + branch): GET/POST `/api/inventory/counts`,
+GET `/api/inventory/counts/history`; see [api/11](11-inventory.md).

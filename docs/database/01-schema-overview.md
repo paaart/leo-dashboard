@@ -173,9 +173,10 @@ of deferred constraint triggers that validate totals and keep `status` correct.
 
 ## Inventory Management **[migration]**
 
-Packaging-material stock. Migration `20260924083141`. All three tables have RLS
-enabled with the standard `authenticated_app_access` policy, but the app only reaches
-them through admin routes on the `pg` Pool. Routes:
+Packaging-material stock. Setup migration `20260924083141`; counts migration
+`20261013154626` was applied live on 2026-10-14. All tables use RLS. The count
+migration revokes direct Data API privileges from `anon`/`authenticated` on all five
+tables. The app reaches them through guarded server routes on the `pg` Pool. Routes:
 [api/11](../api/11-inventory.md).
 
 ### `inventory_branches`
@@ -197,6 +198,20 @@ stock and purchase sheets.
 
 `(profile_id, branch_id)` primary key; both FKs `on delete cascade`. Which
 `profiles.role = 'branch'` users may report stock for which branches.
+
+### `inventory_counts`
+
+One snapshot per `(branch_id, material_id, count_date)`, UUID id, whole non-negative
+quantity, version, updated_by profile FK and updated_at. Dates start at 2026-08-31.
+A descending branch/material/date index supports latest snapshot reads. Historical
+corrections retain their count date and do not supersede later counts.
+
+### `inventory_count_edits`
+
+Append-only through application routes. UUID id, count FK, old/new quantity, edited_by
+profile FK, edited_at, version; unique `(count_id, version)`. An invoker trigger on
+counts records every insert/update in the same transaction. New tables have RLS and
+no Data API policies or grants to browser roles.
 
 ### `profiles.role` (changed)
 

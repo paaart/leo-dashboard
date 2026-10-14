@@ -38,7 +38,7 @@ docs/
     08-warehouse-pods-and-cycles.md  pods, cycles, renewals, rate changes
     09-warehouse-transactions.md     the ledger (charge / payment / adjustment)
     10-warehouse-billing-payments-alerts.md  accrual cron, payments, alerts, dashboard
-    11-inventory.md                  materials, branches, branch-staff assignments
+    11-inventory.md                  setup, dated counts, history and branch access
 
   frontend/
     00-frontend-overview.md          conventions, module boundaries, shared UI

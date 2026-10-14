@@ -1,6 +1,6 @@
 # Inventory Management (frontend)
 
-> Status: Current. Verified 2026-09-24.
+> Status: Current. Updated against code 2026-10-13; live count rollout awaits migration approval.
 > Files: `src/components/Inventory/**`, `src/lib/inventory/client.ts`, `src/lib/roles.ts`.
 > API: [api/11](../api/11-inventory.md).
 
@@ -19,7 +19,7 @@ Sidebar label: **"Inventory Management"**. Module slug: `/dashboard/inventory`.
 | Role | Sees |
 |---|---|
 | `admin` | every sub-section |
-| `branch` (branch staff) | only the sub-sections flagged for them in `sections.ts` — **none yet**; the stock-reporting screens are the next slice |
+| `branch` (branch staff) | Overview and Update stock, scoped to assigned active branches |
 | `user` | nothing (the module is hidden and blocked) |
 
 `branch` is a third `profiles.role` added for this module (see
@@ -39,7 +39,30 @@ sub). Adding a screen means adding an entry there plus a `renderContent()` branc
 
 | `sub` | Component | Who |
 |---|---|---|
+| `overview` | `InventoryCounts` (overview) | admin + branch |
+| `update` | `InventoryCounts` (update) | admin + branch |
 | `setup` | `InventorySetup` | admin |
+
+### Overview and Update stock
+
+Overview is the default for both roles. It shows latest dated snapshots per material,
+company totals for admins or assigned-branch totals for staff, and a branch filter.
+Missing counts remain unknown, never zero. Cards show the oldest count's age and how
+many selected branches have not counted. Company totals below a material's company-wide
+minimum are flagged; incomplete totals are explicitly labelled as reported subtotals.
+Branch-only views do not reuse that company-wide minimum as a branch target.
+
+Update stock uses an actual count date (IST today by default), one whole non-negative
+number per active material, and partial saves. Blank leaves the material unchanged;
+zero explicitly records no stock. Dates range from 2026-08-31 (August closing / September
+opening) through today. Choose month-end dates for closing counts. An existing count on
+the selected date can be corrected; every changed value records who/when/old/new.
+A stale version rejects the entire save with a reload message. Changing branch/date
+or reloading prompts before discarding draft values; page unload warns too.
+
+History & edit log is an inline, paginated table (100 saves per page), scoped to the
+selected material and available branches. Historical corrections do not replace a newer
+count in Overview. No purchases, dispatches, requests or analytics are implemented yet.
 
 ### Setup
 

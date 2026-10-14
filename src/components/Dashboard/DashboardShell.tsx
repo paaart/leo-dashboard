@@ -78,6 +78,8 @@ const UserManagement = dynamic(
   () => import("@/components/UserManagement/UserManagement"),
   { loading: moduleLoading }
 );
+const InventoryCounts = dynamic(() => import("@/components/Inventory/InventoryCounts"), { ssr: false });
+
 const InventorySetup = dynamic(
   () => import("@/components/Inventory/InventorySetup"),
   { loading: moduleLoading }
@@ -316,6 +318,10 @@ export default function DashboardShell({
           case "setup":
           default:
             return <InventorySetup />;
+          case "overview":
+            return <InventoryCounts key="overview" mode="overview" />;
+          case "update":
+            return <InventoryCounts key="update" mode="update" />;
         }
 
       default:

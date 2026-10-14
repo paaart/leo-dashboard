@@ -32,3 +32,32 @@ export type InventoryAssignment = {
   status: string;
   branchIds: string[];
 };
+
+export type InventoryCount = {
+  id: string;
+  branchId: string;
+  materialId: string;
+  countDate: string;
+  quantity: number;
+  version: number;
+  updatedAt: string;
+};
+
+export type CountInput = { materialId: string; quantity: number; version: number | null };
+export type StockData = {
+  isCompanyView: boolean;
+  branches: InventoryBranch[];
+  materials: InventoryMaterial[];
+  counts: InventoryCount[];
+};
+export type CountEdit = {
+  id: string;
+  countId: string;
+  branchId: string;
+  countDate: string;
+  oldQuantity: number | null;
+  newQuantity: number;
+  editedBy: string;
+  editedAt: string;
+  version: number;
+};

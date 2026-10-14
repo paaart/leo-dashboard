@@ -102,3 +102,7 @@ git add supabase/migrations/<file> && commit with the code that needs it
 Follow the existing conventions in the folder: `create table if not exists`, named
 `check` constraints, explicit indexes, and — for money invariants — deferred constraint
 triggers like the vendor-invoice tables use.
+
+- Inventory counts + audit (`20261013154626`) applied live on 2026-10-14 via direct SQL
+  after checking target tables did not exist.
+  Do not use `supabase db push`: remote migration history is unrelated to this repo.
