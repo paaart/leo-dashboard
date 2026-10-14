@@ -36,10 +36,19 @@ async function requestJson<T>(
     },
   });
 
-  const json = (await response.json()) as FuelApiResponse<T>;
+  const contentType = response.headers.get("content-type") ?? "";
+  const json = contentType.includes("application/json")
+    ? ((await response.json()) as FuelApiResponse<T>)
+    : null;
 
-  if (!response.ok || !json.ok) {
-    throw new Error(json.ok ? "Request failed" : json.error);
+  if (!response.ok || !json?.ok) {
+    throw new Error(
+      json && !json.ok
+        ? json.error
+        : response.status === 504
+        ? "The server took too long to update this fuel entry. Please try again."
+        : `Request failed (${response.status})`
+    );
   }
 
   return json.data;

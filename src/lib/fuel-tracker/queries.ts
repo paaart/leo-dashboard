@@ -636,61 +636,60 @@ async function recalculateFuelEntriesForVehicle(
     throw Object.assign(new Error("Vehicle not found"), { status: 404 });
   }
 
-  const entries = await client.query<{
-    id: string;
-    fuel_amount: string | number;
-    fuel_liters: string | number;
-    odometer_reading: string | number;
-  }>(
+  // Recalculate the whole chain in one statement. The previous implementation
+  // issued one UPDATE per entry, which made editing a vehicle with many fuel
+  // records exceed the serverless request timeout.
+  await client.query(
     `
-    select id, fuel_amount, fuel_liters, odometer_reading
-    from public.fuel_entries
-    where vehicle_id = $1
-    order by fuel_date asc, created_at asc
-    for update
+    with ordered as (
+      select
+        id,
+        fuel_amount,
+        fuel_liters,
+        odometer_reading,
+        row_number() over (order by fuel_date asc, created_at asc) as position,
+        lag(odometer_reading) over (order by fuel_date asc, created_at asc) as prior_odometer
+      from public.fuel_entries
+      where vehicle_id = $1
+    ), calculated as (
+      select
+        id,
+        coalesce(prior_odometer, $2::numeric) as previous_odometer_reading,
+        odometer_reading - coalesce(prior_odometer, $2::numeric) as km_driven,
+        fuel_amount / fuel_liters as fuel_rate,
+        position,
+        fuel_liters,
+        fuel_amount
+      from ordered
+    )
+    update public.fuel_entries entry
+    set
+      previous_odometer_reading = calculated.previous_odometer_reading,
+      km_driven = calculated.km_driven,
+      approx_mileage = case
+        when calculated.km_driven > 0 then calculated.km_driven / calculated.fuel_liters
+        else null
+      end,
+      fuel_rate = calculated.fuel_rate,
+      cost_per_km = case
+        when calculated.km_driven > 0 then calculated.fuel_amount / calculated.km_driven
+        else null
+      end,
+      warning_flag = case
+        when calculated.position = 1 then calculated.km_driven < 0
+        else calculated.km_driven <= 0
+      end,
+      warning_reason = case
+        when (calculated.position = 1 and calculated.km_driven < 0)
+          or (calculated.position > 1 and calculated.km_driven <= 0)
+        then 'Current odometer reading is not greater than previous odometer reading'
+        else null
+      end
+    from calculated
+    where entry.id = calculated.id
     `,
-    [vehicleId]
+    [vehicleId, vehicle.starting_odometer]
   );
-
-  let previousOdometer = Number(vehicle.starting_odometer);
-
-  for (let index = 0; index < entries.rows.length; index += 1) {
-    const entry = entries.rows[index];
-    const calculations = calculateFuelEntryValues({
-      currentOdometer: Number(entry.odometer_reading),
-      previousOdometer,
-      fuelAmount: Number(entry.fuel_amount),
-      fuelLiters: Number(entry.fuel_liters),
-      allowBaselineEqual: index === 0,
-    });
-
-    await client.query(
-      `
-      update public.fuel_entries
-      set
-        previous_odometer_reading = $2,
-        km_driven = $3,
-        approx_mileage = $4,
-        fuel_rate = $5,
-        cost_per_km = $6,
-        warning_flag = $7,
-        warning_reason = $8
-      where id = $1
-      `,
-      [
-        entry.id,
-        calculations.previous_odometer_reading,
-        calculations.km_driven,
-        calculations.approx_mileage,
-        calculations.fuel_rate,
-        calculations.cost_per_km,
-        calculations.warning_flag,
-        calculations.warning_reason,
-      ]
-    );
-
-    previousOdometer = Number(entry.odometer_reading);
-  }
 }
 
 export async function createFuelEntry(
