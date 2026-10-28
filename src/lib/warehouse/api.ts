@@ -29,7 +29,9 @@ export function handleApiAuthFailure(status: number) {
   window.localStorage.removeItem("leo-dashboard-auth-user");
 
   if (window.location.pathname !== "/login") {
-    window.location.assign("/login");
+    // This helper runs outside React components after an API auth failure.
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination
+    window.location.href = "/login";
   }
 }
 

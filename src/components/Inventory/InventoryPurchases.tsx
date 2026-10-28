@@ -23,12 +23,13 @@ import { inventoryToday } from "@/lib/inventory/count-validation";
 import {
   invoiceUrl,
   loadPurchaseData,
+  deletePurchase,
   savePurchase,
   uploadInvoice,
   type PurchaseData,
 } from "@/lib/inventory/purchase-client";
 
-export default function InventoryPurchases() {
+export default function InventoryPurchases({ isAdmin }: { isAdmin: boolean }) {
   const [data, setData] = useState<PurchaseData | null>(null);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState("");
@@ -82,7 +83,11 @@ export default function InventoryPurchases() {
                 setReload((x) => x + 1);
               }}
             />
-            <PurchaseTable data={data} />
+            <PurchaseTable
+              data={data}
+              isAdmin={isAdmin}
+              onDeleted={() => setReload((x) => x + 1)}
+            />
           </>
         ) : (
           <p role="status">Loading purchases…</p>
@@ -91,6 +96,11 @@ export default function InventoryPurchases() {
     </div>
   );
 }
+
+function formatQuantity(value: number) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(2);
+}
+
 function PurchaseForm({
   data,
   onSaved,
@@ -104,15 +114,67 @@ function PurchaseForm({
   const [date, setDate] = useState(inventoryToday());
   const [quantity, setQuantity] = useState("");
   const [unitPrice, setUnitPrice] = useState("");
+  const [totalCost, setTotalCost] = useState("");
   const [notes, setNotes] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  function updateAmount(field: "quantity" | "unitPrice" | "totalCost", value: string) {
+    const next = { quantity, unitPrice, totalCost, [field]: value };
+    const q = Number(next.quantity);
+    const unit = Number(next.unitPrice);
+    const total = Number(next.totalCost);
+    if (field === "quantity") {
+      if (q > 0 && unit >= 0 && next.unitPrice !== "")
+        next.totalCost = (q * unit).toFixed(2);
+      else if (q > 0 && total >= 0 && next.totalCost !== "")
+        next.unitPrice = (total / q).toFixed(2);
+    } else if (field === "unitPrice") {
+      if (
+        q > 0 &&
+        unit >= 0 &&
+        next.quantity !== "" &&
+        next.unitPrice !== ""
+      )
+        next.totalCost = (q * unit).toFixed(2);
+      else if (unit > 0 && total >= 0 && next.totalCost !== "")
+        next.quantity = formatQuantity(total / unit);
+    } else if (field === "totalCost") {
+      if (
+        q > 0 &&
+        total >= 0 &&
+        next.quantity !== "" &&
+        next.totalCost !== ""
+      )
+        next.unitPrice = (total / q).toFixed(2);
+      else if (unit > 0 && total >= 0 && next.unitPrice !== "")
+        next.quantity = formatQuantity(total / unit);
+    }
+    setQuantity(next.quantity);
+    setUnitPrice(next.unitPrice);
+    setTotalCost(next.totalCost);
+  }
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError("");
     try {
+      const q = Number(quantity);
+      const unit = Number(unitPrice);
+      const total = Number(totalCost);
+      const filled = [quantity, unitPrice, totalCost].filter(
+        (value) => value.trim() !== "",
+      ).length;
+      if (filled < 2)
+        throw new Error("Enter any two of quantity, unit price, or total cost.");
+      if (!Number.isInteger(q) || q <= 0)
+        throw new Error("Quantity must be a positive whole number.");
+      if (!Number.isFinite(unit) || unit < 0)
+        throw new Error("Enter a valid unit price.");
+      if (!Number.isFinite(total) || total < 0)
+        throw new Error("Enter a valid total cost.");
+      if (Math.abs(q * unit - total) > 0.01)
+        throw new Error("Quantity × unit price must equal total cost.");
       let invoicePath: string | undefined;
       if (file) invoicePath = (await uploadInvoice(file)).path;
       await savePurchase({
@@ -128,6 +190,7 @@ function PurchaseForm({
       onSaved("Purchase saved.");
       setQuantity("");
       setUnitPrice("");
+      setTotalCost("");
       setNotes("");
       setFile(null);
     } catch (err) {
@@ -196,27 +259,37 @@ function PurchaseForm({
         <label>
           <span className={fieldLabel}>Quantity</span>
           <input
-            required
             className={inputField}
             type="number"
             min="1"
             step="1"
             inputMode="numeric"
             value={quantity}
-            onChange={(e) => setQuantity(e.target.value)}
+            onChange={(e) => updateAmount("quantity", e.target.value)}
           />
         </label>
         <label>
           <span className={fieldLabel}>Unit price (₹)</span>
           <input
-            required
             className={inputField}
             type="number"
             min="0"
             step="0.01"
             inputMode="decimal"
             value={unitPrice}
-            onChange={(e) => setUnitPrice(e.target.value)}
+            onChange={(e) => updateAmount("unitPrice", e.target.value)}
+          />
+        </label>
+        <label>
+          <span className={fieldLabel}>Total cost (₹)</span>
+          <input
+            className={inputField}
+            type="number"
+            min="0"
+            step="0.01"
+            inputMode="decimal"
+            value={totalCost}
+            onChange={(e) => updateAmount("totalCost", e.target.value)}
           />
         </label>
         <label className="sm:col-span-2">
@@ -244,6 +317,8 @@ function PurchaseForm({
         </div>
       ) : null}
       <div className={alertInfo}>
+        Enter any two of quantity, unit price, or total cost; the third is
+        calculated automatically. {" "}
         Branch purchases are treated as emergency purchases. This records what
         was bought; it does not change the shelf count automatically.
       </div>
@@ -258,7 +333,26 @@ function PurchaseForm({
     </form>
   );
 }
-function PurchaseTable({ data }: { data: PurchaseData }) {
+function PurchaseTable({
+  data,
+  isAdmin,
+  onDeleted,
+}: {
+  data: PurchaseData;
+  isAdmin: boolean;
+  onDeleted: () => void;
+}) {
+  async function remove(id: string) {
+    if (!window.confirm("Delete this purchase? This cannot be undone.")) return;
+    try {
+      await deletePurchase(id);
+      onDeleted();
+    } catch (error) {
+      window.alert(
+        error instanceof Error ? error.message : "Unable to delete purchase",
+      );
+    }
+  }
   return (
     <section className="space-y-3">
       <h2 className="text-lg font-semibold">Recent purchases</h2>
@@ -273,9 +367,11 @@ function PurchaseTable({ data }: { data: PurchaseData }) {
                 "Vendor",
                 "Qty",
                 "Unit price",
+                "Total cost",
                 "6-month average",
                 "Signal",
                 "Invoice",
+                ...(isAdmin ? ["Admin action"] : []),
               ].map((h) => (
                 <th scope="col" key={h} className={tableHeadCell}>
                   {h}
@@ -296,6 +392,12 @@ function PurchaseTable({ data }: { data: PurchaseData }) {
                 <td className={tableCell}>
                   ₹
                   {p.unitPrice.toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                  })}
+                </td>
+                <td className={tableCell}>
+                  ₹
+                  {(p.quantity * p.unitPrice).toLocaleString("en-IN", {
                     minimumFractionDigits: 2,
                   })}
                 </td>
@@ -335,11 +437,21 @@ function PurchaseTable({ data }: { data: PurchaseData }) {
                     "—"
                   )}
                 </td>
+                {isAdmin ? (
+                  <td className={tableCell}>
+                    <button
+                      className={buttonSecondary}
+                      onClick={() => remove(p.id)}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                ) : null}
               </tr>
             ))}
             {!data.purchases.length ? (
               <tr>
-                <td colSpan={9} className={tableCell}>
+                <td colSpan={isAdmin ? 11 : 10} className={tableCell}>
                   No purchases recorded yet.
                 </td>
               </tr>

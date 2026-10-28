@@ -17,7 +17,7 @@ were additionally exercised live in the browser — light/dark, desktop/375px).
   username to a `profiles` row, checks `status = 'active'`, then signs in via Supabase
   with the profile's email. Self-service signup (`/api/auth/request-access`) creates a
   `pending` profile awaiting admin approval. Page routes are gated by
-  `src/middleware.ts` (session presence only); API routes gate themselves with
+  `src/proxy.ts` (session presence only); API routes gate themselves with
   `requireAuth`/`requireAdmin`. Not load-tested; correctness claims are from reading
   the handlers.
 - **Seven modules render and are wired to data** — verified in browser 2026-07-26:

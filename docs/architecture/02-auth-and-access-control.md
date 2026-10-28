@@ -1,7 +1,7 @@
 # Auth and Access Control
 
 > Status: Current. Verified against code 2026-07-26.
-> Files: `src/middleware.ts`, `src/lib/auth.ts`, `src/lib/auth-routes.ts`,
+> Files: `src/proxy.ts`, `src/lib/auth.ts`, `src/lib/auth-routes.ts`,
 > `src/lib/supabase/*`, `src/app/api/auth/*`, `src/components/Dashboard/DashboardAuthProvider.tsx`.
 
 ---
@@ -39,7 +39,7 @@ Branch-staff users are tied to branches through `inventory_branch_assignments`
 
 ## 2. Two enforcement points
 
-### Page routes — `src/middleware.ts`
+### Page routes — `src/proxy.ts`
 
 Runs on every request except `/_next/static`, `/_next/image`, `favicon.ico` (matcher),
 and additionally passes through:

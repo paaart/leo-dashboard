@@ -1,7 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ["leopackersandmovers.com"],
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "leopackersandmovers.com",
+        pathname: "/intercity/images/**",
+      },
+    ],
   },
 };
 

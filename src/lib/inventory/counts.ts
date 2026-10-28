@@ -1,5 +1,10 @@
 import { db } from "@/lib/db";
-import type { CountEdit, CountInput, InventoryCount } from "./types";
+import {
+  INVENTORY_HISTORY_PAGE_SIZE,
+  type CountEdit,
+  type CountInput,
+  type InventoryCount,
+} from "./types";
 
 const columns = `id::text, branch_id::text as "branchId", material_id::text as "materialId",
   to_char(count_date, 'YYYY-MM-DD') as "countDate", quantity, version, updated_at::text as "updatedAt"`;
@@ -114,7 +119,7 @@ export async function countHistory(
     from public.inventory_count_edits e join public.inventory_counts c on c.id = e.count_id
     join public.profiles p on p.id = e.edited_by
     where c.branch_id = any($1::uuid[]) and c.material_id = $2
-    order by e.edited_at desc, e.id desc limit 100 offset $3`,
+    order by e.edited_at desc, e.id desc limit ${INVENTORY_HISTORY_PAGE_SIZE} offset $3`,
     [branchIds, materialId, offset],
   );
   return result.rows;

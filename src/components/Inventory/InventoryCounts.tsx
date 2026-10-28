@@ -12,6 +12,7 @@ import {
   cardPadded,
   fieldLabel,
   inputField,
+  modalOverlay,
   selectField,
   tableWrapper,
   tableBase,
@@ -36,6 +37,7 @@ import type {
   InventoryMaterial,
   StockData,
 } from "@/lib/inventory/types";
+import { INVENTORY_HISTORY_PAGE_SIZE } from "@/lib/inventory/types";
 
 function countAge(date: string) {
   const days = Math.floor(
@@ -456,97 +458,126 @@ function History({
     };
   }, [material.id, branchId, offset, retry]);
   return (
-    <section className="space-y-3" aria-label={`${material.name} history`}>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold">
-          {material.name} · History &amp; edit log
-        </h2>
-        <button className={buttonSecondary} onClick={onClose}>
-          Close history
-        </button>
-      </div>
-      <p className="text-sm text-fg-muted">
-        Every count and correction, newest save first. To correct a count,
-        choose its branch and count date in Update stock.
-      </p>
-      {error ? (
-        <div role="alert" className={alertDanger}>
-          {error}{" "}
+    <div
+      className={modalOverlay}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="inventory-history-title"
+      onClick={onClose}
+    >
+      <section
+        className="max-h-[90vh] w-full max-w-5xl overflow-hidden rounded-xl border border-edge bg-surface shadow-overlay"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-4 border-b border-edge px-5 py-4">
+          <div>
+            <h2 id="inventory-history-title" className="text-lg font-semibold">
+              {material.name} · History &amp; edit log
+            </h2>
+            <p className="mt-1 text-sm text-fg-muted">
+              Every count and correction, newest save first.
+            </p>
+          </div>
           <button
+            type="button"
             className={buttonSecondary}
-            onClick={() => setRetry((r) => r + 1)}
+            onClick={onClose}
+            aria-label="Close history dialog"
           >
-            Retry
+            Close
           </button>
         </div>
-      ) : loading ? (
-        <p role="status">Loading history…</p>
-      ) : (
-        <>
-          <div className={tableWrapper}>
-            <table className={tableBase}>
-              <thead className={tableHead}>
-                <tr>
-                  {[
-                    "Count date",
-                    "Branch",
-                    "Old → New",
-                    "Changed by",
-                    "Saved at (IST)",
-                  ].map((h) => (
-                    <th key={h} scope="col" className={tableHeadCell}>
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <tr key={row.id} className={tableRow}>
-                    <td className={tableCell}>{row.countDate}</td>
-                    <td className={tableCell}>
-                      {branches.find((b) => b.id === row.branchId)?.name}
-                    </td>
-                    <td className={tableCell}>
-                      {row.oldQuantity ?? "Not counted"} → {row.newQuantity}{" "}
-                      {material.unit}
-                    </td>
-                    <td className={tableCell}>{row.editedBy}</td>
-                    <td className={tableCell}>
-                      {new Date(row.editedAt).toLocaleString("en-IN", {
-                        timeZone: "Asia/Kolkata",
-                      })}
-                    </td>
-                  </tr>
-                ))}
-                {!rows.length ? (
-                  <tr>
-                    <td colSpan={5} className={tableCell}>
-                      No count history on this page.
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
-          </div>
-          <div className="flex gap-3">
-            <button
-              disabled={offset === 0}
-              className={buttonSecondary}
-              onClick={() => setOffset((o) => Math.max(0, o - 100))}
-            >
-              Previous
-            </button>
-            <button
-              disabled={rows.length < 100}
-              className={buttonSecondary}
-              onClick={() => setOffset((o) => o + 100)}
-            >
-              Next
-            </button>
-          </div>
-        </>
-      )}
-    </section>
+        <div className="max-h-[calc(90vh-6rem)] space-y-3 overflow-auto px-5 py-5">
+          <p className="text-sm text-fg-muted">
+            To correct a count, choose its branch and count date in Update
+            stock.
+          </p>
+          {error ? (
+            <div role="alert" className={alertDanger}>
+              {error}{" "}
+              <button
+                className={buttonSecondary}
+                onClick={() => setRetry((r) => r + 1)}
+              >
+                Retry
+              </button>
+            </div>
+          ) : loading ? (
+            <p role="status">Loading history…</p>
+          ) : (
+            <>
+              <div className={tableWrapper}>
+                <table className={tableBase}>
+                  <thead className={tableHead}>
+                    <tr>
+                      {[
+                        "Count date",
+                        "Branch",
+                        "Old → New",
+                        "Changed by",
+                        "Saved at (IST)",
+                      ].map((h) => (
+                        <th key={h} scope="col" className={tableHeadCell}>
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((row) => (
+                      <tr key={row.id} className={tableRow}>
+                        <td className={tableCell}>{row.countDate}</td>
+                        <td className={tableCell}>
+                          {branches.find((b) => b.id === row.branchId)?.name}
+                        </td>
+                        <td className={tableCell}>
+                          {row.oldQuantity ?? "Not counted"} → {row.newQuantity}{" "}
+                          {material.unit}
+                        </td>
+                        <td className={tableCell}>{row.editedBy}</td>
+                        <td className={tableCell}>
+                          {new Date(row.editedAt).toLocaleString("en-IN", {
+                            timeZone: "Asia/Kolkata",
+                          })}
+                        </td>
+                      </tr>
+                    ))}
+                    {!rows.length ? (
+                      <tr>
+                        <td colSpan={5} className={tableCell}>
+                          No count history on this page.
+                        </td>
+                      </tr>
+                    ) : null}
+                  </tbody>
+                </table>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  disabled={offset === 0}
+                  className={buttonSecondary}
+                  onClick={() =>
+                    setOffset((o) =>
+                      Math.max(0, o - INVENTORY_HISTORY_PAGE_SIZE),
+                    )
+                  }
+                >
+                  Previous
+                </button>
+                <button
+                  disabled={rows.length < INVENTORY_HISTORY_PAGE_SIZE}
+                  className={buttonSecondary}
+                  onClick={() =>
+                    setOffset((o) => o + INVENTORY_HISTORY_PAGE_SIZE)
+                  }
+                >
+                  Next
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </section>
+    </div>
   );
 }

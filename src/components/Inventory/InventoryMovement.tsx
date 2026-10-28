@@ -25,6 +25,8 @@ import {
   loadCountRequests,
   createCountRequest,
   completeCountRequest,
+  deleteCountRequest,
+  deleteDispatch,
   loadReconciliation,
 } from "@/lib/inventory/dispatch-client";
 import { loadInventoryStock } from "@/lib/inventory/client";
@@ -38,8 +40,10 @@ import type {
 } from "@/lib/inventory/types";
 export default function InventoryMovement({
   mode,
+  isAdmin,
 }: {
   mode: "dispatches" | "count-requests" | "reconciliation";
+  isAdmin: boolean;
 }) {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -52,6 +56,7 @@ export default function InventoryMovement({
             setMessage={setMessage}
             error={error}
             setError={setError}
+            isAdmin={isAdmin}
           />
         ) : mode === "count-requests" ? (
           <CountRequests
@@ -59,6 +64,7 @@ export default function InventoryMovement({
             setMessage={setMessage}
             error={error}
             setError={setError}
+            isAdmin={isAdmin}
           />
         ) : (
           <Reconciliation error={error} setError={setError} />
@@ -72,11 +78,13 @@ function Dispatches({
   setMessage,
   error,
   setError,
+  isAdmin,
 }: {
   message: string;
   setMessage: (x: string) => void;
   error: string;
   setError: (x: string) => void;
+  isAdmin: boolean;
 }) {
   const [data, setData] = useState<InventoryDispatch[]>([]);
   const [branches, setBranches] = useState<InventoryBranch[]>([]);
@@ -124,6 +132,16 @@ function Dispatches({
       setReload((x) => x + 1);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unable to confirm receipt");
+    }
+  }
+  async function remove(id: string) {
+    if (!window.confirm("Delete this dispatch? This cannot be undone.")) return;
+    try {
+      await deleteDispatch(id);
+      setMessage("Dispatch deleted.");
+      setReload((x) => x + 1);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unable to delete dispatch");
     }
   }
   return (
@@ -200,6 +218,7 @@ function Dispatches({
                 "Received",
                 "Status",
                 "Action",
+                ...(isAdmin ? ["Admin action"] : []),
               ].map((h, index) => (
                 <th key={`${h}-${index}`} className={tableHeadCell}>
                   {h}
@@ -209,7 +228,13 @@ function Dispatches({
           </thead>
           <tbody>
             {data.map((d) => (
-              <DispatchRow key={d.id} d={d} onReceive={receive} />
+              <DispatchRow
+                key={d.id}
+                d={d}
+                onReceive={receive}
+                isAdmin={isAdmin}
+                onDelete={remove}
+              />
             ))}
           </tbody>
         </table>
@@ -220,9 +245,13 @@ function Dispatches({
 function DispatchRow({
   d,
   onReceive,
+  isAdmin,
+  onDelete,
 }: {
   d: InventoryDispatch;
   onReceive: (id: string, q: number) => void;
+  isAdmin: boolean;
+  onDelete: (id: string) => void;
 }) {
   const [q, setQ] = useState(String(d.quantitySent));
   return (
@@ -267,6 +296,13 @@ function DispatchRow({
           "—"
         )}
       </td>
+      {isAdmin ? (
+        <td className={tableCell}>
+          <button className={buttonSecondary} onClick={() => onDelete(d.id)}>
+            Delete
+          </button>
+        </td>
+      ) : null}
     </tr>
   );
 }
@@ -275,11 +311,13 @@ function CountRequests({
   setMessage,
   error,
   setError,
+  isAdmin,
 }: {
   message: string;
   setMessage: (x: string) => void;
   error: string;
   setError: (x: string) => void;
+  isAdmin: boolean;
 }) {
   const [data, setData] = useState<InventoryCountRequest[]>([]);
   const [branches, setBranches] = useState<InventoryBranch[]>([]);
@@ -313,6 +351,17 @@ function CountRequests({
       setReload((x) => x + 1);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unable to complete request");
+    }
+  }
+  async function remove(id: string) {
+    if (!window.confirm("Delete this count request? This cannot be undone."))
+      return;
+    try {
+      await deleteCountRequest(id);
+      setMessage("Count request deleted.");
+      setReload((x) => x + 1);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unable to delete request");
     }
   }
   return (
@@ -357,7 +406,7 @@ function CountRequests({
         <table className={tableBase}>
           <thead className={tableHead}>
             <tr>
-              {["Requested", "Branch", "Note", "Due", "Status", "Action"].map(
+              {["Requested", "Branch", "Note", "Due", "Status", "Action", ...(isAdmin ? ["Admin action"] : [])].map(
                 (h) => (
                   <th key={h} className={tableHeadCell}>
                     {h}
@@ -396,6 +445,16 @@ function CountRequests({
                     "—"
                   )}
                 </td>
+                {isAdmin ? (
+                  <td className={tableCell}>
+                    <button
+                      className={buttonSecondary}
+                      onClick={() => remove(r.id)}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                ) : null}
               </tr>
             ))}
           </tbody>

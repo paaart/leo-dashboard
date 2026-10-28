@@ -31,7 +31,7 @@ Handlers under `src/app/api/`.
 
 ```
 src/
-  middleware.ts              page-route auth gate + 24h session cap (skips /api and public routes)
+  proxy.ts                   page-route auth gate + 24h session cap (skips /api and public routes)
   app/
     layout.tsx               root layout (html, Geist fonts, Toaster)
     page.tsx                 entry — redirects to /dashboard/home
@@ -90,7 +90,7 @@ vercel.json                  cron schedule for warehouse accrual
 
 ```
 Browser requests /dashboard/...
-  → src/middleware.ts runs
+  → src/proxy.ts runs
       → is it /_next, /api, a file (has a dot), or a public route?  → pass through
       → else: read Supabase session from cookies
           → no session?                              → redirect to /login?next=<path>

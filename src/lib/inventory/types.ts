@@ -2,6 +2,8 @@
 // Shapes shared by the inventory API routes and the client components.
 // JSON is camelCase; the SQL in setup.ts aliases columns to match.
 
+export const INVENTORY_HISTORY_PAGE_SIZE = 20;
+
 export type InventoryBranch = {
   id: string;
   name: string;

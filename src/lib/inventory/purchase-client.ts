@@ -30,6 +30,11 @@ export function savePurchase(input: Record<string, unknown>) {
     body: JSON.stringify(input),
   });
 }
+export function deletePurchase(id: string) {
+  return fetchJson<{ deleted: boolean }>(`/api/inventory/purchases/${id}`, {
+    method: "DELETE",
+  });
+}
 export async function uploadInvoice(file: File) {
   const form = new FormData();
   form.append("file", file);

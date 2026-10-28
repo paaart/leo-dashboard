@@ -152,3 +152,12 @@ export async function createPurchase(input: {
   );
   return result.rows[0].id as string;
 }
+
+export async function deletePurchase(id: string) {
+  const result = await db.query<{ invoicePath: string | null }>(
+    `delete from public.inventory_purchases where id = $1::uuid
+     returning invoice_path as "invoicePath"`,
+    [id],
+  );
+  return result.rows[0] ?? null;
+}

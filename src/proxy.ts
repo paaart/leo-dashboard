@@ -2,7 +2,7 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { isPublicRoute } from "@/lib/auth-routes";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (
@@ -28,14 +28,14 @@ export async function middleware(request: NextRequest) {
             name: string;
             value: string;
             options: CookieOptions;
-          }[]
+          }[],
         ) {
           cookiesToSet.forEach(({ name, value, options }) => {
             response.cookies.set(name, value, options);
           });
         },
       },
-    }
+    },
   );
 
   const {
@@ -49,12 +49,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Hard 24h session limit: the marker cookie is set at login with a 24h
-  // maxAge and its timestamp is validated here, so sessions cannot outlive
-  // it via Supabase token refresh.
   const sessionStart = request.cookies.get(SESSION_START_COOKIE)?.value;
   const startedAt = Number(sessionStart);
-
   if (
     !sessionStart ||
     !Number.isFinite(startedAt) ||

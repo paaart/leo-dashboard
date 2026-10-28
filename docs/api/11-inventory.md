@@ -155,9 +155,15 @@ vendor is deactivated.
 GET returns accessible branches, active materials, admin-visible vendors and up to 500
 recent purchases. Optional filters are `materialId`, `vendorId`, `from`, and `to`.
 POST accepts `{ branchId, materialId, vendorId, purchaseDate, quantity, unitPrice,
-invoicePath?, notes? }`. Purchase dates begin at 2026-09-01. Admins can use every active
-branch; branch staff are restricted to their assignments. Purchase rows include a
-trailing six-month average and `priceSignal` (`good`, `high`, `normal`, or `no_history`).
+invoicePath?, notes? }`. The UI accepts any two of quantity, unit price, and total cost
+and calculates the third before sending the stored quantity/unit price pair. Purchase
+dates begin at 2026-09-01. Admins can use every active branch; branch staff are
+restricted to their assignments. Purchase rows include a trailing six-month average,
+`totalAmount`, and `priceSignal` (`good`, `high`, `normal`, or `no_history`).
+
+### DELETE `/api/inventory/purchases/[id]` (admin)
+
+Deletes a purchase and best-effort removes its private invoice object from Storage.
 
 ### POST/GET `/api/inventory/purchases/upload` (admin + branch)
 
@@ -168,8 +174,8 @@ namespaced to the authenticated profile; admins may open any invoice path.
 ## Dispatches and count requests (Slice 4)
 
 Migration `20261028175920_inventory_dispatches_and_count_requests.sql` creates the
-dispatch and count-request tables with RLS and no direct browser-role privileges. It
-has not been applied live yet.
+dispatch and count-request tables with RLS and no direct browser-role privileges. It is
+applied to the hosted database.
 
 ### GET/POST `/api/inventory/dispatches`
 
@@ -182,6 +188,11 @@ materialId, quantitySent, notes? }`; the source must be the configured central s
 Admins or staff assigned to the receiving branch can confirm `{ quantityReceived }`.
 The operation is one-time and records the receiver and timestamp.
 
+### DELETE `/api/inventory/dispatches/[id]` (admin)
+
+Deletes a dispatch. This is intended for correcting an incorrectly entered movement;
+admins should use reconciliation to review the effect before deleting a received row.
+
 ### GET/POST `/api/inventory/count-requests`
 
 GET lists accessible requests; `pending=1` filters to incomplete requests. POST is
@@ -190,6 +201,11 @@ admin-only and accepts `{ branchId, dueDate?, note? }`.
 ### PATCH `/api/inventory/count-requests/[id]`
 
 Marks a pending request complete for an admin or assigned branch staff member.
+
+### DELETE `/api/inventory/count-requests/[id]` (admin)
+
+Deletes a count request. Count snapshots and edit history do not have delete endpoints;
+they remain the audit record and are corrected by submitting a replacement count.
 
 ### GET `/api/inventory/reconciliation?month=YYYY-MM`
 

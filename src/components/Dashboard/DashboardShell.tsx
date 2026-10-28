@@ -337,13 +337,22 @@ export default function DashboardShell({ children }: { children?: ReactNode }) {
           case "update":
             return <InventoryCounts key="update" mode="update" />;
           case "purchases":
-            return <InventoryPurchases />;
+            return <InventoryPurchases isAdmin={user.role === "admin"} />;
           case "dispatches":
-            return <InventoryMovement mode="dispatches" />;
+            return (
+              <InventoryMovement mode="dispatches" isAdmin={user.role === "admin"} />
+            );
           case "count-requests":
-            return <InventoryMovement mode="count-requests" />;
+            return (
+              <InventoryMovement mode="count-requests" isAdmin={user.role === "admin"} />
+            );
           case "reconciliation":
-            return <InventoryMovement mode="reconciliation" />;
+            return (
+              <InventoryMovement
+                mode="reconciliation"
+                isAdmin={user.role === "admin"}
+              />
+            );
           default:
             return <InventorySetup />;
         }

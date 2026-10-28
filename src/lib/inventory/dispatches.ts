@@ -68,6 +68,14 @@ export async function receiveDispatch(
   return result.rows[0] ?? null;
 }
 
+export async function deleteDispatch(id: string) {
+  const result = await db.query<{ id: string }>(
+    `delete from public.inventory_dispatches where id = $1::uuid returning id::text`,
+    [id],
+  );
+  return result.rows[0] ?? null;
+}
+
 const requestColumns = `r.id::text as "id", r.branch_id::text as "branchId", b.name as "branchName",
  coalesce(p.full_name,p.username) as "requestedBy", r.requested_at::text as "requestedAt",
  r.due_date::text as "dueDate", r.note, r.completed_at::text as "completedAt", coalesce(cp.full_name,cp.username) as "completedBy"`;
@@ -109,6 +117,14 @@ export async function completeCountRequest(
       branchIds === "all",
       branchIds === "all" ? [] : branchIds,
     ],
+  );
+  return result.rows[0] ?? null;
+}
+
+export async function deleteCountRequest(id: string) {
+  const result = await db.query<{ id: string }>(
+    `delete from public.inventory_count_requests where id = $1::uuid returning id::text`,
+    [id],
   );
   return result.rows[0] ?? null;
 }

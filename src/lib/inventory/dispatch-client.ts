@@ -27,6 +27,11 @@ export function receiveDispatch(id: string, quantityReceived: number) {
     },
   );
 }
+export function deleteDispatch(id: string) {
+  return fetchJson<{ deleted: boolean }>(`/api/inventory/dispatches/${id}`, {
+    method: "DELETE",
+  });
+}
 export function loadCountRequests(pending = true) {
   return fetchJson<InventoryCountRequest[]>(
     `/api/inventory/count-requests?pending=${pending ? "1" : "0"}`,
@@ -48,6 +53,12 @@ export function completeCountRequest(id: string) {
       headers: { "Content-Type": "application/json" },
       body: "{}",
     },
+  );
+}
+export function deleteCountRequest(id: string) {
+  return fetchJson<{ deleted: boolean }>(
+    `/api/inventory/count-requests/${id}`,
+    { method: "DELETE" },
   );
 }
 export function loadReconciliation(month: string) {

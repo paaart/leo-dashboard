@@ -64,9 +64,10 @@ the selected date can be corrected; every changed value records who/when/old/new
 A stale version rejects the entire save with a reload message. Changing branch/date
 or reloading prompts before discarding draft values; page unload warns too.
 
-History & edit log is an inline, paginated table (100 saves per page), scoped to the
-selected material and available branches. Historical corrections do not replace a newer
-count in Overview.
+History & edit log opens in a modal with 20 saves per page, scoped to the selected
+material and available branches. Historical corrections do not replace a newer count in
+Overview. Count history and edit logs are immutable; admins correct a count through
+Update stock rather than deleting the audit trail.
 
 ### Purchases
 
@@ -79,7 +80,10 @@ opened through a short-lived signed URL.
 The purchase list compares each unit price with the trailing six-month average for that
 material. Prices at least 5% below the average show **Good deal**; prices at least 5%
 above show **Above average**. With no prior six-month data it shows **No history**.
-Purchases do not automatically change shelf counts.
+The list shows total cost (`quantity × unit price`). The entry form accepts any two of
+quantity, unit price, and total cost, then calculates the third. Purchases do not
+automatically change shelf counts. Admins can delete a purchase; the invoice object is
+removed with it.
 
 ### Dispatches, count requests, and reconciliation
 
@@ -89,7 +93,8 @@ Branch staff can only see dispatches involving their assigned branches and can c
 incoming dispatches.
 
 Admins can raise count requests for any branch. Branch staff see requests for their
-assigned branches and can mark them complete after entering a stock count.
+assigned branches and can mark them complete after entering a stock count. Admins can
+delete count requests and dispatches; branch staff have no delete actions.
 
 Reconciliation is calculated by month and branch/material as `opening + received - sent
 - closing = apparent usage`. Missing opening or closing counts remain blank.
