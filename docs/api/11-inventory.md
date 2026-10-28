@@ -165,6 +165,38 @@ POST accepts a PDF or JPEG/PNG/WebP invoice up to 10 MB and returns a private St
 path. GET accepts that path and returns a five-minute signed URL. Branch uploads are
 namespaced to the authenticated profile; admins may open any invoice path.
 
+## Dispatches and count requests (Slice 4)
+
+Migration `20261028175920_inventory_dispatches_and_count_requests.sql` creates the
+dispatch and count-request tables with RLS and no direct browser-role privileges. It
+has not been applied live yet.
+
+### GET/POST `/api/inventory/dispatches`
+
+GET returns dispatches involving accessible branches and supports `status=in_transit`
+or `status=received`. POST is admin-only and accepts `{ fromBranchId, toBranchId,
+materialId, quantitySent, notes? }`; the source must be the configured central store.
+
+### PATCH `/api/inventory/dispatches/[id]/receive`
+
+Admins or staff assigned to the receiving branch can confirm `{ quantityReceived }`.
+The operation is one-time and records the receiver and timestamp.
+
+### GET/POST `/api/inventory/count-requests`
+
+GET lists accessible requests; `pending=1` filters to incomplete requests. POST is
+admin-only and accepts `{ branchId, dueDate?, note? }`.
+
+### PATCH `/api/inventory/count-requests/[id]`
+
+Marks a pending request complete for an admin or assigned branch staff member.
+
+### GET `/api/inventory/reconciliation?month=YYYY-MM`
+
+Returns one row per accessible branch/material with opening, received, sent, closing and
+apparent usage. The usage equation is `opening + received - sent - closing`; it is null
+until both opening and closing snapshots exist.
+
 ### Verification
 
 `npm ci && npm run test:inventory` runs isolated PostgreSQL (PGlite) migration, transaction,

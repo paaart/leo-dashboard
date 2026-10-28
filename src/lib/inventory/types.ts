@@ -100,3 +100,46 @@ export type InventoryPurchase = {
   sixMonthAverage: number | null;
   priceSignal: "good" | "high" | "normal" | "no_history";
 };
+
+export type InventoryDispatch = {
+  id: string;
+  fromBranchId: string;
+  fromBranchName: string;
+  toBranchId: string;
+  toBranchName: string;
+  materialId: string;
+  materialName: string;
+  materialUnit: string;
+  quantitySent: number;
+  quantityReceived: number | null;
+  status: "in_transit" | "received";
+  dispatchedAt: string;
+  receivedAt: string | null;
+  createdBy: string;
+  receivedBy: string | null;
+  notes: string | null;
+};
+export type InventoryCountRequest = {
+  id: string;
+  branchId: string;
+  branchName: string;
+  requestedBy: string;
+  requestedAt: string;
+  dueDate: string | null;
+  note: string | null;
+  completedAt: string | null;
+  completedBy: string | null;
+};
+export type InventoryReconciliation = {
+  branchId: string;
+  branchName: string;
+  materialId: string;
+  materialName: string;
+  unit: string;
+  month: string;
+  opening: number | null;
+  received: number;
+  sent: number;
+  closing: number | null;
+  used: number | null;
+};

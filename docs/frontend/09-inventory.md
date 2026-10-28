@@ -42,6 +42,9 @@ sub). Adding a screen means adding an entry there plus a `renderContent()` branc
 | `overview` | `InventoryCounts` (overview) | admin + branch |
 | `update` | `InventoryCounts` (update) | admin + branch |
 | `purchases` | `InventoryPurchases` | admin + branch |
+| `dispatches` | `InventoryMovement` (dispatches) | admin + branch |
+| `count-requests` | `InventoryMovement` (count requests) | admin + branch |
+| `reconciliation` | `InventoryMovement` (reconciliation) | admin + branch |
 | `setup` | `InventorySetup` | admin |
 
 ### Overview and Update stock
@@ -77,6 +80,19 @@ The purchase list compares each unit price with the trailing six-month average f
 material. Prices at least 5% below the average show **Good deal**; prices at least 5%
 above show **Above average**. With no prior six-month data it shows **No history**.
 Purchases do not automatically change shelf counts.
+
+### Dispatches, count requests, and reconciliation
+
+Admins dispatch material from Uttarahalli to a branch. The receiving branch confirms
+the quantity received, which changes the dispatch from **In transit** to **Received**.
+Branch staff can only see dispatches involving their assigned branches and can confirm
+incoming dispatches.
+
+Admins can raise count requests for any branch. Branch staff see requests for their
+assigned branches and can mark them complete after entering a stock count.
+
+Reconciliation is calculated by month and branch/material as `opening + received - sent
+- closing = apparent usage`. Missing opening or closing counts remain blank.
 
 ### Setup
 

@@ -90,6 +90,10 @@ const InventoryPurchases = dynamic(
   () => import("@/components/Inventory/InventoryPurchases"),
   { loading: moduleLoading },
 );
+const InventoryMovement = dynamic(
+  () => import("@/components/Inventory/InventoryMovement"),
+  { loading: moduleLoading },
+);
 const VendorsPage = dynamic(() => import("@/components/Vendors/VendorsPage"), {
   loading: moduleLoading,
 });
@@ -334,6 +338,12 @@ export default function DashboardShell({ children }: { children?: ReactNode }) {
             return <InventoryCounts key="update" mode="update" />;
           case "purchases":
             return <InventoryPurchases />;
+          case "dispatches":
+            return <InventoryMovement mode="dispatches" />;
+          case "count-requests":
+            return <InventoryMovement mode="count-requests" />;
+          case "reconciliation":
+            return <InventoryMovement mode="reconciliation" />;
           default:
             return <InventorySetup />;
         }

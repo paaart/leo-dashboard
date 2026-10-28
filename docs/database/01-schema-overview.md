@@ -227,6 +227,13 @@ Storage bucket, with a 10 MB limit for PDF/JPEG/PNG/WebP files. The application 
 guarded server routes and short-lived signed URLs; browser roles receive no direct
 table privileges.
 
+### Dispatches and count requests **[migration prepared]**
+
+`inventory_dispatches` records central-store shipments, in-transit/received status,
+sent and received quantities, and the users who performed each action.
+`inventory_count_requests` records branch count requests, due dates, notes and
+completion actors/timestamps. The migration is prepared but awaits live application.
+
 ## Warehouse **[supabase-only, except alert dismissals]**
 
 The warehouse core tables are **not** in the migrations folder — they were built in
