@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import toast from "react-hot-toast";
 import {
   EmptyState,
   LoadingState,
   SectionCard,
 } from "@/components/shared/DashboardUI";
-import { badgeClass, buttonPrimary } from "@/components/shared/ui";
+import { badgeClass, buttonPrimary, buttonSecondary } from "@/components/shared/ui";
 import {
   listInventoryAssignments,
   listInventoryBranches,
@@ -86,6 +87,14 @@ export default function SetupAssignments() {
       title="Branch staff"
       description="Who can report stock for which branches. A person can cover more than one branch. Accounts are created and approved as “Branch staff” in User Management."
     >
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-accent/25 bg-accent-soft p-3">
+        <p className="text-sm text-accent-soft-fg">
+          Need a new person? Create their account in User Management, then approve them as Branch staff.
+        </p>
+        <Link href="/dashboard/users" className={buttonSecondary}>
+          Create branch staff user
+        </Link>
+      </div>
       {users.length === 0 ? (
         <EmptyState
           title="No branch-staff users yet"

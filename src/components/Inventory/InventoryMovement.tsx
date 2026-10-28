@@ -200,8 +200,8 @@ function Dispatches({
                 "Received",
                 "Status",
                 "Action",
-              ].map((h) => (
-                <th key={h} className={tableHeadCell}>
+              ].map((h, index) => (
+                <th key={`${h}-${index}`} className={tableHeadCell}>
                   {h}
                 </th>
               ))}
