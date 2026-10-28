@@ -15,6 +15,7 @@ export type AppUser = {
   fullName: string | null;
   role: AppRole;
   status: "active";
+  isDemoAccount: boolean;
 };
 
 type ProfileRow = {
@@ -60,6 +61,7 @@ async function appUserFromAuthUserId(
     fullName: data.full_name,
     role: data.role,
     status: "active",
+    isDemoAccount: data.username.trim().toLowerCase() === "test",
   };
 }
 

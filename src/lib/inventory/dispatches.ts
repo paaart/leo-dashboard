@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { demoDescription } from "./demo";
 import type {
   InventoryCountRequest,
   InventoryDispatch,
@@ -33,6 +34,7 @@ export async function createDispatch(input: {
   quantitySent: number;
   notes?: string | null;
   createdBy: string;
+  isDemo: boolean;
 }) {
   const result = await db.query<{ id: string }>(
     `insert into public.inventory_dispatches (from_branch_id,to_branch_id,material_id,quantity_sent,notes,created_by)
@@ -42,7 +44,7 @@ export async function createDispatch(input: {
       input.toBranchId,
       input.materialId,
       input.quantitySent,
-      input.notes ?? null,
+      demoDescription(input.isDemo, input.notes),
       input.createdBy,
     ],
   );
@@ -97,10 +99,11 @@ export async function createCountRequest(
   dueDate: string | null,
   note: string | null,
   requestedBy: string,
+  isDemo: boolean,
 ) {
   const result = await db.query<{ id: string }>(
     `insert into public.inventory_count_requests(branch_id,due_date,note,requested_by) values($1,$2,$3,$4) returning id::text`,
-    [branchId, dueDate, note, requestedBy],
+    [branchId, dueDate, demoDescription(isDemo, note), requestedBy],
   );
   return result.rows[0].id;
 }

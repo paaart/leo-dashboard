@@ -62,6 +62,7 @@ export async function POST(req: NextRequest) {
           quantitySent: q,
           notes: n,
           createdBy: a.user.id,
+          isDemo: a.user.isDemoAccount,
         }),
       },
       201,

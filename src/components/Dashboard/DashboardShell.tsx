@@ -94,6 +94,10 @@ const InventoryMovement = dynamic(
   () => import("@/components/Inventory/InventoryMovement"),
   { loading: moduleLoading },
 );
+const InventoryAnalytics = dynamic(
+  () => import("@/components/Inventory/InventoryAnalytics"),
+  { loading: moduleLoading },
+);
 const VendorsPage = dynamic(() => import("@/components/Vendors/VendorsPage"), {
   loading: moduleLoading,
 });
@@ -353,6 +357,8 @@ export default function DashboardShell({ children }: { children?: ReactNode }) {
                 isAdmin={user.role === "admin"}
               />
             );
+          case "analytics":
+            return <InventoryAnalytics />;
           default:
             return <InventorySetup />;
         }

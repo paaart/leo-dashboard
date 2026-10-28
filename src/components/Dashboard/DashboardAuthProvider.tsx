@@ -18,6 +18,7 @@ export type DashboardAppUser = {
   fullName: string | null;
   role: AppRole;
   status: "active";
+  isDemoAccount: boolean;
 };
 
 type AuthMeResponse =

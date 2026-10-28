@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { demoDescription } from "./demo";
 import type { InventoryPurchase, InventoryVendor } from "./types";
 
 const vendorColumns = `v.id::text as "id", v.name, v.phone, v.email, v.address, v.notes,
@@ -27,6 +28,7 @@ export async function createVendor(input: {
   email?: string | null;
   address?: string | null;
   notes?: string | null;
+  isDemo: boolean;
 }) {
   const result = await db.query<InventoryVendor>(
     `insert into public.vendors (name, phone, email, address, notes)
@@ -36,7 +38,7 @@ export async function createVendor(input: {
       input.phone ?? null,
       input.email ?? null,
       input.address ?? null,
-      input.notes ?? null,
+      demoDescription(input.isDemo, input.notes),
     ],
   );
   return result.rows[0];
@@ -51,13 +53,15 @@ export async function updateVendor(
     address: string | null;
     notes: string | null;
     isActive: boolean;
+    isDemo: boolean;
   }>,
 ) {
   const result = await db.query<InventoryVendor>(
     `update public.vendors set
     name = coalesce($2,name), phone = case when $3::boolean then $4 else phone end,
     email = case when $5::boolean then $6 else email end, address = case when $7::boolean then $8 else address end,
-    notes = case when $9::boolean then $10 else notes end, is_active = coalesce($11,is_active), updated_at = now()
+    notes = case when $9::boolean then $10 else notes end, is_active = coalesce($11,is_active),
+    updated_at = now()
     where id = $1::uuid returning ${vendorColumns}`,
     [
       id,
@@ -69,7 +73,7 @@ export async function updateVendor(
       input.address !== undefined,
       input.address ?? null,
       input.notes !== undefined,
-      input.notes ?? null,
+      demoDescription(Boolean(input.isDemo), input.notes),
       input.isActive ?? null,
     ],
   );
@@ -134,6 +138,7 @@ export async function createPurchase(input: {
   invoicePath?: string | null;
   notes?: string | null;
   createdBy: string;
+  isDemo: boolean;
 }) {
   const result = await db.query(
     `insert into public.inventory_purchases (branch_id, material_id, vendor_id, purchase_date, quantity, unit_price, invoice_path, notes, created_by)
@@ -146,7 +151,7 @@ export async function createPurchase(input: {
       input.quantity,
       input.unitPrice,
       input.invoicePath ?? null,
-      input.notes ?? null,
+      demoDescription(input.isDemo, input.notes),
       input.createdBy,
     ],
   );

@@ -17,6 +17,11 @@ Count routes allow admins and assigned branch staff. All use the raw `pg` Pool (
 - **JSON is camelCase** in both directions (`isActive`, `minStock`, `branchIds`). The SQL
   in `setup.ts` aliases columns so rows come back already camelCased.
 - Ids are uuids and are validated with `isUuid` before hitting the database.
+- Demo tagging is actor-based: the guarded server treats the exact username `test` as the
+  demo actor and prefixes writable descriptions/notes with `[demo]`. Counts without a
+  description are matched by their recorded actor during cleanup.
+  The admin-only `DELETE /api/inventory/demo` cleanup removes tagged transactions and
+  associated invoice files; setup branches and materials are not deleted.
 - Unique-name collisions (`23505`) map to **409** with a human message.
 - `requireInventoryAccess(request)` in `src/lib/inventory/access.ts` is the guard for the
   count and history routes: admins get `branchIds: "all"`, branch
@@ -128,7 +133,7 @@ Success: `{ saved: true }`. Unauthorized branch: 403; unavailable branch: 404.
 ### GET `/api/inventory/counts/history?materialId=UUID&branchId=UUID&offset=0`
 
 `materialId` is required; `branchId` is optional and must be accessible. Returns up to
-100 audit entries, ordered by save time descending. Offset is an integer 0–1000000.
+20 audit entries, ordered by save time descending. Offset is an integer 0–1000000.
 Each entry has `{ id, countId, branchId, countDate, oldQuantity, newQuantity, editedBy,
 editedAt, version }`; `editedBy` is the current profile display name, while the database
 retains the actor's profile id. Creation uses `oldQuantity: null`.
@@ -212,6 +217,14 @@ they remain the audit record and are corrected by submitting a replacement count
 Returns one row per accessible branch/material with opening, received, sent, closing and
 apparent usage. The usage equation is `opening + received - sent - closing`; it is null
 until both opening and closing snapshots exist.
+
+### GET `/api/inventory/analytics?mode=cy|fy&year=YYYY`
+
+Admin-only analytics for the accessible branch scope. Returns the selected period label,
+12 monthly columns, material purchase-grid rows, monthly quantity/spend trends, latest
+stock and restock alerts. Days of stock uses the latest reported count and trailing 90-day
+purchase quantity; materials with no movement history use their configured minimum as the
+fallback. The browser exports the returned grid, trends, and alerts to Excel.
 
 ### Verification
 

@@ -3,6 +3,7 @@ import type {
   InventoryDispatch,
   InventoryCountRequest,
   InventoryReconciliation,
+  InventoryAnalyticsResponse,
 } from "./types";
 export function loadDispatches(status?: string) {
   return fetchJson<InventoryDispatch[]>(
@@ -64,6 +65,12 @@ export function deleteCountRequest(id: string) {
 export function loadReconciliation(month: string) {
   return fetchJson<InventoryReconciliation[]>(
     `/api/inventory/reconciliation?month=${month}`,
+    { cache: "no-store" },
+  );
+}
+export function loadInventoryAnalytics(mode: "cy" | "fy", year: number) {
+  return fetchJson<InventoryAnalyticsResponse>(
+    `/api/inventory/analytics?mode=${mode}&year=${year}`,
     { cache: "no-store" },
   );
 }

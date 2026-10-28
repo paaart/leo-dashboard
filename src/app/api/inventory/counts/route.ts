@@ -55,7 +55,12 @@ export async function POST(req: NextRequest) {
     }
     if (!canAccessBranch(auth, body.branchId))
       return jsonError("Forbidden", 403);
-    await saveCounts(body.branchId, body.date, body.entries, auth.user.id);
+    await saveCounts(
+      body.branchId,
+      body.date,
+      body.entries,
+      auth.user.id,
+    );
     return jsonOk({ saved: true });
   } catch (error) {
     if (error instanceof CountError)

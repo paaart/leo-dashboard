@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
         fullName: user.fullName,
         role: user.role,
         status: user.status,
+        isDemoAccount: user.isDemoAccount,
       },
     });
   } catch {

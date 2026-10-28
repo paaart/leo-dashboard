@@ -43,7 +43,14 @@ export async function POST(req: NextRequest) {
     return jsonError("Enter a valid vendor name and contact details");
   try {
     return jsonOk(
-      await createVendor({ name, phone, email, address, notes }),
+      await createVendor({
+        name,
+        phone,
+        email,
+        address,
+        notes,
+        isDemo: auth.user.isDemoAccount,
+      }),
       201,
     );
   } catch (error) {

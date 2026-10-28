@@ -48,7 +48,15 @@ export async function POST(req: NextRequest) {
   if (!canAccessBranch(a, b.branchId)) return jsonError("Forbidden", 403);
   try {
     return jsonOk(
-      { id: await createCountRequest(b.branchId, due, note, a.user.id) },
+      {
+        id: await createCountRequest(
+          b.branchId,
+          due,
+          note,
+          a.user.id,
+          a.user.isDemoAccount,
+        ),
+      },
       201,
     );
   } catch {

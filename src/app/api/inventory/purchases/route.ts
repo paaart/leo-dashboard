@@ -78,6 +78,7 @@ export async function POST(req: NextRequest) {
       invoicePath: body.invoicePath as string | null | undefined,
       notes,
       createdBy: auth.user.id,
+      isDemo: auth.user.isDemoAccount,
     });
     return jsonOk({ id }, 201);
   } catch {

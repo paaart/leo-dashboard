@@ -42,6 +42,7 @@ export async function PATCH(
       address,
       notes,
       isActive: body.isActive as boolean | undefined,
+      isDemo: auth.user.isDemoAccount,
     });
     return row ? jsonOk(row) : jsonError("Vendor not found", 404);
   } catch {

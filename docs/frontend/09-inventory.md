@@ -45,6 +45,7 @@ sub). Adding a screen means adding an entry there plus a `renderContent()` branc
 | `dispatches` | `InventoryMovement` (dispatches) | admin + branch |
 | `count-requests` | `InventoryMovement` (count requests) | admin + branch |
 | `reconciliation` | `InventoryMovement` (reconciliation) | admin + branch |
+| `analytics` | `InventoryAnalytics` | admin |
 | `setup` | `InventorySetup` | admin |
 
 ### Overview and Update stock
@@ -61,6 +62,10 @@ number per active material, and partial saves. Blank leaves the material unchang
 zero explicitly records no stock. Dates range from 2026-08-31 (August closing / September
 opening) through today. Choose month-end dates for closing counts. An existing count on
 the selected date can be corrected; every changed value records who/when/old/new.
+A selected date's value is shown separately from the latest reported stock, so staff can
+compare the date they are correcting with the most recent snapshot. In history, the first
+count for a date is compared with the previous dated snapshot for that branch and material;
+later corrections show the value that was replaced.
 A stale version rejects the entire save with a reload message. Changing branch/date
 or reloading prompts before discarding draft values; page unload warns too.
 
@@ -99,6 +104,14 @@ delete count requests and dispatches; branch staff have no delete actions.
 Reconciliation is calculated by month and branch/material as `opening + received - sent
 - closing = apparent usage`. Missing opening or closing counts remain blank.
 
+### Analytics
+
+Analytics is admin-only and supports calendar-year and financial-year views. It rebuilds
+the purchase grid with monthly quantity and spend by material, shows monthly spend trends,
+and provides an Excel workbook with purchase-grid, trend, and stock-alert sheets. Restock
+alerts use latest reported stock divided by trailing 90-day purchase quantity; when there
+is no movement history, the material's configured minimum is used as the fallback.
+
 ### Setup
 
 `InventorySetup` is a `PageHeader` + `SegmentedTabs` (the shared pill tab strip added
@@ -116,6 +129,11 @@ in `shared/DashboardUI.tsx`) with three panels:
   active branch to toggle; Save replaces the whole set via
   `PUT /api/inventory/assignments/[profileId]`. Empty state points admins at User
   Management, since accounts are created there.
+
+The account with username `test` is treated as the **Demo account**. Records created or
+updated by it are tagged automatically across counts, purchases/invoices, vendors,
+dispatches, and count requests. Inventory Setup includes an admin-only **Delete all demo
+data** action; it removes only those tagged records and leaves branches/materials intact.
 
 All three fetch through `src/lib/inventory/client.ts` (thin `fetchJson` wrappers; the
 `fetchJson` helper is the shared one in `lib/warehouse/api.ts`) and report with

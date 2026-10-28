@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   AlertTriangle,
   ArrowRight,
+  Boxes,
   Calculator,
   Globe2,
   HandCoins,
@@ -19,6 +20,7 @@ import {
   type WarehousePaymentAlertRow,
 } from "@/lib/warehouse/summary";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getInventoryHomeSummary } from "@/lib/inventory/analytics";
 import { MetricCard, SectionCard } from "@/components/shared/DashboardUI";
 
 const TIME_ZONE = "Asia/Kolkata";
@@ -165,7 +167,7 @@ export default async function HomeContent({ user }: { user: AppUser }) {
   }).format(now);
 
   // null = the source failed (rendered as a failure state); [] = genuinely empty.
-  const [alerts, warehouse, paymentAlerts, loansOutstanding] =
+  const [alerts, warehouse, paymentAlerts, loansOutstanding, inventorySummary] =
     await Promise.all([
       tryLoad<VehicleRenewalAlert[]>("renewal alerts", () =>
         listVehicleRenewalAlerts()
@@ -181,6 +183,9 @@ export default async function HomeContent({ user }: { user: AppUser }) {
           )
         : Promise.resolve<WarehousePaymentAlertRow[] | null>([]),
       isAdmin ? getLoansOutstanding() : Promise.resolve(null),
+      isAdmin
+        ? tryLoad("inventory summary", () => getInventoryHomeSummary())
+        : Promise.resolve(null),
     ]);
 
   const displayName = user.fullName || user.username || user.email || "there";
@@ -254,6 +259,20 @@ export default async function HomeContent({ user }: { user: AppUser }) {
               }
               hint="Current employee balances"
               icon={<HandCoins className="h-5 w-5" />}
+            />
+            <MetricCard
+              label="Packaging Stock"
+              value={
+                inventorySummary === null
+                  ? "—"
+                  : inventorySummary.latestStock.toLocaleString("en-IN")
+              }
+              hint={
+                inventorySummary === null
+                  ? "Inventory summary unavailable"
+                  : `${inventorySummary.lowStockMaterials} low-stock material${inventorySummary.lowStockMaterials === 1 ? "" : "s"}`
+              }
+              icon={<Boxes className="h-5 w-5" />}
             />
           </div>
         ) : null}

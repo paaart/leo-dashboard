@@ -12,6 +12,7 @@ export type InventorySub =
   | "dispatches"
   | "count-requests"
   | "reconciliation"
+  | "analytics"
   | "setup";
 
 export const INVENTORY_SUBS: {
@@ -25,6 +26,7 @@ export const INVENTORY_SUBS: {
   { id: "dispatches", label: "Dispatches", roles: ["admin", "branch"] },
   { id: "count-requests", label: "Count requests", roles: ["admin", "branch"] },
   { id: "reconciliation", label: "Reconciliation", roles: ["admin", "branch"] },
+  { id: "analytics", label: "Analytics", roles: ["admin"] },
   { id: "setup", label: "Setup", roles: ["admin"] },
 ];
 

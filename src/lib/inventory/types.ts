@@ -145,3 +145,54 @@ export type InventoryReconciliation = {
   closing: number | null;
   used: number | null;
 };
+
+export type InventoryAnalyticsMode = "cy" | "fy";
+
+export type InventoryAnalyticsMonth = {
+  key: string;
+  label: string;
+};
+
+export type InventoryAnalyticsGridRow = {
+  materialId: string;
+  materialName: string;
+  unit: string;
+  monthlyQuantity: number[];
+  monthlySpend: number[];
+  totalQuantity: number;
+  totalSpend: number;
+};
+
+export type InventoryAnalyticsTrend = {
+  month: string;
+  label: string;
+  quantity: number;
+  spend: number;
+};
+
+export type InventoryStockAlert = {
+  materialId: string;
+  materialName: string;
+  unit: string;
+  stock: number;
+  trailing90DayQuantity: number;
+  daysOfStock: number | null;
+  minStock: number | null;
+  status: "low" | "healthy" | "no_history";
+};
+
+export type InventoryAnalyticsResponse = {
+  mode: InventoryAnalyticsMode;
+  year: number;
+  periodLabel: string;
+  months: InventoryAnalyticsMonth[];
+  grid: InventoryAnalyticsGridRow[];
+  trends: InventoryAnalyticsTrend[];
+  alerts: InventoryStockAlert[];
+  summary: {
+    latestStock: number;
+    lowStockMaterials: number;
+    purchaseSpend: number;
+    purchaseQuantity: number;
+  };
+};

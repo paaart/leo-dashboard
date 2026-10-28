@@ -7,7 +7,8 @@ import {
 } from "./types";
 
 const columns = `id::text, branch_id::text as "branchId", material_id::text as "materialId",
-  to_char(count_date, 'YYYY-MM-DD') as "countDate", quantity, version, updated_at::text as "updatedAt"`;
+  to_char(count_date, 'YYYY-MM-DD') as "countDate", quantity, version,
+  updated_at::text as "updatedAt"`;
 
 export class CountError extends Error {
   constructor(
@@ -114,7 +115,16 @@ export async function countHistory(
   const result = await db.query<CountEdit>(
     `select e.id::text, c.id::text as "countId",
     c.branch_id::text as "branchId", to_char(c.count_date, 'YYYY-MM-DD') as "countDate",
-    e.old_quantity as "oldQuantity", e.new_quantity as "newQuantity",
+    case when e.version = 1 then (
+      select previous.quantity
+      from public.inventory_counts previous
+      where previous.branch_id = c.branch_id
+        and previous.material_id = c.material_id
+        and previous.count_date < c.count_date
+      order by previous.count_date desc
+      limit 1
+    ) else e.old_quantity end as "oldQuantity",
+    e.new_quantity as "newQuantity",
     coalesce(p.full_name, p.username) as "editedBy", e.edited_at::text as "editedAt", e.version
     from public.inventory_count_edits e join public.inventory_counts c on c.id = e.count_id
     join public.profiles p on p.id = e.edited_by

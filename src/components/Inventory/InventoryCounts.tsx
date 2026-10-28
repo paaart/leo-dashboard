@@ -68,17 +68,23 @@ export default function InventoryCounts({
   }
   const [revision, setRevision] = useState(0);
   const [data, setData] = useState<StockData | null>(null);
+  const [currentCounts, setCurrentCounts] = useState<StockData["counts"]>([]);
   const [error, setError] = useState("");
   const [branchId, setBranchId] = useState("");
   const queryDate = mode === "update" ? date : undefined;
   useEffect(() => {
     let cancelled = false;
     setData(null);
+    setCurrentCounts([]);
     setError("");
-    loadInventoryStock(queryDate)
-      .then((result) => {
+    Promise.all([
+      loadInventoryStock(queryDate),
+      mode === "update" ? loadInventoryStock() : Promise.resolve(null),
+    ])
+      .then(([result, latest]) => {
         if (cancelled) return;
         setData(result);
+        setCurrentCounts(latest?.counts ?? result.counts);
         setBranchId((current) =>
           result.branches.some((b) => b.id === current)
             ? current
@@ -179,6 +185,7 @@ export default function InventoryCounts({
               <StockForm
                 key={`${branchId}:${date}:${revision}`}
                 data={data}
+                currentCounts={currentCounts}
                 branchId={branchId}
                 date={date}
                 onDirty={setDirty}
@@ -199,6 +206,7 @@ export default function InventoryCounts({
 
 function StockForm({
   data,
+  currentCounts,
   branchId,
   date,
   onSaved,
@@ -206,6 +214,7 @@ function StockForm({
   onBusy,
 }: {
   data: StockData;
+  currentCounts: StockData["counts"];
   branchId: string;
   date: string;
   onSaved: () => void;
@@ -218,6 +227,11 @@ function StockForm({
   const [saved, setSaved] = useState(false);
   const counts = new Map(
     data.counts
+      .filter((c) => c.branchId === branchId)
+      .map((c) => [c.materialId, c]),
+  );
+  const latestCounts = new Map(
+    currentCounts
       .filter((c) => c.branchId === branchId)
       .map((c) => [c.materialId, c]),
   );
@@ -295,12 +309,18 @@ function StockForm({
                 ({material.unit})
               </span>
             </span>
-            <span className="mb-3 block text-sm text-fg-muted">
-              This date:{" "}
-              {counts.has(material.id)
-                ? counts.get(material.id)!.quantity.toLocaleString("en-IN")
-                : "Not counted"}
-            </span>
+            <div className="mb-3 space-y-1 text-sm text-fg-muted">
+              <span className="block">
+                Latest reported stock: {latestCounts.has(material.id)
+                  ? `${latestCounts.get(material.id)!.quantity.toLocaleString("en-IN")} ${material.unit}`
+                  : "Not counted yet"}
+              </span>
+              <span className="block">
+                Selected date ({date}): {counts.has(material.id)
+                  ? `${counts.get(material.id)!.quantity.toLocaleString("en-IN")} ${material.unit}`
+                  : "No count recorded"}
+              </span>
+            </div>
             <input
               className={inputField}
               type="number"
@@ -489,8 +509,10 @@ function History({
         </div>
         <div className="max-h-[calc(90vh-6rem)] space-y-3 overflow-auto px-5 py-5">
           <p className="text-sm text-fg-muted">
-            To correct a count, choose its branch and count date in Update
-            stock.
+            A first count for a date is compared with the previous dated
+            snapshot for that branch and material. Later corrections show the
+            value that was replaced. To correct a count, choose its branch and
+            count date in Update stock.
           </p>
           {error ? (
             <div role="alert" className={alertDanger}>
@@ -531,7 +553,11 @@ function History({
                           {branches.find((b) => b.id === row.branchId)?.name}
                         </td>
                         <td className={tableCell}>
-                          {row.oldQuantity ?? "Not counted"} → {row.newQuantity}{" "}
+                          {row.oldQuantity === null
+                            ? "First count recorded"
+                            : row.oldQuantity.toLocaleString("en-IN")}
+                          {" → "}
+                          {row.newQuantity.toLocaleString("en-IN")} {" "}
                           {material.unit}
                         </td>
                         <td className={tableCell}>{row.editedBy}</td>
