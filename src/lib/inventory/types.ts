@@ -43,7 +43,11 @@ export type InventoryCount = {
   updatedAt: string;
 };
 
-export type CountInput = { materialId: string; quantity: number; version: number | null };
+export type CountInput = {
+  materialId: string;
+  quantity: number;
+  version: number | null;
+};
 export type StockData = {
   isCompanyView: boolean;
   branches: InventoryBranch[];
@@ -60,4 +64,39 @@ export type CountEdit = {
   editedBy: string;
   editedAt: string;
   version: number;
+};
+
+export type InventoryVendor = {
+  id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  notes: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  purchaseCount?: number;
+  totalSpend?: number;
+};
+
+export type InventoryPurchase = {
+  id: string;
+  branchId: string;
+  branchName: string;
+  materialId: string;
+  materialName: string;
+  materialUnit: string;
+  vendorId: string;
+  vendorName: string;
+  purchaseDate: string;
+  quantity: number;
+  unitPrice: number;
+  totalAmount: number;
+  invoicePath: string | null;
+  notes: string | null;
+  createdBy: string;
+  createdAt: string;
+  sixMonthAverage: number | null;
+  priceSignal: "good" | "high" | "normal" | "no_history";
 };

@@ -185,7 +185,7 @@ function SidebarNav({
           onClick={() => {
             setSection({ main: "international", sub: "calculator" });
             setOpen((prev) =>
-              prev === "international" ? null : "international"
+              prev === "international" ? null : "international",
             );
           }}
           className={groupLinkClass(isActive("international"))}
@@ -229,6 +229,20 @@ function SidebarNav({
       >
         Vehicle Tracker
       </Link>
+
+      {isAdmin && (
+        <Link
+          href="/dashboard/vendors"
+          onClick={() => {
+            setSection({ main: "vendors" });
+            setOpen(null);
+            onAnyNavigate?.();
+          }}
+          className={mainLinkClass(isActive("vendors"))}
+        >
+          Vendors
+        </Link>
+      )}
 
       {isAdmin && (
         <Link
@@ -389,7 +403,7 @@ export default function Sidebar({
   role,
 }: SidebarProps) {
   const [open, setOpen] = useState<OpenGroup>(() =>
-    groupForSection(section.main)
+    groupForSection(section.main),
   );
 
   useEffect(() => {

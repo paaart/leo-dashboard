@@ -1,6 +1,6 @@
 # Inventory Management (frontend)
 
-> Status: Current. Updated against code 2026-10-13; live count rollout awaits migration approval.
+> Status: Current. Updated against code 2026-10-28; Slice 3 migration is applied live.
 > Files: `src/components/Inventory/**`, `src/lib/inventory/client.ts`, `src/lib/roles.ts`.
 > API: [api/11](../api/11-inventory.md).
 
@@ -41,6 +41,7 @@ sub). Adding a screen means adding an entry there plus a `renderContent()` branc
 |---|---|---|
 | `overview` | `InventoryCounts` (overview) | admin + branch |
 | `update` | `InventoryCounts` (update) | admin + branch |
+| `purchases` | `InventoryPurchases` | admin + branch |
 | `setup` | `InventorySetup` | admin |
 
 ### Overview and Update stock
@@ -62,7 +63,20 @@ or reloading prompts before discarding draft values; page unload warns too.
 
 History & edit log is an inline, paginated table (100 saves per page), scoped to the
 selected material and available branches. Historical corrections do not replace a newer
-count in Overview. No purchases, dispatches, requests or analytics are implemented yet.
+count in Overview.
+
+### Purchases
+
+Purchases records central-store buying and emergency branch purchases. Admins can see
+and record every active branch; branch staff can only use their assigned branches. Each
+entry records the material, vendor, date, quantity, unit price, optional notes and an
+optional PDF/image invoice. The invoice is stored privately in Supabase Storage and is
+opened through a short-lived signed URL.
+
+The purchase list compares each unit price with the trailing six-month average for that
+material. Prices at least 5% below the average show **Good deal**; prices at least 5%
+above show **Above average**. With no prior six-month data it shows **No history**.
+Purchases do not automatically change shelf counts.
 
 ### Setup
 

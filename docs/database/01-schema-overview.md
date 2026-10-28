@@ -217,6 +217,16 @@ no Data API policies or grants to browser roles.
 
 `profiles_role_valid` now allows `'branch'` alongside `'user'` and `'admin'`.
 
+### Vendors and inventory purchases **[migration applied]**
+
+`vendors` is the module-neutral supplier directory: name, contact details, notes and
+active flag. `inventory_purchases` records branch, material, vendor, date, quantity,
+unit price, optional invoice Storage path, notes and creator. It has indexes for date,
+material/date and vendor/date. The migration creates the private `inventory-invoices`
+Storage bucket, with a 10 MB limit for PDF/JPEG/PNG/WebP files. The application uses
+guarded server routes and short-lived signed URLs; browser roles receive no direct
+table privileges.
+
 ## Warehouse **[supabase-only, except alert dismissals]**
 
 The warehouse core tables are **not** in the migrations folder — they were built in

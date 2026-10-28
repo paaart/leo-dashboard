@@ -106,3 +106,6 @@ triggers like the vendor-invoice tables use.
 - Inventory counts + audit (`20261013154626`) applied live on 2026-10-14 via direct SQL
   after checking target tables did not exist.
   Do not use `supabase db push`: remote migration history is unrelated to this repo.
+- Vendors, inventory purchases and private invoice Storage bucket
+  (`20261022054951`) applied live on 2026-10-28 via direct SQL after checking the
+  target tables and bucket did not exist.

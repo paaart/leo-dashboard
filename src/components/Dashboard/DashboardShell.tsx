@@ -23,67 +23,76 @@ const moduleLoading = () => <ContentLoadingState />;
 
 const DomesticCalculator = dynamic(
   () => import("@/components/DomesticCalculator"),
-  { loading: moduleLoading }
+  { loading: moduleLoading },
 );
 const InternationalShipping = dynamic(
-  () =>
-    import("@/components/InternationalCalculator/InternationalShipping"),
-  { loading: moduleLoading }
+  () => import("@/components/InternationalCalculator/InternationalShipping"),
+  { loading: moduleLoading },
 );
 const HistoryView = dynamic(
   () => import("@/components/InternationalCalculator/History/HistoryList"),
-  { loading: moduleLoading }
+  { loading: moduleLoading },
 );
 const LoanEntryForm = dynamic(
   () => import("@/components/LoansAndAdvances/LoanEntryForm"),
-  { loading: moduleLoading }
+  { loading: moduleLoading },
 );
 const OutstandingLoansList = dynamic(
   () => import("@/components/LoansAndAdvances/OutstandingLoansList"),
-  { loading: moduleLoading }
+  { loading: moduleLoading },
 );
 const ManageEmployees = dynamic(
   () => import("@/components/LoansAndAdvances/ManageEmployees"),
-  { loading: moduleLoading }
+  { loading: moduleLoading },
 );
 const WarehouseAddClient = dynamic(
   () => import("@/components/Warehouse/WarehouseAddClient"),
-  { loading: moduleLoading }
+  { loading: moduleLoading },
 );
 const WarehouseActivePods = dynamic(
   () => import("@/components/Warehouse/WarehouseActivePods"),
-  { loading: moduleLoading }
+  { loading: moduleLoading },
 );
 const WarehouseRenewals = dynamic(
   () => import("@/components/Warehouse/Ledger/WarehouseRenewals"),
-  { loading: moduleLoading }
+  { loading: moduleLoading },
 );
 const WarehousePayments = dynamic(
   () => import("@/components/Warehouse/WarehousePayments"),
-  { loading: moduleLoading }
+  { loading: moduleLoading },
 );
 const WarehouseClosedPods = dynamic(
   () => import("@/components/Warehouse/WarehouseClosedPods"),
-  { loading: moduleLoading }
+  { loading: moduleLoading },
 );
 const WarehousePaymentAlerts = dynamic(
   () => import("@/components/Warehouse/WarehousePaymentAlerts"),
-  { loading: moduleLoading }
+  { loading: moduleLoading },
 );
 const FuelTrackerPage = dynamic(
   () => import("@/components/FuelTracker/FuelTrackerPage"),
-  { loading: moduleLoading }
+  { loading: moduleLoading },
 );
 const UserManagement = dynamic(
   () => import("@/components/UserManagement/UserManagement"),
-  { loading: moduleLoading }
+  { loading: moduleLoading },
 );
-const InventoryCounts = dynamic(() => import("@/components/Inventory/InventoryCounts"), { ssr: false });
+const InventoryCounts = dynamic(
+  () => import("@/components/Inventory/InventoryCounts"),
+  { ssr: false },
+);
 
 const InventorySetup = dynamic(
   () => import("@/components/Inventory/InventorySetup"),
-  { loading: moduleLoading }
+  { loading: moduleLoading },
 );
+const InventoryPurchases = dynamic(
+  () => import("@/components/Inventory/InventoryPurchases"),
+  { loading: moduleLoading },
+);
+const VendorsPage = dynamic(() => import("@/components/Vendors/VendorsPage"), {
+  loading: moduleLoading,
+});
 
 export type DashboardModule =
   | "home"
@@ -93,7 +102,8 @@ export type DashboardModule =
   | "warehouse"
   | "loans"
   | "users"
-  | "inventory";
+  | "inventory"
+  | "vendors";
 
 export type Section =
   | { main: "home"; sub?: null }
@@ -112,7 +122,8 @@ export type Section =
         | "closed"
         | "payment-alerts";
     }
-  | { main: "inventory"; sub: InventorySub };
+  | { main: "inventory"; sub: InventorySub }
+  | { main: "vendors"; sub?: null };
 
 function sectionFromModule(module: DashboardModule, role: AppRole): Section {
   switch (module) {
@@ -131,6 +142,8 @@ function sectionFromModule(module: DashboardModule, role: AppRole): Section {
     case "inventory":
       // Branch staff and admins land on different first screens.
       return { main: "inventory", sub: defaultInventorySub(role) ?? "setup" };
+    case "vendors":
+      return { main: "vendors", sub: null };
     case "domestic":
     default:
       return { main: "domestic", sub: null };
@@ -147,6 +160,7 @@ function moduleFromSegment(segment: string | null): DashboardModule {
     "loans",
     "users",
     "inventory",
+    "vendors",
   ];
 
   return modules.includes(segment as DashboardModule)
@@ -159,7 +173,8 @@ function isAdminSection(section: Section) {
     section.main === "warehouse" ||
     section.main === "loans" ||
     section.main === "users" ||
-    section.main === "inventory"
+    section.main === "inventory" ||
+    section.main === "vendors"
   );
 }
 
@@ -213,11 +228,7 @@ function ContentLoadingState() {
   );
 }
 
-export default function DashboardShell({
-  children,
-}: {
-  children?: ReactNode;
-}) {
+export default function DashboardShell({ children }: { children?: ReactNode }) {
   const { user, loading: authLoading, ready } = useDashboardAuth();
   const activeModule = moduleFromSegment(useSelectedLayoutSegment());
   const [isPending, startTransition] = useTransition();
@@ -225,7 +236,7 @@ export default function DashboardShell({
   // placeholder until the auth provider has resolved the real user.
   const role: AppRole = user?.role ?? "user";
   const [section, setSection] = useState<Section>(() =>
-    sectionFromModule(activeModule, role)
+    sectionFromModule(activeModule, role),
   );
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
@@ -316,13 +327,19 @@ export default function DashboardShell({
       case "inventory":
         switch (sub) {
           case "setup":
-          default:
             return <InventorySetup />;
           case "overview":
             return <InventoryCounts key="overview" mode="overview" />;
           case "update":
             return <InventoryCounts key="update" mode="update" />;
+          case "purchases":
+            return <InventoryPurchases />;
+          default:
+            return <InventorySetup />;
         }
+
+      case "vendors":
+        return <VendorsPage />;
 
       default:
         return null;

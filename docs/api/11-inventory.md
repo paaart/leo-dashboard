@@ -133,6 +133,38 @@ Each entry has `{ id, countId, branchId, countDate, oldQuantity, newQuantity, ed
 editedAt, version }`; `editedBy` is the current profile display name, while the database
 retains the actor's profile id. Creation uses `oldQuantity: null`.
 
+## Vendors and purchases (Slice 3)
+
+Migration `20261022054951_inventory_vendors_and_purchases.sql` (applied live on
+2026-10-28) creates
+`vendors`, `inventory_purchases`, and the private `inventory-invoices` Storage bucket.
+
+### GET/POST `/api/vendors` (admin)
+
+GET returns active vendors, purchase count and total spend; `?includeInactive=1` includes
+inactive vendors. POST accepts `{ name, phone?, email?, address?, notes? }` and returns
+the created vendor. Names are unique case-insensitively.
+
+### PATCH `/api/vendors/[id]` (admin)
+
+Updates vendor details or `isActive`. Existing purchase history remains attached when a
+vendor is deactivated.
+
+### GET/POST `/api/inventory/purchases` (admin + branch)
+
+GET returns accessible branches, active materials, admin-visible vendors and up to 500
+recent purchases. Optional filters are `materialId`, `vendorId`, `from`, and `to`.
+POST accepts `{ branchId, materialId, vendorId, purchaseDate, quantity, unitPrice,
+invoicePath?, notes? }`. Purchase dates begin at 2026-09-01. Admins can use every active
+branch; branch staff are restricted to their assignments. Purchase rows include a
+trailing six-month average and `priceSignal` (`good`, `high`, `normal`, or `no_history`).
+
+### POST/GET `/api/inventory/purchases/upload` (admin + branch)
+
+POST accepts a PDF or JPEG/PNG/WebP invoice up to 10 MB and returns a private Storage
+path. GET accepts that path and returns a five-minute signed URL. Branch uploads are
+namespaced to the authenticated profile; admins may open any invoice path.
+
 ### Verification
 
 `npm ci && npm run test:inventory` runs isolated PostgreSQL (PGlite) migration, transaction,

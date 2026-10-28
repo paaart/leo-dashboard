@@ -5,7 +5,7 @@
 */
 import type { AppRole } from "@/lib/roles";
 
-export type InventorySub = "overview" | "update" | "setup";
+export type InventorySub = "overview" | "update" | "purchases" | "setup";
 
 export const INVENTORY_SUBS: {
   id: InventorySub;
@@ -14,6 +14,7 @@ export const INVENTORY_SUBS: {
 }[] = [
   { id: "overview", label: "Overview", roles: ["admin", "branch"] },
   { id: "update", label: "Update stock", roles: ["admin", "branch"] },
+  { id: "purchases", label: "Purchases", roles: ["admin", "branch"] },
   { id: "setup", label: "Setup", roles: ["admin"] },
 ];
 

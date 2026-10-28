@@ -199,3 +199,5 @@ and **which tables it touches**. Keep it to current reality — no roadmap.
 
 Inventory count routes (admin + branch): GET/POST `/api/inventory/counts`,
 GET `/api/inventory/counts/history`; see [api/11](11-inventory.md).
+Vendor routes (admin) and purchase routes (admin + branch) are documented in
+[api/11](11-inventory.md).

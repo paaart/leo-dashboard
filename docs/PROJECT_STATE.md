@@ -25,12 +25,14 @@ were additionally exercised live in the browser — light/dark, desktop/375px).
   Loans/Advances, User Management. Home is a server component with data in the HTML;
   the rest map to `DashboardShell` sections loaded lazily via `next/dynamic` (see
   [architecture/04](architecture/04-dashboard-shell-and-routing.md)).
-- **Inventory Management — Setup + Counts** — slice 2 implemented in code 2026-10-13.
+- **Inventory Management — Setup + Counts + Purchases** — slice 3 implemented in code 2026-10-22.
   Overview and Update stock are available to admins and assigned branch staff. Counts
   are dated snapshots with partial updates, conflict protection and an edit log.
   Migration `20261013154626` was applied live on 2026-10-14 after checking the target
   tables were absent. Isolated PostgreSQL tests cover counts and
-  access. Purchases, dispatches, vendors, requests and analytics remain unbuilt.
+  access. Slice 3 adds vendor and purchase code; its migration was applied live on
+  2026-10-28 after confirming the targets were absent. Dispatches, requests and
+  analytics remain unbuilt.
 - **Design system** — verified in browser. All UI runs on semantic tokens in
   `globals.css` + class constants in `shared/ui.ts`; light/dark flips with the OS
   scheme with no hand-written `dark:` variants (intentional exceptions: the always-dark
