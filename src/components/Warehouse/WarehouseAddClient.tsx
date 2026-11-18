@@ -8,6 +8,7 @@ import {
   CreatePodBody,
   createWarehousePod,
   getWarehouseOptions,
+  uploadPodDocument,
 } from "@/lib/warehouse/pods";
 import type { BillingInterval, InsuranceProvider } from "@/lib/warehouse/types";
 import { PageHeader, SectionCard } from "@/components/shared/DashboardUI";
@@ -58,6 +59,9 @@ export default function WarehouseAddClient() {
   const [insuranceIdv, setInsuranceIdv] = useState("0");
   const [oldOutstanding, setOldOutstanding] = useState("");
   const [loading, setLoading] = useState(false);
+  const [packingList, setPackingList] = useState<File | null>(null);
+  const [ledgerRecord, setLedgerRecord] = useState<File | null>(null);
+  const [storageContract, setStorageContract] = useState<File | null>(null);
 
   const inputClass = inputField;
 
@@ -156,7 +160,10 @@ export default function WarehouseAddClient() {
         old_outstanding: Number(oldOutstanding || 0),
       };
 
-      const { client_id } = await createWarehousePod(payload);
+      const { id, client_id } = await createWarehousePod(payload);
+      for (const [kind, file] of [["packingList", packingList], ["ledgerRecord", ledgerRecord], ["storageContract", storageContract]] as const) {
+        if (file) await uploadPodDocument(id, kind, file);
+      }
       return client_id;
     };
 
@@ -187,6 +194,9 @@ export default function WarehouseAddClient() {
       setInsuranceValue("0");
       setInsuranceIdv("0");
       setOldOutstanding("");
+      setPackingList(null);
+      setLedgerRecord(null);
+      setStorageContract(null);
     } finally {
       setLoading(false);
     }
@@ -280,6 +290,16 @@ export default function WarehouseAddClient() {
                     ))}
                   </select>
                 </Field>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-semibold text-fg">Customer documents (PDF)</h3>
+              <p className="mt-1 text-xs text-fg-muted">Upload the packing list, Ledger Record (LR), and storage contract. They will appear as columns in the active POD list.</p>
+              <div className="mt-3 grid gap-4 md:grid-cols-3">
+                <DocumentField label="Packing list" file={packingList} onChange={setPackingList} />
+                <DocumentField label="Ledger Record (LR)" file={ledgerRecord} onChange={setLedgerRecord} />
+                <DocumentField label="Storage contract" file={storageContract} onChange={setStorageContract} />
               </div>
             </div>
 
@@ -529,5 +549,14 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
       </div>
       {children}
     </label>
+  );
+}
+
+function DocumentField({ label, file, onChange }: { label: string; file: File | null; onChange: (file: File | null) => void }) {
+  return (
+    <Field label={label}>
+      <input className={inputField} type="file" accept="application/pdf" onChange={(e) => onChange(e.target.files?.[0] ?? null)} />
+      {file ? <p className="mt-1 truncate text-xs text-fg-muted">{file.name}</p> : null}
+    </Field>
   );
 }

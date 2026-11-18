@@ -97,10 +97,6 @@ export default function InventoryPurchases({ isAdmin }: { isAdmin: boolean }) {
   );
 }
 
-function formatQuantity(value: number) {
-  return Number.isInteger(value) ? String(value) : value.toFixed(2);
-}
-
 function PurchaseForm({
   data,
   onSaved,
@@ -114,46 +110,11 @@ function PurchaseForm({
   const [date, setDate] = useState(inventoryToday());
   const [quantity, setQuantity] = useState("");
   const [unitPrice, setUnitPrice] = useState("");
-  const [totalCost, setTotalCost] = useState("");
+  const [gstAmount, setGstAmount] = useState("");
   const [notes, setNotes] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  function updateAmount(field: "quantity" | "unitPrice" | "totalCost", value: string) {
-    const next = { quantity, unitPrice, totalCost, [field]: value };
-    const q = Number(next.quantity);
-    const unit = Number(next.unitPrice);
-    const total = Number(next.totalCost);
-    if (field === "quantity") {
-      if (q > 0 && unit >= 0 && next.unitPrice !== "")
-        next.totalCost = (q * unit).toFixed(2);
-      else if (q > 0 && total >= 0 && next.totalCost !== "")
-        next.unitPrice = (total / q).toFixed(2);
-    } else if (field === "unitPrice") {
-      if (
-        q > 0 &&
-        unit >= 0 &&
-        next.quantity !== "" &&
-        next.unitPrice !== ""
-      )
-        next.totalCost = (q * unit).toFixed(2);
-      else if (unit > 0 && total >= 0 && next.totalCost !== "")
-        next.quantity = formatQuantity(total / unit);
-    } else if (field === "totalCost") {
-      if (
-        q > 0 &&
-        total >= 0 &&
-        next.quantity !== "" &&
-        next.totalCost !== ""
-      )
-        next.unitPrice = (total / q).toFixed(2);
-      else if (unit > 0 && total >= 0 && next.unitPrice !== "")
-        next.quantity = formatQuantity(total / unit);
-    }
-    setQuantity(next.quantity);
-    setUnitPrice(next.unitPrice);
-    setTotalCost(next.totalCost);
-  }
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -161,20 +122,13 @@ function PurchaseForm({
     try {
       const q = Number(quantity);
       const unit = Number(unitPrice);
-      const total = Number(totalCost);
-      const filled = [quantity, unitPrice, totalCost].filter(
-        (value) => value.trim() !== "",
-      ).length;
-      if (filled < 2)
-        throw new Error("Enter any two of quantity, unit price, or total cost.");
+      const gst = Number(gstAmount || 0);
       if (!Number.isInteger(q) || q <= 0)
         throw new Error("Quantity must be a positive whole number.");
       if (!Number.isFinite(unit) || unit < 0)
         throw new Error("Enter a valid unit price.");
-      if (!Number.isFinite(total) || total < 0)
-        throw new Error("Enter a valid total cost.");
-      if (Math.abs(q * unit - total) > 0.01)
-        throw new Error("Quantity × unit price must equal total cost.");
+      if (!Number.isFinite(gst) || gst < 0)
+        throw new Error("Enter a valid GST amount.");
       let invoicePath: string | undefined;
       if (file) invoicePath = (await uploadInvoice(file)).path;
       await savePurchase({
@@ -184,13 +138,14 @@ function PurchaseForm({
         purchaseDate: date,
         quantity: Number(quantity),
         unitPrice: Number(unitPrice),
+        gstAmount: gst,
         invoicePath,
         notes,
       });
       onSaved("Purchase saved.");
       setQuantity("");
       setUnitPrice("");
-      setTotalCost("");
+      setGstAmount("");
       setNotes("");
       setFile(null);
     } catch (err) {
@@ -265,7 +220,7 @@ function PurchaseForm({
             step="1"
             inputMode="numeric"
             value={quantity}
-            onChange={(e) => updateAmount("quantity", e.target.value)}
+            onChange={(e) => setQuantity(e.target.value)}
           />
         </label>
         <label>
@@ -277,19 +232,31 @@ function PurchaseForm({
             step="0.01"
             inputMode="decimal"
             value={unitPrice}
-            onChange={(e) => updateAmount("unitPrice", e.target.value)}
+            onChange={(e) => setUnitPrice(e.target.value)}
           />
         </label>
         <label>
-          <span className={fieldLabel}>Total cost (₹)</span>
+          <span className={fieldLabel}>GST amount (₹)</span>
           <input
             className={inputField}
             type="number"
             min="0"
             step="0.01"
             inputMode="decimal"
-            value={totalCost}
-            onChange={(e) => updateAmount("totalCost", e.target.value)}
+            value={gstAmount}
+            onChange={(e) => setGstAmount(e.target.value)}
+            placeholder="0"
+          />
+        </label>
+        <label>
+          <span className={fieldLabel}>Total cost (₹)</span>
+          <input
+            className={`${inputField} bg-surface-2`}
+            readOnly
+            value={(Number(quantity) > 0 && Number(unitPrice) >= 0
+              ? Number(quantity) * Number(unitPrice) + Number(gstAmount || 0)
+              : 0
+            ).toFixed(2)}
           />
         </label>
         <label className="sm:col-span-2">
@@ -317,8 +284,8 @@ function PurchaseForm({
         </div>
       ) : null}
       <div className={alertInfo}>
-        Enter any two of quantity, unit price, or total cost; the third is
-        calculated automatically. {" "}
+        Enter quantity, unit price, and the GST amount directly. Total cost is
+        calculated as (quantity × unit price) + GST. {" "}
         Branch purchases are treated as emergency purchases. This records what
         was bought; it does not change the shelf count automatically.
       </div>
@@ -367,7 +334,7 @@ function PurchaseTable({
                 "Vendor",
                 "Qty",
                 "Unit price",
-                "Total cost",
+                "Total incl. GST",
                 "6-month average",
                 "Signal",
                 "Invoice",
@@ -397,7 +364,7 @@ function PurchaseTable({
                 </td>
                 <td className={tableCell}>
                   ₹
-                  {(p.quantity * p.unitPrice).toLocaleString("en-IN", {
+                  {p.totalAmount.toLocaleString("en-IN", {
                     minimumFractionDigits: 2,
                   })}
                 </td>

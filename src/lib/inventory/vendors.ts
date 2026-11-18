@@ -10,7 +10,7 @@ export async function listVendors(
 ): Promise<InventoryVendor[]> {
   const result = await db.query<InventoryVendor>(
     `select ${vendorColumns}, count(p.id)::int as "purchaseCount",
-    coalesce(sum(p.quantity * p.unit_price), 0)::numeric as "totalSpend"
+    coalesce(sum(p.quantity * p.unit_price + coalesce(p.gst_amount, 0)), 0)::numeric as "totalSpend"
     from public.vendors v left join public.inventory_purchases p on p.vendor_id = v.id
     where ($1::boolean or v.is_active) group by v.id order by v.is_active desc, lower(v.name)`,
     [includeInactive],
@@ -83,7 +83,8 @@ export async function updateVendor(
 const purchaseColumns = `p.id::text as "id", p.branch_id::text as "branchId", b.name as "branchName",
   p.material_id::text as "materialId", m.name as "materialName", m.unit as "materialUnit",
   p.vendor_id::text as "vendorId", v.name as "vendorName", to_char(p.purchase_date,'YYYY-MM-DD') as "purchaseDate",
-  p.quantity, p.unit_price::numeric as "unitPrice", (p.quantity*p.unit_price)::numeric as "totalAmount",
+  p.quantity, p.unit_price::numeric as "unitPrice", coalesce(p.gst_amount, 0)::numeric as "gstAmount",
+  (p.quantity*p.unit_price)::numeric as "baseAmount", (p.quantity*p.unit_price + coalesce(p.gst_amount, 0))::numeric as "totalAmount",
   p.invoice_path as "invoicePath", p.notes, coalesce(pr.full_name,pr.username) as "createdBy", p.created_at::text as "createdAt"`;
 
 export async function listPurchases(
@@ -135,14 +136,15 @@ export async function createPurchase(input: {
   purchaseDate: string;
   quantity: number;
   unitPrice: number;
+  gstAmount: number;
   invoicePath?: string | null;
   notes?: string | null;
   createdBy: string;
   isDemo: boolean;
 }) {
   const result = await db.query(
-    `insert into public.inventory_purchases (branch_id, material_id, vendor_id, purchase_date, quantity, unit_price, invoice_path, notes, created_by)
-    values ($1,$2,$3,$4,$5,$6,$7,$8,$9) returning id::text`,
+    `insert into public.inventory_purchases (branch_id, material_id, vendor_id, purchase_date, quantity, unit_price, gst_amount, invoice_path, notes, created_by)
+    values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) returning id::text`,
     [
       input.branchId,
       input.materialId,
@@ -150,6 +152,7 @@ export async function createPurchase(input: {
       input.purchaseDate,
       input.quantity,
       input.unitPrice,
+      input.gstAmount,
       input.invoicePath ?? null,
       demoDescription(input.isDemo, input.notes),
       input.createdBy,

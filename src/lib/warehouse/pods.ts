@@ -108,6 +108,17 @@ export async function createWarehousePod(
   return data;
 }
 
+export async function uploadPodDocument(podId: string, kind: string, file: File) {
+  const form = new FormData();
+  form.append("podId", podId);
+  form.append("kind", kind);
+  form.append("file", file);
+  return fetchJson<{ path: string }>("/api/warehouse/pods/documents", {
+    method: "POST",
+    body: form,
+  });
+}
+
 export async function getWarehouseOptions(): Promise<{
   companies: Array<{ id: number; name: string; is_active?: boolean }>;
   locations: Array<{ id: number; name: string; is_active?: boolean }>;

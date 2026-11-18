@@ -94,6 +94,8 @@ export type InventoryPurchase = {
   purchaseDate: string;
   quantity: number;
   unitPrice: number;
+  gstAmount: number;
+  baseAmount: number;
   totalAmount: number;
   invoicePath: string | null;
   notes: string | null;

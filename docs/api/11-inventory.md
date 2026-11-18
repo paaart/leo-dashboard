@@ -160,8 +160,9 @@ vendor is deactivated.
 GET returns accessible branches, active materials, admin-visible vendors and up to 500
 recent purchases. Optional filters are `materialId`, `vendorId`, `from`, and `to`.
 POST accepts `{ branchId, materialId, vendorId, purchaseDate, quantity, unitPrice,
-invoicePath?, notes? }`. The UI accepts any two of quantity, unit price, and total cost
-and calculates the third before sending the stored quantity/unit price pair. Purchase
+gstAmount, invoicePath?, notes? }`. The UI sends quantity, unit price, and the
+directly-entered GST amount. Total cost is calculated as `(quantity × unit price) + GST`.
+Purchase
 dates begin at 2026-09-01. Admins can use every active branch; branch staff are
 restricted to their assignments. Purchase rows include a trailing six-month average,
 `totalAmount`, and `priceSignal` (`good`, `high`, `normal`, or `no_history`).

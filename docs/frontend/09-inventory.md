@@ -42,6 +42,7 @@ sub). Adding a screen means adding an entry there plus a `renderContent()` branc
 | `overview` | `InventoryCounts` (overview) | admin + branch |
 | `update` | `InventoryCounts` (update) | admin + branch |
 | `purchases` | `InventoryPurchases` | admin + branch |
+| `vendors` | `VendorsPage` | admin |
 | `dispatches` | `InventoryMovement` (dispatches) | admin + branch |
 | `count-requests` | `InventoryMovement` (count requests) | admin + branch |
 | `reconciliation` | `InventoryMovement` (reconciliation) | admin + branch |
@@ -85,8 +86,9 @@ opened through a short-lived signed URL.
 The purchase list compares each unit price with the trailing six-month average for that
 material. Prices at least 5% below the average show **Good deal**; prices at least 5%
 above show **Above average**. With no prior six-month data it shows **No history**.
-The list shows total cost (`quantity × unit price`). The entry form accepts any two of
-quantity, unit price, and total cost, then calculates the third. Purchases do not
+The list shows total cost including GST. The entry form accepts quantity, unit price,
+and GST amount directly. Total cost is calculated as `(quantity × unit price) + GST`.
+Purchases do not
 automatically change shelf counts. Admins can delete a purchase; the invoice object is
 removed with it.
 

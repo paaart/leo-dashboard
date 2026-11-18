@@ -49,6 +49,7 @@ export async function POST(req: NextRequest) {
   if (!body) return jsonError("Invalid JSON body");
   const quantity = parsePositiveInteger(body.quantity);
   const unitPrice = parseMoney(body.unitPrice);
+  const gstAmount = parseMoney(body.gstAmount ?? 0);
   const notes = cleanOptionalText(body.notes, 1000);
   const date = body.purchaseDate;
   if (
@@ -59,6 +60,7 @@ export async function POST(req: NextRequest) {
     date < "2026-09-01" ||
     quantity === undefined ||
     unitPrice === undefined ||
+    gstAmount === undefined ||
     notes === undefined ||
     (body.invoicePath !== undefined &&
       body.invoicePath !== null &&
@@ -75,6 +77,7 @@ export async function POST(req: NextRequest) {
       purchaseDate: date,
       quantity,
       unitPrice,
+      gstAmount,
       invoicePath: body.invoicePath as string | null | undefined,
       notes,
       createdBy: auth.user.id,

@@ -359,6 +359,8 @@ export default function DashboardShell({ children }: { children?: ReactNode }) {
             );
           case "analytics":
             return <InventoryAnalytics />;
+          case "vendors":
+            return <VendorsPage />;
           default:
             return <InventorySetup />;
         }

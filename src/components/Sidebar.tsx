@@ -232,20 +232,6 @@ function SidebarNav({
 
       {isAdmin && (
         <Link
-          href="/dashboard/vendors"
-          onClick={() => {
-            setSection({ main: "vendors" });
-            setOpen(null);
-            onAnyNavigate?.();
-          }}
-          className={mainLinkClass(isActive("vendors"))}
-        >
-          Vendors
-        </Link>
-      )}
-
-      {isAdmin && (
-        <Link
           href="/dashboard/users"
           onClick={() => {
             setSection({ main: "users" });

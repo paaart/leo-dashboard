@@ -221,6 +221,9 @@ export default function WarehouseActivePods() {
                     <th className="border-b border-edge px-4 py-3 text-left font-semibold">
                       Status
                     </th>
+                    <th className="border-b border-edge px-4 py-3 text-left font-semibold">Packing list</th>
+                    <th className="border-b border-edge px-4 py-3 text-left font-semibold">LR</th>
+                    <th className="border-b border-edge px-4 py-3 text-left font-semibold">Storage contract</th>
                     <th className="border-b border-edge px-4 py-3 text-right font-semibold">
                       Actions
                     </th>
@@ -282,6 +285,10 @@ export default function WarehouseActivePods() {
                         </span>
                       </td>
 
+                      <DocumentCell path={r.packing_list_path} label="Open PDF" />
+                      <DocumentCell path={r.ledger_record_path} label="Open PDF" />
+                      <DocumentCell path={r.storage_contract_path} label="Open PDF" />
+
                       <td className="px-4 py-3 text-right">
                         <button
                           type="button"
@@ -316,5 +323,13 @@ export default function WarehouseActivePods() {
         </SectionCard>
       </div>
     </div>
+  );
+}
+
+function DocumentCell({ path, label }: { path: string | null; label: string }) {
+  return (
+    <td className="px-4 py-3 text-left">
+      {path ? <a className="text-accent underline" href={`/api/warehouse/pods/documents?path=${encodeURIComponent(path)}`} target="_blank" rel="noreferrer">{label}</a> : <span className="text-fg-muted">—</span>}
+    </td>
   );
 }

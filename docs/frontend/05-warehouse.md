@@ -15,8 +15,8 @@ ledger.
 
 | Section | Component | Purpose |
 |---|---|---|
-| `add` | `WarehouseAddClient.tsx` | create a pod (client + billing config) |
-| `active` | `WarehouseActivePods.tsx` | active pods with balances + severity bands; paginated 50/page (`TablePagination` from FuelTracker) — the count/total-due KPI chips aggregate the **full filtered set**, not the visible page |
+| `add` | `WarehouseAddClient.tsx` | create a pod (client + billing config) and optionally upload the packing list, Ledger Record (LR), and storage contract PDFs |
+| `active` | `WarehouseActivePods.tsx` | active pods with balances + severity bands and links for the three customer PDFs; paginated 50/page (`TablePagination` from FuelTracker) — the count/total-due KPI chips aggregate the **full filtered set**, not the visible page |
 | `renewals` | `Ledger/WarehouseRenewals.tsx` | pods due for renewal, renew flow |
 | `payments` | `WarehousePayments.tsx` | payments list, filters, CSV export |
 | `closed` | `WarehouseClosedPods.tsx` | closed pods (paginated search) |

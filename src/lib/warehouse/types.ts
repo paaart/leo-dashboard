@@ -79,6 +79,9 @@ export type WarehousePodSummary = {
 
   last_charge_date: string | null;
   last_payment_date: string | null;
+  packing_list_path: string | null;
+  ledger_record_path: string | null;
+  storage_contract_path: string | null;
 };
 
 export type WarehouseTxnType = "charge" | "payment" | "adjustment";

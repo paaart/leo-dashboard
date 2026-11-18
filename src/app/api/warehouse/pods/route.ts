@@ -113,6 +113,9 @@ export async function GET(req: NextRequest) {
           p.insurance_provider,
           p.insurance_value,
           p.insurance_idv,
+          p.packing_list_path,
+          p.ledger_record_path,
+          p.storage_contract_path,
           p.created_at,                  -- ✅ add this so pb.created_at exists
           c.name as company_name,
           l.name as location_name
@@ -176,6 +179,9 @@ export async function GET(req: NextRequest) {
         insurance_provider: r.insurance_provider,
         insurance_value: Number(r.insurance_value ?? 0),
         insurance_idv: Number(r.insurance_idv ?? 0),
+        packing_list_path: r.packing_list_path ?? null,
+        ledger_record_path: r.ledger_record_path ?? null,
+        storage_contract_path: r.storage_contract_path ?? null,
 
         total_due: totalDue,
         total_charged: totalCharged,

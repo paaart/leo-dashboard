@@ -103,3 +103,10 @@ Distinct from renew: rate-change stays within the current cycle.
 
 **All cycle/rate routes touch:** `warehouse_pods`, `warehouse_pod_cycles`,
 `warehouse_pod_transactions`.
+## Customer documents
+
+Warehouse pods can store three private PDF paths: `packing_list_path`,
+`ledger_record_path`, and `storage_contract_path`. Admins upload them through
+`POST /api/warehouse/pods/documents` and open them through its signed-URL GET.
+Files are stored in the private `warehouse-pod-documents` bucket and limited to
+10 MB each.
