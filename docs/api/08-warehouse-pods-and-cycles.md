@@ -107,6 +107,12 @@ Distinct from renew: rate-change stays within the current cycle.
 
 Warehouse pods can store three private PDF paths: `packing_list_path`,
 `ledger_record_path`, and `storage_contract_path`. Admins upload them through
-`POST /api/warehouse/pods/documents` and open them through its signed-URL GET.
+`POST /api/warehouse/pods/documents` from either the create-client form or the
+inline **Upload PDF** controls in the active-POD table, and open them through its signed-URL GET.
 Files are stored in the private `warehouse-pod-documents` bucket and limited to
 10 MB each.
+
+The reusable storage implementation is `src/lib/documents/upload.ts`. The generic
+`POST /api/documents/upload` endpoint accepts `module`, `bucket`, `entity`,
+`entityId`, `documentType`, and `file`; the path itself carries those tags so a
+future module can reuse the same upload flow without another storage helper.

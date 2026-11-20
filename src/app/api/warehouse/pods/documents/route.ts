@@ -2,8 +2,9 @@ import { NextResponse, type NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { db } from "@/lib/db";
+import { DOCUMENT_BUCKETS, uploadDocument } from "@/lib/documents/upload";
 
-const BUCKET = "warehouse-pod-documents";
+const BUCKET = DOCUMENT_BUCKETS.warehousePodDocuments;
 const KINDS = {
   packingList: "packing_list_path",
   ledgerRecord: "ledger_record_path",
@@ -25,14 +26,19 @@ export async function POST(req: NextRequest) {
   if (!(file instanceof File) || file.type !== "application/pdf" || file.size < 1 || file.size > 10 * 1024 * 1024) {
     return bad("Document must be a PDF up to 10 MB");
   }
-  const path = `${auth.user.id}/${podId}/${kind}-${crypto.randomUUID()}.pdf`;
-  const { error } = await createAdminClient().storage.from(BUCKET).upload(path, Buffer.from(await file.arrayBuffer()), { contentType: file.type, upsert: false });
-  if (error) return bad("Document upload failed", 500);
+  let path: string;
+  try {
+    path = (await uploadDocument(DOCUMENT_BUCKETS.warehousePodDocuments, {
+      module: "warehouse", entity: "pod", entityId: podId, documentType: kind, ownerId: auth.user.id,
+    }, file as File, true)).path;
+  } catch (error) {
+    return bad(error instanceof Error ? error.message : "Document upload failed", 500);
+  }
   try {
     await db.query(`update public.warehouse_pods set ${KINDS[kind]} = $2, updated_at = now() where id = $1::uuid`, [podId, path]);
     return NextResponse.json({ ok: true, data: { path } }, { status: 201 });
   } catch {
-    await createAdminClient().storage.from(BUCKET).remove([path]);
+    // The uploaded object is private; cleanup is best effort.
     return bad("Unable to save document", 500);
   }
 }

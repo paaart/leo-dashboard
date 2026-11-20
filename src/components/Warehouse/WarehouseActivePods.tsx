@@ -4,7 +4,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { getErrorMessage } from "@/lib/errors";
 import type { WarehousePodSummary } from "@/lib/warehouse/types";
-import { listWarehousePods, deleteWarehousePod } from "@/lib/warehouse/pods";
+import {
+  listWarehousePods,
+  deleteWarehousePod,
+  uploadPodDocument,
+} from "@/lib/warehouse/pods";
 import { accrueAllWarehousePods } from "@/lib/warehouse/queries";
 import WarehousePodHistoryView from "./Ledger/WarehousePodLedger";
 import {
@@ -21,6 +25,7 @@ import {
 } from "@/components/FuelTracker/TablePagination";
 
 const POD_PAGE_SIZE = 50;
+type DocumentKind = "packingList" | "ledgerRecord" | "storageContract";
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("en-IN", {
@@ -54,6 +59,7 @@ export default function WarehouseActivePods() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [summaryReady, setSummaryReady] = useState(false);
   const [summaryRefreshKey, setSummaryRefreshKey] = useState(0);
+  const [uploadingDocument, setUploadingDocument] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -124,6 +130,31 @@ export default function WarehouseActivePods() {
       toast.error(getErrorMessage(err) || "Failed to delete pod");
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleDocumentUpload = async (
+    podId: string,
+    kind: DocumentKind,
+    file: File,
+  ) => {
+    const key = `${podId}:${kind}`;
+    setUploadingDocument(key);
+    try {
+      const { path } = await uploadPodDocument(podId, kind, file);
+      setRows((prev) =>
+        prev.map((row) => {
+          if (row.id !== podId) return row;
+          if (kind === "packingList") return { ...row, packing_list_path: path };
+          if (kind === "ledgerRecord") return { ...row, ledger_record_path: path };
+          return { ...row, storage_contract_path: path };
+        }),
+      );
+      toast.success("Document uploaded");
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err) || "Failed to upload document");
+    } finally {
+      setUploadingDocument(null);
     }
   };
 
@@ -285,9 +316,27 @@ export default function WarehouseActivePods() {
                         </span>
                       </td>
 
-                      <DocumentCell path={r.packing_list_path} label="Open PDF" />
-                      <DocumentCell path={r.ledger_record_path} label="Open PDF" />
-                      <DocumentCell path={r.storage_contract_path} label="Open PDF" />
+                      <DocumentCell
+                        podId={r.id}
+                        kind="packingList"
+                        path={r.packing_list_path}
+                        uploading={uploadingDocument === `${r.id}:packingList`}
+                        onUpload={handleDocumentUpload}
+                      />
+                      <DocumentCell
+                        podId={r.id}
+                        kind="ledgerRecord"
+                        path={r.ledger_record_path}
+                        uploading={uploadingDocument === `${r.id}:ledgerRecord`}
+                        onUpload={handleDocumentUpload}
+                      />
+                      <DocumentCell
+                        podId={r.id}
+                        kind="storageContract"
+                        path={r.storage_contract_path}
+                        uploading={uploadingDocument === `${r.id}:storageContract`}
+                        onUpload={handleDocumentUpload}
+                      />
 
                       <td className="px-4 py-3 text-right">
                         <button
@@ -326,10 +375,51 @@ export default function WarehouseActivePods() {
   );
 }
 
-function DocumentCell({ path, label }: { path: string | null; label: string }) {
+function DocumentCell({
+  podId,
+  kind,
+  path,
+  uploading,
+  onUpload,
+}: {
+  podId: string;
+  kind: DocumentKind;
+  path: string | null;
+  uploading: boolean;
+  onUpload: (podId: string, kind: DocumentKind, file: File) => void;
+}) {
   return (
     <td className="px-4 py-3 text-left">
-      {path ? <a className="text-accent underline" href={`/api/warehouse/pods/documents?path=${encodeURIComponent(path)}`} target="_blank" rel="noreferrer">{label}</a> : <span className="text-fg-muted">—</span>}
+      {path ? (
+        <a
+          className="text-accent underline"
+          href={`/api/warehouse/pods/documents?path=${encodeURIComponent(path)}`}
+          target="_blank"
+          rel="noreferrer"
+          onClick={(event) => event.stopPropagation()}
+        >
+          View
+        </a>
+      ) : (
+        <label
+          className="inline-flex cursor-pointer items-center rounded-md border border-edge px-2.5 py-1.5 text-xs font-medium text-accent hover:bg-surface-2"
+          onClick={(event) => event.stopPropagation()}
+        >
+          {uploading ? "Uploading…" : "Upload PDF"}
+          <input
+            type="file"
+            accept="application/pdf"
+            className="sr-only"
+            disabled={uploading}
+            onClick={(event) => event.stopPropagation()}
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) onUpload(podId, kind, file);
+              event.target.value = "";
+            }}
+          />
+        </label>
+      )}
     </td>
   );
 }
